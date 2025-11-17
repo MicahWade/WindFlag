@@ -11,19 +11,32 @@ WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwin
     pip install -r requirements.txt
     ```
 
-2.  **Create the Database:**
+2.  **Configure Environment Variables:**
+    Copy the `.env.template` file to `.env` and fill in the values. For more information, see [ENV.md](ENV.md).
+
+3.  **Create the Database:**
     ```bash
     python create_db.py
     ```
 
-3.  **Run the Application:**
+4.  **Run the Application:**
     ```bash
     python app.py
     ```
 
-4.  **Access the Application:**
+5.  **Access the Application:**
     Open your web browser and go to `http://127.0.0.1:5000/`.
 
 ## Creating an Admin User
 
-To create an admin user, you will need to register a new user and then manually set the `is_admin` flag to `True` in the database. You can use a SQLite browser to edit the `app.db` file.
+You can create an admin user with the `-admin` flag when running the application:
+
+```bash
+python app.py -admin <email> <password>
+```
+
+Alternatively, you can manually create a user and set the `is_admin` flag to `True` in the database.
+
+## Environment Variables
+
+For information on environment variables, see [ENV.md](ENV.md).
