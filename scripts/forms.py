@@ -70,7 +70,7 @@ class ChallengeForm(FlaskForm):
     description = TextAreaField('Description', validators=[DataRequired()])
     points = IntegerField('Points', validators=[DataRequired(), NumberRange(min=1)])
     flag = StringField('Flag', validators=[DataRequired(), Length(min=1, max=100)])
-    category = SelectField('Category', coerce=int, validators=[DataRequired()], choices=[(0, '--- Create New Category ---')])
+    category = SelectField('Category', coerce=int, choices=[(0, '--- Create New Category ---')])
     new_category_name = StringField('New Category Name', validators=[Length(max=50)])
     submit = SubmitField('Submit Challenge')
 
