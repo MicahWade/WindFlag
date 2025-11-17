@@ -161,6 +161,13 @@ if __name__ == '__main__':
         create_admin(args.admin[0], args.admin[1])
     else:
         app = create_app()
+        # Check if the database file exists, if not, create it
+        db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+        if not os.path.exists(db_path):
+            with app.app_context():
+                db.create_all()
+                print("Database created successfully.")
+        
         if args.test:
             print("Running in test mode: server will shut down in 40 seconds.")
             timer = threading.Timer(40, os._exit, args=[0])
