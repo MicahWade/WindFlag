@@ -78,13 +78,13 @@ def create_app(config_class=Config):
             return redirect(url_for('home'))
         form = LoginForm()
         if form.validate_on_submit():
-            user = User.query.filter_by(email=form.email.data).first()
+            user = User.query.filter_by(username=form.username.data).first()
             if user and bcrypt.check_password_hash(user.password_hash, form.password.data):
                 login_user(user, remember=form.remember.data)
                 next_page = request.args.get('next')
                 return redirect(next_page) if next_page else redirect(url_for('home'))
             else:
-                flash('Login Unsuccessful. Please check email and password', 'danger')
+                flash('Login Unsuccessful. Please check username and password', 'danger')
         return render_template('login.html', title='Login', form=form)
 
     @app.route('/logout')
@@ -142,18 +142,18 @@ def create_app(config_class=Config):
 
     return app
 
-def create_admin(email, password):
+def create_admin(username, password):
     with create_app().app_context():
         from scripts.models import User
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        admin = User(username='admin', email=email, password_hash=hashed_password, is_admin=True)
+        admin = User(username=username, email=None, password_hash=hashed_password, is_admin=True)
         db.session.add(admin)
         db.session.commit()
-        print(f"Admin user with email {email} created successfully.")
+        print(f"Admin user with username {username} created successfully.")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='WindFlag CTF Platform')
-    parser.add_argument('-admin', nargs=2, metavar=('EMAIL', 'PASSWORD'), help='Create an admin user')
+    parser.add_argument('-admin', nargs=2, metavar=('USERNAME', 'PASSWORD'), help='Create an admin user')
     parser.add_argument('-test', action='store_true', help='Run the server in test mode with a 40-second timeout')
     args = parser.parse_args()
 
