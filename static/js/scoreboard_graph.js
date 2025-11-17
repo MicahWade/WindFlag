@@ -10,15 +10,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderScoreboardGraph(topPlayersHistory) {
         const ctx = document.getElementById('scoreboardChart').getContext('2d');
         
-        if (!topPlayersHistory || topPlayersHistory.length === 0) {
+        if (!topPlayersHistory || Object.keys(topPlayersHistory).length === 0) {
             ctx.font = '18px Arial';
             ctx.textAlign = 'center';
             ctx.fillText('No data available for graph.', ctx.canvas.width / 2, ctx.canvas.height / 2);
             return;
         }
 
-        // Extract unique player names
-        const playerNames = Array.from(new Set(topPlayersHistory.flatMap(entry => Object.keys(entry.scores))));
+        // Extract unique player names from the new structure
+        const playerNames = Object.keys(topPlayersHistory);
         
         // Prepare datasets for Chart.js
         const datasets = playerNames.map((playerName, index) => {
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             return {
                 label: playerName,
-                data: topPlayersHistory.map(entry => ({ x: entry.timestamp, y: entry.scores[playerName] || 0 })),
+                data: topPlayersHistory[playerName], // Directly use the player's history
                 borderColor: color,
                 backgroundColor: color,
                 fill: false,
@@ -41,16 +41,9 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         });
 
-        // Prepare labels (timestamps) - use raw ISO strings for time scale
-        // Chart.js time scale with x/y data points doesn't strictly need a separate labels array
-        // but we can use it to define the overall range if needed.
-        // For now, we'll use the timestamps from the topPlayersHistory for the labels array.
-        const labels = topPlayersHistory.map(entry => entry.timestamp);
-
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
                 datasets: datasets
             },
             options: {
@@ -58,16 +51,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 maintainAspectRatio: false,
                 plugins: {
                     title: {
-                        display: true,
+                        display: false, // Remove the chart title
                         text: 'Top Players Score Over Time'
                     },
                     tooltip: {
                         mode: 'index',
                         intersect: false,
                         callbacks: {
+                            filter: function(tooltipItem) {
+                                // Only show tooltip items if the y-value is not null/undefined AND the dataset index is valid
+                                return tooltipItem.parsed.y !== null && tooltipItem.parsed.y !== undefined && tooltipItem.datasetIndex !== undefined;
+                            },
                             title: function(context) {
+                                // If there are no valid data points, return an empty string to hide the title
+                                if (!context || context.length === 0 || !context[0].parsed || context[0].parsed.y === null || context[0].parsed.y === undefined) {
+                                    return '';
+                                }
                                 // Display formatted date as title
-                                return new Date(context[0].label).toLocaleString();
+                                if (context[0].parsed.x) {
+                                    return new Date(context[0].parsed.x).toLocaleString();
+                                }
+                                return '';
                             },
                             label: function(context) {
                                 // Display player name and score
