@@ -93,3 +93,9 @@ class ChallengeForm(FlaskForm):
                 self.new_category_name.errors.append('A category with this name already exists.')
                 return False
         return True
+
+class AdminSettingsForm(FlaskForm):
+    top_x_scoreboard = IntegerField('Top X Scoreboard',
+                                    validators=[DataRequired(), NumberRange(min=1, max=100)],
+                                    default=10)
+    submit = SubmitField('Save Settings')

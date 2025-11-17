@@ -2,15 +2,16 @@ from flask import Flask, render_template, request, flash, redirect, url_for, jso
 from flask_login import login_user, current_user, logout_user, login_required
 from scripts.config import Config
 from scripts.forms import RegistrationForm, LoginForm, FlagSubmissionForm # Import forms
-from datetime import datetime # Import datetime
+from datetime import datetime, UTC, timedelta # Import datetime, UTC, and timedelta
 from sqlalchemy import func # Import func for aggregation
 from sqlalchemy.orm import joinedload # Import joinedload for eager loading
-from scripts.extensions import db, login_manager, bcrypt # Import extensions
+from scripts.extensions import db, login_manager, bcrypt, get_setting # Import extensions and get_setting
 from scripts.admin_routes import admin_bp # Import admin blueprint
 import sys # Import sys
 import argparse # Import argparse
 import threading # Import threading
 import os # Import os
+import json # Import json
 
 import os # Import os
 from dotenv import load_dotenv # Import load_dotenv
@@ -128,30 +129,127 @@ def create_app(config_class=Config):
                 if submission:
                     return jsonify({'success': False, 'message': 'You have already solved this challenge!'})
                 else:
-                    new_submission = Submission(user_id=current_user.id, challenge_id=challenge.id, timestamp=datetime.utcnow())
+                    new_submission = Submission(user_id=current_user.id, challenge_id=challenge.id, timestamp=datetime.now(UTC))
                     db.session.add(new_submission)
                     current_user.score += challenge.points # Update user score
+                    new_submission.score_at_submission = current_user.score # Record score at this submission
                     db.session.commit()
                     return jsonify({'success': True, 'message': f'Correct Flag! You earned {challenge.points} points!'})
             else:
                 return jsonify({'success': False, 'message': 'Incorrect Flag. Please try again.'})
         return jsonify({'success': False, 'message': 'Invalid form submission.'})
 
+    @app.route('/api/scoreboard_data')
+    @login_required
+    def scoreboard_data():
+        try:
+            top_x = int(get_setting('TOP_X_SCOREBOARD', '10'))
+
+            # 1. all_players_ranked data (for the table)
+            all_players_ranked_query = db.session.query(
+                User.username,
+                func.coalesce(func.sum(Challenge.points), 0).label('score'),
+                func.max(Submission.timestamp).label('last_submission')
+            ).outerjoin(Submission, User.id == Submission.user_id)\
+             .outerjoin(Challenge, Submission.challenge_id == Challenge.id)\
+             .group_by(User.id, User.username)\
+             .order_by(func.coalesce(func.sum(Challenge.points), 0).desc(), func.max(Submission.timestamp).asc())\
+             .all()
+            
+            all_players_ranked = []
+            for user_data in all_players_ranked_query:
+                all_players_ranked.append({
+                    'username': user_data.username,
+                    'score': user_data.score,
+                })
+
+            # 2. top_players_history data (for the graph)
+            # Get the top_x users based on current score
+            top_users_query = db.session.query(User)\
+                                        .order_by(User.score.desc())\
+                                        .limit(top_x)\
+                                        .all()
+            
+            top_usernames = [u.username for u in top_users_query]
+            
+            # Fetch all submissions for these top users, ordered by timestamp
+            all_relevant_submissions = Submission.query\
+                                                .join(User)\
+                                                .filter(User.username.in_(top_usernames))\
+                                                .order_by(Submission.timestamp.asc())\
+                                                .all()
+
+            # Reconstruct score history for each top user
+            user_scores_over_time = {username: [{'timestamp': None, 'score': 0}] for username in top_usernames} # Initialize with 0 score
+            
+            # Populate initial 0 score at the time of first submission for each user
+            for user in top_users_query:
+                first_submission = Submission.query.filter_by(user_id=user.id).order_by(Submission.timestamp.asc()).first()
+                if first_submission:
+                    # Set the 0 score timestamp to be 1 microsecond before the first submission
+                    initial_timestamp = first_submission.timestamp - timedelta(microseconds=1)
+                    user_scores_over_time[user.username][0] = {
+                        'timestamp': initial_timestamp.isoformat(),
+                        'score': 0
+                    }
+                else:
+                    # If a top user has no submissions, their score history is just 0
+                    user_scores_over_time[user.username][0] = {
+                        'timestamp': datetime.now(UTC).isoformat(), # Use current time for users with no submissions
+                        'score': 0
+                    }
+
+            for submission in all_relevant_submissions:
+                username = submission.solver.username
+                user_scores_over_time[username].append({
+                    'timestamp': submission.timestamp.isoformat(),
+                    'score': submission.score_at_submission
+                })
+            
+            # Aggregate all unique timestamps from all top players' histories
+            all_timestamps = sorted(list(set(
+                ts_entry['timestamp'] 
+                for user_history in user_scores_over_time.values() 
+                for ts_entry in user_history if ts_entry['timestamp'] is not None
+            )))
+
+            # Build the final top_players_history structure
+            top_players_history = []
+            
+            for ts in all_timestamps:
+                entry_scores = {}
+                for username in top_usernames:
+                    # Find the latest score for this user up to or at this timestamp
+                    latest_score_at_ts = 0
+                    user_history = user_scores_over_time[username]
+                    
+                    # Filter history entries up to the current timestamp
+                    relevant_history = [h for h in user_history if h['timestamp'] is not None and h['timestamp'] <= ts]
+                    
+                    if relevant_history:
+                        # Get the entry with the latest timestamp among relevant ones
+                        latest_entry = max(relevant_history, key=lambda x: x['timestamp'])
+                        latest_score_at_ts = latest_entry['score']
+                    
+                    entry_scores[username] = latest_score_at_ts
+                
+                top_players_history.append({
+                    'timestamp': ts,
+                    'scores': entry_scores
+                })
+
+            return jsonify({
+                'top_players_history': top_players_history,
+                'all_players_ranked': all_players_ranked
+            })
+        except Exception as e:
+            current_app.logger.error(f"Error fetching scoreboard data: {e}")
+            return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+
     @app.route('/scoreboard')
     @login_required
     def scoreboard():
-        # Query users and their total scores
-        # Order by score (descending), then by last submission timestamp (ascending)
-        scoreboard_data = db.session.query(
-            User.username,
-            func.sum(Challenge.points).label('score'),
-            func.max(Submission.timestamp).label('last_submission')
-        ).join(Submission, User.id == Submission.user_id)\
-         .join(Challenge, Submission.challenge_id == Challenge.id)\
-         .group_by(User.id)\
-         .order_by(func.sum(Challenge.points).desc(), func.max(Submission.timestamp).asc())\
-         .all()
-        return render_template('scoreboard.html', title='Scoreboard', scoreboard_data=scoreboard_data)
+        return render_template('scoreboard.html', title='Scoreboard')
 
     return app
 
@@ -179,8 +277,10 @@ if __name__ == '__main__':
             print("Database created successfully.")
 
     if args.admin:
+        # If -admin is used, just create the admin and exit
         create_admin(args.admin[0], args.admin[1])
     else:
+        # Otherwise, run the Flask app
         if args.test:
             print("Running in test mode: server will shut down in 40 seconds.")
             timer = threading.Timer(40, os._exit, args=[0])

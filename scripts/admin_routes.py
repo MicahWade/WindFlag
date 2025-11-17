@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app # Import current_app
 from flask_login import login_required, current_user
-from scripts.extensions import db
-from scripts.models import Category, Challenge, Submission, User
-from scripts.forms import CategoryForm, ChallengeForm # These forms will be created later
+from scripts.extensions import db, get_setting # Import get_setting
+from scripts.models import Category, Challenge, Submission, User, Setting # Import Setting
+from scripts.forms import CategoryForm, ChallengeForm, AdminSettingsForm # Import AdminSettingsForm
 from functools import wraps # Import wraps
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -21,6 +21,25 @@ def admin_required(f):
 @admin_required
 def index():
     return render_template('admin/index.html', title='Admin Dashboard')
+
+@admin_bp.route('/settings', methods=['GET', 'POST'])
+@admin_required
+def admin_settings():
+    form = AdminSettingsForm()
+    if form.validate_on_submit():
+        top_x_val = str(form.top_x_scoreboard.data)
+        setting = Setting.query.filter_by(key='TOP_X_SCOREBOARD').first()
+        if setting:
+            setting.value = top_x_val
+        else:
+            setting = Setting(key='TOP_X_SCOREBOARD', value=top_x_val)
+            db.session.add(setting)
+        db.session.commit()
+        flash('Settings updated successfully!', 'success')
+        return redirect(url_for('admin.admin_settings'))
+    elif request.method == 'GET':
+        form.top_x_scoreboard.data = int(get_setting('TOP_X_SCOREBOARD', '10')) # Default to 10
+    return render_template('admin/settings.html', title='Admin Settings', form=form)
 
 # Category CRUD
 @admin_bp.route('/categories')
