@@ -74,8 +74,8 @@ class ChallengeForm(FlaskForm):
     new_category_name = StringField('New Category Name', validators=[Length(max=50)])
     submit = SubmitField('Submit Challenge')
 
-    def validate(self):
-        if not super().validate():
+    def validate(self, extra_validators=None):
+        if not super().validate(extra_validators=extra_validators):
             return False
         
         # Ensure either an existing category is selected (not the default 0) OR a new category name is provided, but not both.
