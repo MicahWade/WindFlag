@@ -8,6 +8,8 @@ from scripts.extensions import db, login_manager, bcrypt # Import extensions
 from scripts.admin_routes import admin_bp # Import admin blueprint
 import sys # Import sys
 import argparse # Import argparse
+import threading # Import threading
+import os # Import os
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -138,10 +140,15 @@ def create_admin(email, password):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='WindFlag CTF Platform')
     parser.add_argument('-admin', nargs=2, metavar=('EMAIL', 'PASSWORD'), help='Create an admin user')
+    parser.add_argument('-test', action='store_true', help='Run the server in test mode with a 40-second timeout')
     args = parser.parse_args()
 
     if args.admin:
         create_admin(args.admin[0], args.admin[1])
     else:
         app = create_app()
+        if args.test:
+            print("Running in test mode: server will shut down in 40 seconds.")
+            timer = threading.Timer(40, os._exit, args=[0])
+            timer.start()
         app.run(debug=True, host='0.0.0.0', port=5000)
