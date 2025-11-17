@@ -1,13 +1,25 @@
 {% extends "base.html" %}
 {% block content %}
-    <div class="bg-white p-8 rounded-lg shadow-md">
-        <h1 class="text-3xl font-bold text-gray-800 mb-4">Admin Dashboard</h1>
-        <p class="text-gray-600 mb-6">Welcome to the admin panel. From here you can manage categories, challenges, and view submissions.</p>
-        <ul class="space-y-2">
-            <li><a class="text-blue-500 hover:text-blue-800 font-semibold" href="{{ url_for('admin.manage_categories') }}">Manage Categories</a></li>
-            <li><a class="text-blue-500 hover:text-blue-800 font-semibold" href="{{ url_for('admin.manage_challenges') }}">Manage Challenges</a></li>
-            <li><a class="text-blue-500 hover:text-blue-800 font-semibold" href="{{ url_for('admin.view_submissions') }}">View Submissions</a></li>
-            <li><a class="text-blue-500 hover:text-blue-800 font-semibold" href="{{ url_for('admin.admin_settings') }}">Admin Settings</a></li>
-        </ul>
+    <div class="bg-gray-800 p-8 rounded-lg shadow-lg">
+        <h1 class="text-3xl font-bold text-gray-100 mb-4">Admin Dashboard</h1>
+        <p class="text-gray-300 mb-6">Welcome to the admin panel. From here you can manage categories, challenges, and view submissions.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <a href="{{ url_for('admin.manage_categories') }}" class="block bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition duration-300 ease-in-out">
+                <h2 class="text-xl font-semibold text-gray-100 mb-2">Manage Categories</h2>
+                <p class="text-gray-300">Create, edit, or delete challenge categories.</p>
+            </a>
+            <a href="{{ url_for('admin.manage_challenges') }}" class="block bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition duration-300 ease-in-out">
+                <h2 class="text-xl font-semibold text-gray-100 mb-2">Manage Challenges</h2>
+                <p class="text-gray-300">Add, modify, or remove challenges.</p>
+            </a>
+            <a href="{{ url_for('admin.view_submissions') }}" class="block bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition duration-300 ease-in-out">
+                <h2 class="text-xl font-semibold text-gray-100 mb-2">View Submissions</h2>
+                <p class="text-gray-300">Review user challenge submissions.</p>
+            </a>
+            <a href="{{ url_for('admin.admin_settings') }}" class="block bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition duration-300 ease-in-out">
+                <h2 class="text-xl font-semibold text-gray-100 mb-2">Admin Settings</h2>
+                <p class="text-gray-300">Configure global settings for the platform.</p>
+            </a>
+        </div>
     </div>
 {% endblock content %}

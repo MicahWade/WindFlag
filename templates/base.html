@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap" rel="stylesheet">
     {% if title %}
         <title>WindFlag - {{ title }}</title>
     {% else %}
@@ -10,6 +11,9 @@
     {% endif %}
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
+        body {
+            font-family: 'Raleway', sans-serif;
+        }
         /* Basic Modal Overlay */
         #challengeModal {
             z-index: 1000; /* Ensure modal is on top */
@@ -18,31 +22,32 @@
         }
         /* Completed Challenge Styling */
         .completed-challenge {
-            background-color: #d1fae5; /* Light green background for completed challenges */
-            border: 1px solid #34d399; /* Green border */
+            background-color: #1a202c; /* Darker background for completed challenges */
+            border: 1px solid #2d3748; /* Darker border */
+            color: #a0aec0; /* Lighter text color */
         }
         .completed-challenge:hover {
-            background-color: #a7f3d0; /* Slightly darker green on hover */
+            background-color: #2d3748; /* Slightly darker on hover */
         }
     </style>
 </head>
-<body class="bg-gray-100 font-sans leading-normal tracking-normal">
-    <header class="bg-gray-800 p-4 shadow-md">
+<body class="bg-gray-900 text-gray-200 leading-normal tracking-normal">
+    <header class="bg-gray-950 p-4 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
             <a class="text-white text-xl font-bold" href="/">WindFlag</a>
             <nav class="space-x-4">
                 {% if current_user.is_authenticated %}
-                    <a class="text-gray-300 hover:text-white" href="{{ url_for('challenges') }}">Challenges</a>
-                    <a class="text-gray-300 hover:text-white" href="{{ url_for('scoreboard') }}">Scoreboard</a>
-                    <a class="text-gray-300 hover:text-white" href="{{ url_for('profile') }}">Profile</a>
+                    <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('challenges') }}">Challenges</a>
+                    <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('scoreboard') }}">Scoreboard</a>
+                    <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('profile') }}">Profile</a>
                     {% if current_user.is_admin %}
-                        <a class="text-gray-300 hover:text-white" href="{{ url_for('admin.index') }}">Admin</a>
+                        <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('admin.index') }}">Admin</a>
                     {% endif %}
-                    <a class="text-gray-300 hover:text-white" href="{{ url_for('logout') }}">Logout</a>
+                    <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('logout') }}">Logout</a>
                 {% else %}
-                    <a class="text-gray-300 hover:text-white" href="{{ url_for('home') }}">Home</a>
-                    <a class="text-gray-300 hover:text-white" href="{{ url_for('login') }}">Login</a>
-                    <a class="text-gray-300 hover:text-white" href="{{ url_for('register') }}">Register</a>
+                    <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('home') }}">Home</a>
+                    <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('login') }}">Login</a>
+                    <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('register') }}">Register</a>
                 {% endif %}
             </nav>
         </div>
@@ -53,7 +58,7 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
-                            <div class="p-4 mb-4 rounded-md {% if category == 'success' %}bg-green-100 text-green-800{% elif category == 'danger' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                            <div class="p-4 mb-4 rounded-md {% if category == 'success' %}bg-green-700 text-white{% elif category == 'danger' %}bg-red-700 text-white{% else %}bg-blue-700 text-white{% endif %} shadow-md">
                                 {{ message }}
                             </div>
                         {% endfor %}
