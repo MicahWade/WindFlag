@@ -75,11 +75,20 @@ def manage_challenges():
 @admin_required
 def new_challenge():
     form = ChallengeForm()
-    form.category.choices = [(c.id, c.name) for c in Category.query.all()]
+    form.category.choices.extend([(c.id, c.name) for c in Category.query.all()])
     if form.validate_on_submit():
+        category_id = None
+        if form.new_category_name.data:
+            new_category = Category(name=form.new_category_name.data)
+            db.session.add(new_category)
+            db.session.commit()
+            category_id = new_category.id
+        else:
+            category_id = form.category.data
+
         challenge = Challenge(name=form.name.data, description=form.description.data,
                               points=form.points.data, flag=form.flag.data,
-                              category_id=form.category.data)
+                              category_id=category_id)
         db.session.add(challenge)
         db.session.commit()
         flash('Challenge has been created!', 'success')
@@ -91,13 +100,22 @@ def new_challenge():
 def update_challenge(challenge_id):
     challenge = Challenge.query.get_or_404(challenge_id)
     form = ChallengeForm()
-    form.category.choices = [(c.id, c.name) for c in Category.query.all()]
+    form.category.choices.extend([(c.id, c.name) for c in Category.query.all()])
     if form.validate_on_submit():
+        category_id = None
+        if form.new_category_name.data:
+            new_category = Category(name=form.new_category_name.data)
+            db.session.add(new_category)
+            db.session.commit()
+            category_id = new_category.id
+        else:
+            category_id = form.category.data
+
         challenge.name = form.name.data
         challenge.description = form.description.data
         challenge.points = form.points.data
         challenge.flag = form.flag.data
-        challenge.category_id = form.category.data
+        challenge.category_id = category_id
         db.session.commit()
         flash('Challenge has been updated!', 'success')
         return redirect(url_for('admin.manage_challenges'))

@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, IntegerField, SelectField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
-from scripts.models import User
+from scripts.models import User, Category
 from flask import current_app # Import current_app
 
 class RegistrationForm(FlaskForm):
@@ -70,5 +70,26 @@ class ChallengeForm(FlaskForm):
     description = TextAreaField('Description', validators=[DataRequired()])
     points = IntegerField('Points', validators=[DataRequired(), NumberRange(min=1)])
     flag = StringField('Flag', validators=[DataRequired(), Length(min=1, max=100)])
-    category = SelectField('Category', coerce=int, validators=[DataRequired()])
+    category = SelectField('Category', coerce=int, validators=[DataRequired()], choices=[(0, '--- Select a Category ---')])
+    new_category_name = StringField('New Category Name', validators=[Length(max=50)])
     submit = SubmitField('Submit Challenge')
+
+    def validate(self):
+        if not super().validate():
+            return False
+        
+        # Ensure either an existing category is selected (not the default 0) OR a new category name is provided, but not both.
+        if self.category.data == 0 and not self.new_category_name.data:
+            self.category.errors.append('Please select an existing category or provide a new category name.')
+            return False
+        if self.category.data != 0 and self.new_category_name.data:
+            self.new_category_name.errors.append('Cannot select an existing category and provide a new category name.')
+            return False
+        
+        # If a new category name is provided, validate its uniqueness
+        if self.new_category_name.data:
+            existing_category = Category.query.filter_by(name=self.new_category_name.data).first()
+            if existing_category:
+                self.new_category_name.errors.append('A category with this name already exists.')
+                return False
+        return True

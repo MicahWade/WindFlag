@@ -60,14 +60,27 @@
                 <div class="mb-4">
                     {{ form.category.label(class="block text-gray-700 text-sm font-bold mb-2") }}
                     {% if form.category.errors %}
-                        {{ form.category(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                        {{ form.category(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline", id="category_select") }}
                         <p class="text-red-500 text-xs italic">
                             {% for error in form.category.errors %}
                                 <span>{{ error }}</span>
                             {% endfor %}
                         </p>
                     {% else %}
-                        {{ form.category(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                        {{ form.category(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline", id="category_select") }}
+                    {% endif %}
+                </div>
+                <div class="mb-4" id="new_category_name_field" style="display: none;">
+                    {{ form.new_category_name.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                    {% if form.new_category_name.errors %}
+                        {{ form.new_category_name(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                        <p class="text-red-500 text-xs italic">
+                            {% for error in form.new_category_name.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </p>
+                    {% else %}
+                        {{ form.new_category_name(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
                     {% endif %}
                 </div>
             </fieldset>
@@ -76,4 +89,24 @@
             </div>
         </form>
     </div>
+
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            var categorySelect = document.getElementById('category_select');
+            var newCategoryNameField = document.getElementById('new_category_name_field');
+
+            function toggleNewCategoryField() {
+                if (categorySelect.value === '0') { // Assuming '0' is the value for "Create New Category"
+                    newCategoryNameField.style.display = 'block';
+                } else {
+                    newCategoryNameField.style.display = 'none';
+                }
+            }
+
+            categorySelect.addEventListener('change', toggleNewCategoryField);
+
+            // Initial check in case the page is loaded with 'Create New Category' already selected
+            toggleNewCategoryField();
+        });
+    </script>
 {% endblock content %}
