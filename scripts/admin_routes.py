@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
-from extensions import db
-from models import Category, Challenge, Submission, User
-from forms import CategoryForm, ChallengeForm # These forms will be created later
+from scripts.extensions import db
+from scripts.models import Category, Challenge, Submission, User
+from scripts.forms import CategoryForm, ChallengeForm # These forms will be created later
 from functools import wraps # Import wraps
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')

@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request, flash, redirect, url_for
 from flask_login import login_user, current_user, logout_user, login_required
-from config import Config
-from forms import RegistrationForm, LoginForm, FlagSubmissionForm # Import forms
+from scripts.config import Config
+from scripts.forms import RegistrationForm, LoginForm, FlagSubmissionForm # Import forms
 from datetime import datetime # Import datetime
 from sqlalchemy import func # Import func for aggregation
-from extensions import db, login_manager, bcrypt # Import extensions
-from admin_routes import admin_bp # Import admin blueprint
+from scripts.extensions import db, login_manager, bcrypt # Import extensions
+from scripts.admin_routes import admin_bp # Import admin blueprint
+import sys # Import sys
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -15,9 +16,21 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     bcrypt.init_app(app)
 
-    from models import User, Category, Challenge, Submission # Import models here
+    from scripts.models import User, Category, Challenge, Submission # Import models here
 
     app.register_blueprint(admin_bp) # Register admin blueprint
+
+    if '-playwright' in sys.argv:
+        def shutdown_server():
+            func = request.environ.get('werkzeug.server.shutdown')
+            if func is None:
+                raise RuntimeError('Not running with the Werkzeug Server')
+            func()
+
+        @app.route('/shutdown', methods=['POST'])
+        def shutdown():
+            shutdown_server()
+            return 'Server shutting down...'
 
     @app.route('/')
     @app.route('/home')

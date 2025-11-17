@@ -12,19 +12,11 @@ WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwin
     ```
 
 2.  **Create the Database:**
-    ```python
-    from app import create_app, db
-    app = create_app()
-    with app.app_context():
-        db.create_all()
+    ```bash
+    python create_db.py
     ```
 
 3.  **Run the Application:**
-    ```bash
-    export FLASK_APP=app.py
-    flask run
-    ```
-    Or, for development mode:
     ```bash
     python app.py
     ```

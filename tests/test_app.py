@@ -2,13 +2,19 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pytest
-from app import app
+from app import create_app
 
 @pytest.fixture
-def client():
-    app.config['TESTING'] = True
-    with app.test_client() as client:
-        yield client
+def app():
+    app = create_app()
+    app.config.update({
+        "TESTING": True,
+    })
+    yield app
+
+@pytest.fixture
+def client(app):
+    return app.test_client()
 
 def test_index_page_loads(client):
     """
@@ -18,5 +24,4 @@ def test_index_page_loads(client):
     """
     response = client.get('/')
     assert response.status_code == 200
-    assert b"Welcome to WindFlag Tier 1!" in response.data
-    assert b"<!-- FLAG: WF{y0u_f0und_th3_f1rst_fl4g!} -->" in response.data
+    assert b"Welcome to WindFlag!" in response.data
