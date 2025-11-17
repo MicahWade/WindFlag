@@ -129,24 +129,24 @@ document.addEventListener('DOMContentLoaded', function() {
             const cell = row.insertCell();
             cell.colSpan = 3;
             cell.textContent = 'No players to display.';
-            cell.className = 'px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500';
+            cell.className = 'px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400';
             return;
         }
 
         allPlayersRanked.forEach((player, index) => {
             const row = tableBody.insertRow();
-            row.className = (index % 2 === 0) ? 'bg-white' : 'bg-gray-50';
+            row.className = (index % 2 === 0) ? 'bg-gray-800 border-b border-gray-700' : 'bg-gray-700 border-b border-gray-700';
 
             const rankCell = row.insertCell();
-            rankCell.className = 'px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900';
+            rankCell.className = 'px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-200';
             rankCell.textContent = index + 1; // Rank starts from 1
 
             const usernameCell = row.insertCell();
-            usernameCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+            usernameCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-300';
             usernameCell.textContent = player.username;
 
             const scoreCell = row.insertCell();
-            scoreCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+            scoreCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-300';
             scoreCell.textContent = player.score;
         });
     }
