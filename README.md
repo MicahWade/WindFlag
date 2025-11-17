@@ -12,7 +12,6 @@ WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwin
     ```
 
 2.  **Create the Database:**
-    Since migrations have been removed, you will need to create the database manually. You can do this by running the following commands in a Python shell:
     ```python
     from app import create_app, db
     app = create_app()
