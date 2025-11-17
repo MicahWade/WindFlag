@@ -3,10 +3,12 @@ from flask_login import login_required, current_user
 from extensions import db
 from models import Category, Challenge, Submission, User
 from forms import CategoryForm, ChallengeForm # These forms will be created later
+from functools import wraps # Import wraps
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 def admin_required(f):
+    @wraps(f) # Add wraps decorator
     @login_required
     def decorated_function(*args, **kwargs):
         if not current_user.is_admin:
