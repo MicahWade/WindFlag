@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">Admin Dashboard</h1>
+        <p class="text-gray-600 mb-6">Welcome to the admin panel. From here you can manage categories, challenges, and view submissions.</p>
+        <ul class="space-y-2">
+            <li><a class="text-blue-500 hover:text-blue-800 font-semibold" href="{{ url_for('admin.manage_categories') }}">Manage Categories</a></li>
+            <li><a class="text-blue-500 hover:text-blue-800 font-semibold" href="{{ url_for('admin.manage_challenges') }}">Manage Challenges</a></li>
+            <li><a class="text-blue-500 hover:text-blue-800 font-semibold" href="{{ url_for('admin.view_submissions') }}">View Submissions</a></li>
+        </ul>
+    </div>
+{% endblock content %}

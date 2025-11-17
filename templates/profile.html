@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">{{ current_user.username }}'s Profile</h1>
+        <p class="text-gray-600 mb-2">Email: {{ current_user.email }}</p>
+        <h2 class="text-2xl font-semibold text-gray-700 mt-6 mb-3">Solved Challenges:</h2>
+        <ul class="list-disc list-inside text-gray-600">
+            {# Loop through solved challenges here #}
+            <li>No challenges solved yet.</li>
+        </ul>
+    </div>
+{% endblock content %}

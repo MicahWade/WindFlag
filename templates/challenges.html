@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Challenges</h1>
+    {% for category in categories %}
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">{{ category.name }}</h2>
+        {% if category.challenges %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {% for challenge in category.challenges %}
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h5 class="text-xl font-bold text-gray-800 mb-2">{{ challenge.name }}</h5>
+                        <p class="text-gray-600 mb-4">{{ challenge.description }}</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <small class="text-gray-500">{{ challenge.points }} pts</small>
+                        </div>
+                        <form method="POST" action="{{ url_for('submit_flag', challenge_id=challenge.id) }}" class="space-y-2">
+                            {{ flag_form.hidden_tag() }}
+                            <div>
+                                {{ flag_form.flag(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm", placeholder="Enter flag") }}
+                            </div>
+                            {{ flag_form.submit(class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm") }}
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-600 mb-8">No challenges in this category yet.</p>
+        {% endif %}
+    {% endfor %}
+{% endblock content %}
