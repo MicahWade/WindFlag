@@ -125,6 +125,7 @@ def create_app(config_class=Config):
         return redirect(url_for('challenges'))
 
     @app.route('/scoreboard')
+    @login_required
     def scoreboard():
         # Query users and their total scores
         # Order by score (descending), then by last submission timestamp (ascending)
