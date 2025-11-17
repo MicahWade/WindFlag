@@ -21,6 +21,7 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
     db.init_app(app)
     login_manager.init_app(app)
+    login_manager.unauthorized_handler(lambda: redirect(url_for('home')))
     bcrypt.init_app(app)
 
     from scripts.models import User, Category, Challenge, Submission # Import models here
