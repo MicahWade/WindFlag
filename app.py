@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, flash, redirect, url_for
+from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
 from scripts.config import Config
 from scripts.forms import RegistrationForm, LoginForm, FlagSubmissionForm # Import forms
 from datetime import datetime # Import datetime
 from sqlalchemy import func # Import func for aggregation
+from sqlalchemy.orm import joinedload # Import joinedload for eager loading
 from scripts.extensions import db, login_manager, bcrypt # Import extensions
 from scripts.admin_routes import admin_bp # Import admin blueprint
 import sys # Import sys
@@ -100,9 +101,19 @@ def create_app(config_class=Config):
         return render_template('profile.html', title='Profile')
 
     @app.route('/challenges')
+    @login_required
     def challenges():
-        categories = Category.query.all()
-        flag_form = FlagSubmissionForm() # Instantiate the form
+        flag_form = FlagSubmissionForm()
+        categories = Category.query.options(joinedload(Category.challenges)).all()
+
+        # Get all challenge IDs completed by the current user
+        completed_challenge_ids = {s.challenge_id for s in Submission.query.filter_by(user_id=current_user.id).all()}
+
+        # Add is_completed attribute to each challenge
+        for category in categories:
+            for challenge in category.challenges:
+                challenge.is_completed = challenge.id in completed_challenge_ids
+
         return render_template('challenges.html', title='Challenges', categories=categories, flag_form=flag_form)
 
     @app.route('/submit_flag/<int:challenge_id>', methods=['POST'])
@@ -115,15 +126,16 @@ def create_app(config_class=Config):
                 # Check if user already solved this challenge
                 submission = Submission.query.filter_by(user_id=current_user.id, challenge_id=challenge.id).first()
                 if submission:
-                    flash('You have already solved this challenge!', 'info')
+                    return jsonify({'success': False, 'message': 'You have already solved this challenge!'})
                 else:
                     new_submission = Submission(user_id=current_user.id, challenge_id=challenge.id, timestamp=datetime.utcnow())
                     db.session.add(new_submission)
+                    current_user.score += challenge.points # Update user score
                     db.session.commit()
-                    flash('Correct Flag! You earned points!', 'success')
+                    return jsonify({'success': True, 'message': f'Correct Flag! You earned {challenge.points} points!'})
             else:
-                flash('Incorrect Flag. Please try again.', 'danger')
-        return redirect(url_for('challenges'))
+                return jsonify({'success': False, 'message': 'Incorrect Flag. Please try again.'})
+        return jsonify({'success': False, 'message': 'Invalid form submission.'})
 
     @app.route('/scoreboard')
     @login_required

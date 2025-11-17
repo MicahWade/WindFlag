@@ -9,6 +9,22 @@
         <title>WindFlag</title>
     {% endif %}
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        /* Basic Modal Overlay */
+        #challengeModal {
+            z-index: 1000; /* Ensure modal is on top */
+            /* Temporary diagnostic style */
+            background-color: rgba(0, 0, 0, 0.75) !important; /* Even darker black, 75% opacity */
+        }
+        /* Completed Challenge Styling */
+        .completed-challenge {
+            background-color: #d1fae5; /* Light green background for completed challenges */
+            border: 1px solid #34d399; /* Green border */
+        }
+        .completed-challenge:hover {
+            background-color: #a7f3d0; /* Slightly darker green on hover */
+        }
+    </style>
 </head>
 <body class="bg-gray-100 font-sans leading-normal tracking-normal">
     <header class="bg-gray-800 p-4 shadow-md">
@@ -47,5 +63,6 @@
             </div>
         </div>
     </main>
+    <script src="{{ url_for('static', filename='js/challenges.js') }}"></script>
 </body>
 </html>
