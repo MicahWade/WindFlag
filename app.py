@@ -7,6 +7,7 @@ from sqlalchemy import func # Import func for aggregation
 from scripts.extensions import db, login_manager, bcrypt # Import extensions
 from scripts.admin_routes import admin_bp # Import admin blueprint
 import sys # Import sys
+import argparse # Import argparse
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -45,6 +46,9 @@ def create_app(config_class=Config):
             return redirect(url_for('home'))
         form = RegistrationForm()
         if form.validate_on_submit():
+            if app.config['JOIN_CODE'] and form.join_code.data != app.config['JOIN_CODE']:
+                flash('Invalid join code.', 'danger')
+                return render_template('register.html', title='Register', form=form)
             hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
             user = User(username=form.username.data, email=form.email.data, password_hash=hashed_password)
             db.session.add(user)
@@ -122,6 +126,22 @@ def create_app(config_class=Config):
 
     return app
 
+def create_admin(email, password):
+    with create_app().app_context():
+        from scripts.models import User
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        admin = User(username='admin', email=email, password_hash=hashed_password, is_admin=True)
+        db.session.add(admin)
+        db.session.commit()
+        print(f"Admin user with email {email} created successfully.")
+
 if __name__ == '__main__':
-    app = create_app()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    parser = argparse.ArgumentParser(description='WindFlag CTF Platform')
+    parser.add_argument('-admin', nargs=2, metavar=('EMAIL', 'PASSWORD'), help='Create an admin user')
+    args = parser.parse_args()
+
+    if args.admin:
+        create_admin(args.admin[0], args.admin[1])
+    else:
+        app = create_app()
+        app.run(debug=True, host='0.0.0.0', port=5000)
