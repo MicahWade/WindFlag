@@ -170,76 +170,30 @@ def create_app(config_class=Config):
                                         .limit(top_x)\
                                         .all()
             
-            top_usernames = [u.username for u in top_users_query]
+            top_players_history = {} # New structure: { 'username': [{'x': timestamp, 'y': score}, ...] }
             
-            # Fetch all submissions for these top users, ordered by timestamp
-            all_relevant_submissions = Submission.query\
-                                                .join(User)\
-                                                .filter(User.username.in_(top_usernames))\
-                                                .order_by(Submission.timestamp.asc())\
-                                                .all()
-
-            # Reconstruct score history for each top user
-            user_scores_over_time = {username: [{'timestamp': None, 'score': 0}] for username in top_usernames} # Initialize with 0 score
-            
-            # Populate initial 0 score at the time of first submission for each user
             for user in top_users_query:
-                first_submission = Submission.query.filter_by(user_id=user.id).order_by(Submission.timestamp.asc()).first()
-                if first_submission:
-                    # Set the 0 score timestamp to be 1 microsecond before the first submission
-                    initial_timestamp = first_submission.timestamp - timedelta(microseconds=1)
-                    user_scores_over_time[user.username][0] = {
-                        'timestamp': initial_timestamp.isoformat(),
-                        'score': 0
-                    }
+                user_history_list = []
+                # Get all submissions for the current user, ordered by timestamp
+                user_submissions = Submission.query.filter_by(user_id=user.id).order_by(Submission.timestamp.asc()).all()
+
+                # Add an initial 0 score point
+                if user_submissions:
+                    # Initial 0 score point, slightly before the first submission
+                    initial_timestamp = user_submissions[0].timestamp - timedelta(microseconds=1)
+                    user_history_list.append({'x': initial_timestamp.isoformat(), 'y': 0})
                 else:
-                    # If a top user has no submissions, their score history is just 0
-                    user_scores_over_time[user.username][0] = {
-                        'timestamp': datetime.now(UTC).isoformat(), # Use current time for users with no submissions
-                        'score': 0
-                    }
+                    # If no submissions, just a single 0 score point at current time
+                    user_history_list.append({'x': datetime.now(UTC).isoformat(), 'y': 0})
 
-            for submission in all_relevant_submissions:
-                username = submission.solver.username
-                user_scores_over_time[username].append({
-                    'timestamp': submission.timestamp.isoformat(),
-                    'score': submission.score_at_submission
-                })
-            
-            # Aggregate all unique timestamps from all top players' histories
-            all_timestamps = sorted(list(set(
-                ts_entry['timestamp'] 
-                for user_history in user_scores_over_time.values() 
-                for ts_entry in user_history if ts_entry['timestamp'] is not None
-            )))
-
-            # Build the final top_players_history structure
-            top_players_history = []
-            
-            for ts in all_timestamps:
-                entry_scores = {}
-                for username in top_usernames:
-                    # Find the latest score for this user up to or at this timestamp
-                    latest_score_at_ts = 0
-                    user_history = user_scores_over_time[username]
-                    
-                    # Filter history entries up to the current timestamp
-                    relevant_history = [h for h in user_history if h['timestamp'] is not None and h['timestamp'] <= ts]
-                    
-                    if relevant_history:
-                        # Get the entry with the latest timestamp among relevant ones
-                        latest_entry = max(relevant_history, key=lambda x: x['timestamp'])
-                        latest_score_at_ts = latest_entry['score']
-                    
-                    entry_scores[username] = latest_score_at_ts
+                # Add all actual submission points
+                for submission in user_submissions:
+                    user_history_list.append({'x': submission.timestamp.isoformat(), 'y': submission.score_at_submission})
                 
-                top_players_history.append({
-                    'timestamp': ts,
-                    'scores': entry_scores
-                })
+                top_players_history[user.username] = user_history_list
 
             return jsonify({
-                'top_players_history': top_players_history,
+                'top_players_history': top_players_history, # Now a dictionary of lists
                 'all_players_ranked': all_players_ranked
             })
         except Exception as e:

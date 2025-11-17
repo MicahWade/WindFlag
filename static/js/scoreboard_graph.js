@@ -52,7 +52,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 plugins: {
                     title: {
                         display: false, // Remove the chart title
-                        text: 'Top Players Score Over Time'
+                    },
+                    legend: {
+                        display: false,
                     },
                     tooltip: {
                         mode: 'index',
