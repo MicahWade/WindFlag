@@ -11,8 +11,13 @@ import argparse # Import argparse
 import threading # Import threading
 import os # Import os
 
+import os # Import os
+from dotenv import load_dotenv # Import load_dotenv
+
 def create_app(config_class=Config):
     app = Flask(__name__)
+    # Load environment variables from .env file in the project root
+    load_dotenv(os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), '.env'))
     app.config.from_object(config_class)
 
     db.init_app(app)
@@ -46,18 +51,27 @@ def create_app(config_class=Config):
     def register():
         if current_user.is_authenticated:
             return redirect(url_for('home'))
-        form = RegistrationForm()
+        # Pass app.config to the RegistrationForm to allow dynamic field validation
+        form = RegistrationForm(app.config)
         if form.validate_on_submit():
-            if app.config['JOIN_CODE'] and form.join_code.data != app.config['JOIN_CODE']:
+            # Check join code if required
+            if app.config['REQUIRE_JOIN_CODE'] and form.join_code.data != app.config['JOIN_CODE']:
                 flash('Invalid join code.', 'danger')
-                return render_template('register.html', title='Register', form=form)
+                return render_template('register.html', title='Register', form=form,
+                                       require_email=app.config['REQUIRE_EMAIL'],
+                                       require_join_code=app.config['REQUIRE_JOIN_CODE'])
             hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-            user = User(username=form.username.data, email=form.email.data, password_hash=hashed_password)
+            # Conditionally set email data based on REQUIRE_EMAIL config
+            email_data = form.email.data if app.config['REQUIRE_EMAIL'] else None
+            user = User(username=form.username.data, email=email_data, password_hash=hashed_password)
             db.session.add(user)
             db.session.commit()
             flash('Your account has been created! You are now able to log in', 'success')
             return redirect(url_for('login'))
-        return render_template('register.html', title='Register', form=form)
+        # Pass configuration flags to the template for conditional rendering of fields
+        return render_template('register.html', title='Register', form=form,
+                               require_email=app.config['REQUIRE_EMAIL'],
+                               require_join_code=app.config['REQUIRE_JOIN_CODE'])
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
