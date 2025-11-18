@@ -30,18 +30,6 @@ def create_app(config_class=Config):
 
     app.register_blueprint(admin_bp) # Register admin blueprint
 
-    if '-playwright' in sys.argv:
-        def shutdown_server():
-            func = request.environ.get('werkzeug.server.shutdown')
-            if func is None:
-                raise RuntimeError('Not running with the Werkzeug Server')
-            func()
-
-        @app.route('/shutdown', methods=['POST'])
-        def shutdown():
-            shutdown_server()
-            return 'Server shutting down...'
-
     @app.route('/')
     @app.route('/home')
     def home():
@@ -228,10 +216,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Determine which config to use
-    if args.test is not None:
+    if args.test is not None or '-playwright' in sys.argv: # Modified condition
         from scripts.config import TestConfig
         app = create_app(config_class=TestConfig)
-        test_mode_timeout = args.test
+        if '-playwright' in sys.argv: # Added condition for playwright
+            test_mode_timeout = 360 # Set timeout for playwright tests
+        else:
+            test_mode_timeout = args.test
     else:
         app = create_app()
         test_mode_timeout = None # Not in test mode, no timeout
