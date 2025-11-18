@@ -25,4 +25,6 @@ from scripts.seed import seed_database
 @pytest.fixture(scope='session')
 def seed_data(app):
     with app.app_context():
-        return seed_database()
+        # seed_database now returns IDs
+        seeded_ids = seed_database()
+        yield seeded_ids

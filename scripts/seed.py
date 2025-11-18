@@ -99,8 +99,8 @@ def seed_database():
     db.session.commit()
 
     return {
-        "admins": [admin1, admin2],
-        "users": users,
-        "categories": categories,
-        "challenges": challenges
+        "admin_ids": [admin1.id, admin2.id],
+        "user_ids": [user.id for user in users],
+        "category_ids": [category.id for category in categories],
+        "challenge_ids": [challenge.id for challenge in challenges]
     }

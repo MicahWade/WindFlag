@@ -5,6 +5,11 @@ from scripts.models import User, Challenge, Submission
 from scripts.extensions import db, bcrypt
 from flask import url_for
 
+# Helper function to get a seeded object from the database
+def get_seeded_object(app, model, obj_id):
+    with app.app_context():
+        return db.session.get(model, obj_id)
+
 # Helper function for login
 def login(page: Page, username, password):
     page.goto("/login")
@@ -21,14 +26,14 @@ def get_user_from_seed(seed_data, username):
 
 # --- Authentication Tests ---
 
-def test_login_success(page: Page, seed_data):
-    user = seed_data['users'][2] # Use a non-hidden user
+def test_login_success(page: Page, app, seed_data):
+    user = get_seeded_object(app, User, seed_data['user_ids'][2]) # Use a non-hidden user
     login(page, user.username, "userpass")
     expect(page).to_have_url("/profile")
     expect(page.locator("h1")).to_have_text(f"{user.username}'s Profile")
 
-def test_login_failure_wrong_password(page: Page, seed_data):
-    user = seed_data['users'][0]
+def test_login_failure_wrong_password(page: Page, app, seed_data):
+    user = get_seeded_object(app, User, seed_data['user_ids'][0])
     login(page, user.username, "wrongpass")
     expect(page).to_have_url("/login")
     expect(page.locator(".bg-red-700")).to_be_visible()
@@ -40,8 +45,8 @@ def test_login_failure_non_existent_user(page: Page):
     expect(page.locator(".bg-red-700")).to_be_visible()
     expect(page.locator(".bg-red-700")).to_have_text("Login Unsuccessful. Please check username and password")
 
-def test_admin_login_success(page: Page, seed_data):
-    admin = seed_data['admins'][0]
+def test_admin_login_success(page: Page, app, seed_data):
+    admin = get_seeded_object(app, User, seed_data['admin_ids'][0])
     login(page, admin.username, "adminpass")
     expect(page).to_have_url("/profile")
     expect(page.locator("h1")).to_have_text(f"{admin.username}'s Profile")
@@ -50,8 +55,8 @@ def test_admin_login_success(page: Page, seed_data):
 
 # --- Challenge Interaction Tests ---
 
-def test_challenges_page_loads(page: Page, seed_data):
-    user = seed_data['users'][0]
+def test_challenges_page_loads(page: Page, app, seed_data):
+    user = get_seeded_object(app, User, seed_data['user_ids'][0])
     login(page, user.username, "userpass")
     page.goto("/challenges")
     expect(page).to_have_title(re.compile("Challenges"))
@@ -61,13 +66,13 @@ def test_challenges_page_loads(page: Page, seed_data):
     # Check if at least one challenge is displayed
     expect(page.locator("h5.text-xl").first).to_be_visible()
 
-def test_submit_correct_flag(page: Page, seed_data):
+def test_submit_correct_flag(page: Page, app, seed_data):
     page.on("dialog", lambda dialog: dialog.accept()) # Automatically accept dialogs
-    user = seed_data['users'][3] # Use a user who hasn't solved all challenges
-    challenge = seed_data['challenges'][0] # Use a challenge
+    user = get_seeded_object(app, User, seed_data['user_ids'][3]) # Use a user who hasn't solved all challenges
+    challenge = get_seeded_object(app, Challenge, seed_data['challenge_ids'][0]) # Use a challenge
     
     # Ensure user has not solved this challenge yet
-    with db.session.no_autoflush:
+    with app.app_context():
         submission = Submission.query.filter_by(user_id=user.id, challenge_id=challenge.id).first()
         if submission:
             db.session.delete(submission)
@@ -91,13 +96,13 @@ def test_submit_correct_flag(page: Page, seed_data):
     # For now, let's remove it as the modal status is the primary check.
     # expect(challenge_card.locator(".challenge-solved-badge")).to_be_visible()
 
-def test_submit_incorrect_flag(page: Page, seed_data):
+def test_submit_incorrect_flag(page: Page, app, seed_data):
     page.on("dialog", lambda dialog: dialog.accept()) # Automatically accept dialogs
-    user = seed_data['users'][4]
-    challenge = seed_data['challenges'][1]
+    user = get_seeded_object(app, User, seed_data['user_ids'][4])
+    challenge = get_seeded_object(app, Challenge, seed_data['challenge_ids'][1])
 
     # Ensure user has not solved this challenge yet
-    with db.session.no_autoflush:
+    with app.app_context():
         submission = Submission.query.filter_by(user_id=user.id, challenge_id=challenge.id).first()
         if submission:
             db.session.delete(submission)
@@ -122,13 +127,13 @@ def test_submit_incorrect_flag(page: Page, seed_data):
     # For now, let's remove it as the modal status is the primary check.
     # expect(challenge_card.locator(".challenge-solved-badge")).not_to_be_visible()
 
-def test_already_solved_challenge(page: Page, seed_data):
+def test_already_solved_challenge(page: Page, app, seed_data):
     from datetime import datetime, UTC # Added local import
-    user = seed_data['users'][5]
-    challenge = seed_data['challenges'][2]
+    user = get_seeded_object(app, User, seed_data['user_ids'][5])
+    challenge = get_seeded_object(app, Challenge, seed_data['challenge_ids'][2])
 
     # Ensure user has solved this challenge
-    with db.session.no_autoflush:
+    with app.app_context():
         submission = Submission.query.filter_by(user_id=user.id, challenge_id=challenge.id).first()
         if not submission:
             user.score += challenge.points
@@ -157,32 +162,37 @@ def test_already_solved_challenge(page: Page, seed_data):
 
 # --- Scoreboard Display and Ranking Tests ---
 
-def test_scoreboard_loads_and_shows_users(page: Page, seed_data):
-    user = seed_data['users'][0]
+def test_scoreboard_loads_and_shows_users(page: Page, app, seed_data):
+    user = get_seeded_object(app, User, seed_data['user_ids'][0])
     login(page, user.username, "userpass")
     page.goto("/scoreboard")
     expect(page).to_have_title(re.compile("Scoreboard"))
     expect(page.locator("h1")).to_have_text("Scoreboard")
 
+    with app.app_context():
+        all_users = User.query.all()
+        all_admins = User.query.filter_by(is_admin=True).all() # Assuming admins are also users
+
     # Check if non-hidden users are visible
-    for u in seed_data['users']:
+    for u in all_users:
         if not u.hidden:
             expect(page.locator(f"text=/^{u.username}$/")).to_be_visible() # Use exact text match
     
     # Check that hidden users are NOT visible
-    for u in seed_data['users']:
+    for u in all_users:
         if u.hidden:
             expect(page.locator(f"text=/^{u.username}$/")).not_to_be_visible() # Use exact text match
-    for admin in seed_data['admins']:
-        expect(page.locator(f"text=/^{admin.username}$/")).not_to_be_visible() # Use exact text match
+    for admin in all_admins:
+        if admin.hidden: # Admins are hidden by default in seed_data
+            expect(page.locator(f"text=/^{admin.username}$/")).not_to_be_visible() # Use exact text match
 
-def test_scoreboard_player_rank_and_score(page: Page, seed_data):
-    user = seed_data['users'][0]
+def test_scoreboard_player_rank_and_score(page: Page, app, seed_data):
+    user = get_seeded_object(app, User, seed_data['user_ids'][0])
     login(page, user.username, "userpass")
     page.goto("/scoreboard")
 
     # Fetch users from the database, ordered by score and then submission timestamp for accurate ranking
-    with db.session.no_autoflush:
+    with app.app_context():
         # Replicate the scoreboard_data API logic for ranking
         from sqlalchemy import func
         expected_ranked_users_data = db.session.query(
@@ -206,17 +216,17 @@ def test_scoreboard_player_rank_and_score(page: Page, seed_data):
         expect(user_row.locator("td").nth(1)).to_have_text(user_data.username) # Username
         expect(user_row.locator("td").nth(2)).to_have_text(str(user_data.score)) # Score
 
-def test_hidden_user_not_on_scoreboard(page: Page, seed_data):
-    user = seed_data['users'][0] # This user is set to hidden in seed_data
+def test_hidden_user_not_on_scoreboard(page: Page, app, seed_data):
+    user = get_seeded_object(app, User, seed_data['user_ids'][0]) # This user is set to hidden in seed_data
     login(page, user.username, "userpass")
     page.goto("/scoreboard")
     expect(page.locator(f"text=/^{user.username}$/")).not_to_be_visible()
 
 # --- Admin Functionality Tests ---
 
-def test_admin_toggle_user_hidden_status(page: Page, seed_data):
-    admin = seed_data['admins'][0]
-    user_to_toggle = seed_data['users'][2] # A non-hidden user
+def test_admin_toggle_user_hidden_status(page: Page, app, seed_data):
+    admin = get_seeded_object(app, User, seed_data['admin_ids'][0])
+    user_to_toggle = get_seeded_object(app, User, seed_data['user_ids'][2]) # A non-hidden user
 
     login(page, admin.username, "adminpass")
     page.goto("/admin/users")
@@ -225,8 +235,9 @@ def test_admin_toggle_user_hidden_status(page: Page, seed_data):
     user_row = page.locator(f"tr.user-row[data-user-id='{user_to_toggle.id}']")
     user_row.click() # Click the row to open the dropdown
     
-    # Get initial hidden status
-    initial_hidden_status = user_to_toggle.hidden
+    # Get initial hidden status within app context
+    with app.app_context():
+        initial_hidden_status = db.session.get(User, user_to_toggle.id).hidden
 
     # Click the toggle button within the dropdown
     page.locator("#toggle-hidden-button").click()
@@ -247,9 +258,9 @@ def test_admin_toggle_user_hidden_status(page: Page, seed_data):
     else: # If user was hidden, now should be visible
         expect(page.locator(f"text={user_to_toggle.username}")).to_be_visible()
 
-def test_admin_toggle_user_admin_status(page: Page, seed_data):
-    admin = seed_data['admins'][0]
-    user_to_toggle = seed_data['users'][3] # A regular user
+def test_admin_toggle_user_admin_status(page: Page, app, seed_data):
+    admin = get_seeded_object(app, User, seed_data['admin_ids'][0])
+    user_to_toggle = get_seeded_object(app, User, seed_data['user_ids'][3]) # A regular user
 
     login(page, admin.username, "adminpass")
     page.goto("/admin/users")
@@ -257,7 +268,8 @@ def test_admin_toggle_user_admin_status(page: Page, seed_data):
     # Find the row for the user to toggle and click it to open the dropdown
     user_row = page.locator(f"tr.user-row[data-user-id='{user_to_toggle.id}']")
     user_row.click() # Click the row to open the dropdown
-    initial_admin_status = user_to_toggle.is_admin
+    with app.app_context():
+        initial_admin_status = db.session.get(User, user_to_toggle.id).is_admin
 
     # Click the toggle button within the dropdown
     page.locator("#toggle-admin-button").click()
