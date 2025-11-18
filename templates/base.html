@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='icon/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icon/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icon/favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='icon/site.webmanifest') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='icon/favicon.ico') }}">
+    <meta name="theme-color" content="#ffffff">
     {% if title %}
         <title>WindFlag - {{ title }}</title>
     {% else %}
