@@ -90,7 +90,7 @@ def seed_data(app):
         for user, challenge in all_user_challenge_pairs:
             if len(user_solved_challenges[user.id]) < random.randint(min_challenges_per_user, max_challenges_per_user):
                 if challenge.id not in user_solved_challenges[user.id]:
-                    submission_time = current_time - timedelta(seconds=time_offset_seconds)
+                    submission_time = current_time + timedelta(seconds=time_offset_seconds)
                     time_offset_seconds += random.randint(1, 60) # Vary submission times
 
                     # Temporarily update user score for score_at_submission
