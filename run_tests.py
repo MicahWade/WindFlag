@@ -36,7 +36,7 @@ if __name__ == '__main__':
         server_process.start()
 
         # Give the server a moment to start
-        time.sleep(10) # Increased sleep time
+        time.sleep(1) # Increased sleep time
 
         # Run pytest
         exit_code = pytest.main(['--base-url', f'http://127.0.0.1:{TEST_SERVER_PORT}']) # Use TEST_SERVER_PORT in base-url
