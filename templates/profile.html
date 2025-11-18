@@ -1,13 +1,62 @@
 {% extends "base.html" %}
-{% block content %}
-    <div class="bg-gray-800 p-8 rounded-lg shadow-lg">
-        <h1 class="text-3xl font-bold text-gray-100 mb-4">{{ current_user.username }}'s Profile</h1>
-        <p class="text-gray-300 mb-2">Email: {{ current_user.email }}</p>
-        <h2 class="text-2xl font-semibold text-gray-200 mt-6 mb-3">Solved Challenges:</h2>
-        <ul class="list-disc list-inside text-gray-300">
-            {# Loop through solved challenges here #}
-            <li>No challenges solved yet.</li>
-        </ul>
-    </div>
-{% endblock content %}
 
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card bg-dark text-white shadow-lg mb-4">
+                <div class="card-header bg-secondary text-center">
+                    <h1 class="card-title mb-0">{{ user.username }}'s Profile</h1>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p class="lead mb-1"><strong>Score:</strong> <span class="text-info">{{ user.score }}</span></p>
+                            {% if user_rank %}
+                                <p class="lead mb-1"><strong>Rank:</strong> <span class="text-info">#{{ user_rank }}</span></p>
+                            {% else %}
+                                <p class="lead mb-1"><strong>Rank:</strong> <span class="text-muted">N/A (Hidden User)</span></p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <p class="mb-1"><small class="text-muted">Last Seen: {{ user.last_seen.strftime('%Y-%m-%d') }}</small></p>
+                            {% if user.is_admin %}
+                                <span class="badge bg-danger me-1">Administrator</span>
+                            {% endif %}
+                            {% if user.hidden %}
+                                <span class="badge bg-secondary">Hidden User</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark text-white shadow-lg">
+                <div class="card-header bg-secondary">
+                    <h3 class="card-title mb-0">Solved Challenges</h3>
+                </div>
+                <div class="card-body">
+                    {% if submissions %}
+                        <div class="list-group">
+                            {% for submission in submissions %}
+                                <div class="list-group-item list-group-item-action bg-dark text-white border-secondary mb-2 rounded">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1 text-primary">{{ submission.challenge_rel.name }}</h5>
+                                        <small class="text-muted">{{ submission.timestamp.strftime('%Y-%m-%d') }}</small>
+                                    </div>
+                                    <p class="mb-1">
+                                        <span class="badge bg-info me-2">{{ submission.challenge_rel.category.name }}</span>
+                                        <span class="badge bg-success">{{ submission.challenge_rel.points }} points</span>
+                                    </p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No challenges solved yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

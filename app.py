@@ -89,6 +89,40 @@ def create_app(config_class=Config):
         # This will be expanded later to show solved challenges
         return render_template('profile.html', title='Profile')
 
+    @app.route('/profile/<username>')
+    @login_required
+    def user_profile(username):
+        from scripts.models import User, Submission, Challenge, Category # Import Category
+        target_user = User.query.filter_by(username=username).first_or_404()
+
+        # Access control: If user is hidden and current user is not admin, deny access
+        if target_user.hidden and not current_user.is_admin:
+            flash('You do not have permission to view this profile.', 'danger')
+            return redirect(url_for('home')) # Or abort(403)
+
+        # Calculate user rank
+        # This query gets all non-hidden users, orders them by score, and assigns a rank
+        ranked_users = db.session.query(
+            User.id,
+            User.username,
+            User.score,
+            func.rank().over(order_by=User.score.desc()).label('rank')
+        ).filter(User.hidden == False).subquery()
+
+        user_rank_data = db.session.query(ranked_users.c.rank)\
+                                   .filter(ranked_users.c.id == target_user.id)\
+                                   .first()
+        user_rank = user_rank_data.rank if user_rank_data else None
+
+        # Fetch submissions for the target user, eager-loading challenge and category details
+        user_submissions = Submission.query.filter_by(user_id=target_user.id)\
+                                           .options(joinedload(Submission.challenge_rel).joinedload(Challenge.category))\
+                                           .order_by(Submission.timestamp.desc())\
+                                           .all()
+
+        return render_template('profile.html', title=f"{target_user.username}'s Profile",
+                               user=target_user, submissions=user_submissions, user_rank=user_rank)
+
     @app.route('/challenges')
     @login_required
     def challenges():

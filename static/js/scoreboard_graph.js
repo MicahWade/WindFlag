@@ -158,7 +158,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const usernameCell = row.insertCell();
             usernameCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-300';
-            usernameCell.textContent = player.username;
+            // Create an anchor tag
+            const userLink = document.createElement('a');
+            userLink.href = `/profile/${player.username}`; // Construct the URL
+            userLink.textContent = player.username;
+            userLink.className = 'text-blue-400 hover:text-blue-300'; // Add some styling for links
+            usernameCell.appendChild(userLink); // Append the link to the cell
 
             const scoreCell = row.insertCell();
             scoreCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-300';
