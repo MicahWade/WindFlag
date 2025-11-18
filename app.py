@@ -218,7 +218,9 @@ def create_admin(username, password):
         print(f"Admin user with username {username} created successfully.")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='WindFlag CTF Platform')
+    parser = argparse.ArgumentParser(description='WindFlag CTF Platform', add_help=False)
+    parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
+                        help='Show this help message and exit.')
     parser.add_argument('-admin', nargs=2, metavar=('USERNAME', 'PASSWORD'), help='Create an admin user')
     parser.add_argument('-test', nargs='?', type=int, const=1800, help='Run the server in test mode with an optional timeout in seconds (default: 1800)')
     args = parser.parse_args()

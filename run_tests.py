@@ -10,6 +10,8 @@ TEST_SERVER_PORT = 5001 # Define a specific port for the test server
 
 from scripts.extensions import db # Added import
 
+import argparse
+
 def run_app():
     # Add the -playwright flag
     sys.argv.append('-playwright')
@@ -19,6 +21,11 @@ def run_app():
     app.run(debug=False, host='0.0.0.0', port=TEST_SERVER_PORT, use_reloader=False) # Use TEST_SERVER_PORT
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Run unit and end-to-end tests for WindFlag.')
+    parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
+                        help='Show this help message and exit.')
+    args = parser.parse_args()
+
     server_process = multiprocessing.Process(target=run_app)
     server_process.start()
 
