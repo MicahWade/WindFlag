@@ -22,22 +22,28 @@ def run_app():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run unit and end-to-end tests for WindFlag.')
-    parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
-                        help='Show this help message and exit.')
+    parser.add_argument('-d', '--demo', action='store_true',
+                        help='Run the server in demo mode with test data, without running tests.')
     args = parser.parse_args()
 
-    server_process = multiprocessing.Process(target=run_app)
-    server_process.start()
+    if args.demo:
+        app = create_app(config_class=TestConfig)
+        with app.app_context():
+            db.create_all()
+        app.run(debug=True, host='0.0.0.0', port=TEST_SERVER_PORT)
+    else:
+        server_process = multiprocessing.Process(target=run_app)
+        server_process.start()
 
-    # Give the server a moment to start
-    time.sleep(10) # Increased sleep time
+        # Give the server a moment to start
+        time.sleep(10) # Increased sleep time
 
-    # Run pytest
-    exit_code = pytest.main(['--base-url', f'http://127.0.0.1:{TEST_SERVER_PORT}']) # Use TEST_SERVER_PORT in base-url
+        # Run pytest
+        exit_code = pytest.main(['--base-url', f'http://127.0.0.1:{TEST_SERVER_PORT}']) # Use TEST_SERVER_PORT in base-url
 
-    # Shutdown the server
-    server_process.terminate()
-    server_process.join()
+        # Shutdown the server
+        server_process.terminate()
+        server_process.join()
 
-    # Exit with the same code as pytest
-    exit(exit_code)
+        # Exit with the same code as pytest
+        exit(exit_code)
