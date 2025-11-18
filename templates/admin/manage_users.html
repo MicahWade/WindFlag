@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1 class="text-3xl font-bold text-gray-100 mb-6">Manage Users</h1>
+    <div class="bg-gray-800 shadow-lg rounded-lg overflow-hidden">
+        <table class="min-w-full leading-normal">
+            <thead>
+                <tr>
+                    <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                        ID
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                        Username
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                        Email
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                        Score
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                        Admin
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                        Hidden
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr class="user-row cursor-pointer hover:bg-gray-700" data-user-id="{{ user.id }}" data-is-admin="{{ 'true' if user.is_admin else 'false' }}" data-is-hidden="{{ 'true' if user.hidden else 'false' }}">
+                        <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
+                            <p class="text-gray-200 whitespace-no-wrap">{{ user.id }}</p>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
+                            <p class="text-gray-200 whitespace-no-wrap">{{ user.username }}</p>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
+                            <p class="text-gray-200 whitespace-no-wrap">{{ user.email if user.email else 'N/A' }}</p>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
+                            <p class="text-gray-200 whitespace-no-wrap">{{ user.score }}</p>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
+                            {% if user.is_admin %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Yes</span>
+                            {% else %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">No</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
+                            {% if user.hidden %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Yes</span>
+                            {% else %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="user-actions-dropdown" class="absolute z-10 bg-gray-700 rounded-md shadow-lg py-1 hidden">
+        <form id="toggle-hidden-form" method="POST" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">
+            <button type="submit" class="w-full text-left" id="toggle-hidden-button"></button>
+        </form>
+        <form id="toggle-admin-form" method="POST" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">
+            <button type="submit" class="w-full text-left" id="toggle-admin-button"></button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userRows = document.querySelectorAll('.user-row');
+            const dropdown = document.getElementById('user-actions-dropdown');
+            const toggleHiddenForm = document.getElementById('toggle-hidden-form');
+            const toggleHiddenButton = document.getElementById('toggle-hidden-button');
+            const toggleAdminForm = document.getElementById('toggle-admin-form');
+            const toggleAdminButton = document.getElementById('toggle-admin-button');
+            let currentUserId = null;
+
+            userRows.forEach(row => {
+                row.addEventListener('click', function(event) {
+                    event.stopPropagation(); // Prevent document click from immediately closing
+                    currentUserId = this.dataset.userId;
+                    const isAdmin = this.dataset.isAdmin === 'true';
+                    const isHidden = this.dataset.isHidden === 'true';
+
+                    // Update hidden toggle button
+                    toggleHiddenForm.action = `/admin/user/${currentUserId}/toggle_hidden`;
+                    toggleHiddenButton.textContent = isHidden ? 'Unhide User' : 'Hide User';
+
+                    // Update admin toggle button
+                    toggleAdminForm.action = `/admin/user/${currentUserId}/toggle_admin`;
+                    toggleAdminButton.textContent = isAdmin ? 'Revoke Admin' : 'Make Admin';
+
+                    // Position and show dropdown
+                    const rect = this.getBoundingClientRect();
+                    dropdown.style.top = `${rect.bottom + window.scrollY}px`;
+                    dropdown.style.left = `${rect.left + window.scrollX}px`;
+                    dropdown.classList.remove('hidden');
+                });
+            });
+
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!dropdown.contains(event.target) && !event.target.closest('.user-row')) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+{% endblock %}

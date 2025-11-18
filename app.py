@@ -152,6 +152,7 @@ def create_app(config_class=Config):
                 func.max(Submission.timestamp).label('last_submission')
             ).outerjoin(Submission, User.id == Submission.user_id)\
              .outerjoin(Challenge, Submission.challenge_id == Challenge.id)\
+             .filter(User.hidden == False)\
              .group_by(User.id, User.username)\
              .order_by(func.coalesce(func.sum(Challenge.points), 0).desc(), func.max(Submission.timestamp).asc())\
              .all()
@@ -166,6 +167,7 @@ def create_app(config_class=Config):
             # 2. top_players_history data (for the graph)
             # Get the top_x users based on current score
             top_users_query = db.session.query(User)\
+                                        .filter(User.hidden == False)\
                                         .order_by(User.score.desc())\
                                         .limit(top_x)\
                                         .all()
@@ -214,7 +216,7 @@ def create_admin(username, password):
     with create_app().app_context():
         from scripts.models import User
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        admin = User(username=username, email=None, password_hash=hashed_password, is_admin=True)
+        admin = User(username=username, email=None, password_hash=hashed_password, is_admin=True, hidden=True)
         db.session.add(admin)
         db.session.commit()
         print(f"Admin user with username {username} created successfully.")

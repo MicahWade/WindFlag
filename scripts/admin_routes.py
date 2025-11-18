@@ -172,3 +172,33 @@ def delete_challenge(challenge_id):
 def view_submissions():
     submissions = Submission.query.order_by(Submission.timestamp.desc()).all()
     return render_template('admin/view_submissions.html', title='View Submissions', submissions=submissions)
+
+@admin_bp.route('/users')
+@admin_required
+def manage_users():
+    users = User.query.order_by(User.id.asc()).all()
+    return render_template('admin/manage_users.html', title='Manage Users', users=users)
+
+@admin_bp.route('/user/<int:user_id>/toggle_hidden', methods=['POST'])
+@admin_required
+def toggle_user_hidden(user_id):
+    user = User.query.get_or_404(user_id)
+    user.hidden = not user.hidden
+    db.session.commit()
+    flash(f'User {user.username} hidden status toggled to {user.hidden}.', 'success')
+    return redirect(url_for('admin.manage_users'))
+
+@admin_bp.route('/user/<int:user_id>/toggle_admin', methods=['POST'])
+@admin_required
+def toggle_user_admin(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash('You cannot change your own admin status.', 'danger')
+    else:
+        user.is_admin = not user.is_admin
+        # If a user is made admin, they should be hidden by default
+        if user.is_admin:
+            user.hidden = True
+        db.session.commit()
+        flash(f'User {user.username} admin status toggled to {user.is_admin}.', 'success')
+    return redirect(url_for('admin.manage_users'))

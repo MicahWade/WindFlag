@@ -12,6 +12,8 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=True)
     password_hash = db.Column(db.String(128), nullable=False)
     is_admin = db.Column(db.Boolean, nullable=False, default=False) # Added is_admin field
+    hidden = db.Column(db.Boolean, nullable=False, default=False) # Added hidden field
+    last_seen = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) # Added last_seen field
     score = db.Column(db.Integer, nullable=False, default=0) # New score column
     submissions = db.relationship('Submission', backref='solver', lazy=True)
 
