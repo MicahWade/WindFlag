@@ -222,24 +222,32 @@ def create_admin(username, password):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='WindFlag CTF Platform')
     parser.add_argument('-admin', nargs=2, metavar=('USERNAME', 'PASSWORD'), help='Create an admin user')
-    parser.add_argument('-test', action='store_true', help='Run the server in test mode with a 40-second timeout')
+    parser.add_argument('-test', nargs='?', type=int, const=40, help='Run the server in test mode with an optional timeout in seconds (default: 40)')
     args = parser.parse_args()
 
-    app = create_app()
+    # Determine which config to use
+    if args.test is not None:
+        from scripts.config import TestConfig
+        app = create_app(config_class=TestConfig)
+        test_mode_timeout = args.test
+    else:
+        app = create_app()
+        test_mode_timeout = None # Not in test mode, no timeout
+
     # Check if the database file exists, if not, create it
     db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
     if not os.path.exists(db_path):
         with app.app_context():
             db.create_all()
-            print("Database created successfully.")
+            print(f"Database '{db_path}' created successfully.")
 
     if args.admin:
         # If -admin is used, just create the admin and exit
         create_admin(args.admin[0], args.admin[1])
     else:
         # Otherwise, run the Flask app
-        if args.test:
-            print("Running in test mode: server will shut down in 40 seconds.")
-            timer = threading.Timer(40, os._exit, args=[0])
+        if args.test is not None:
+            print(f"Running in test mode: server will shut down in {test_mode_timeout} seconds.")
+            timer = threading.Timer(test_mode_timeout, os._exit, args=[0])
             timer.start()
         app.run(debug=True, host='0.0.0.0', port=5000)

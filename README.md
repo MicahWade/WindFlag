@@ -15,7 +15,7 @@ WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwin
     Copy the `.env.template` file to `.env` and fill in the values. For more information, see [ENV.md](ENV.md).
 
 3.  **Run the Application:**
-    The database will be created automatically if it doesn't exist.
+    The default database (`app.db`) will be created automatically if it doesn't exist.
     ```bash
     python app.py
     ```
@@ -32,6 +32,18 @@ python app.py -admin <username> <password>
 ```
 
 Alternatively, you can manually create a user and set the `is_admin` flag to `True` in the database.
+
+## Test Mode
+
+You can run the application in test mode using the `-test` flag. In this mode, the application will use a separate database (`test_mode.db`) and will automatically shut down after a specified timeout.
+
+```bash
+# Run in test mode with default 40-second timeout
+python app.py -test
+
+# Run in test mode with a custom timeout of 10 seconds
+python app.py -test 10
+```
 
 ## Environment Variables
 
