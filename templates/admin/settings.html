@@ -17,6 +17,19 @@
                     {{ form.top_x_scoreboard(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
                 {% endif %}
             </div>
+            <div class="mb-4">
+                {{ form.scoreboard_graph_type.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                {% if form.scoreboard_graph_type.errors %}
+                    {{ form.scoreboard_graph_type(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                    <p class="text-red-400 text-xs italic">
+                        {% for error in form.scoreboard_graph_type.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </p>
+                {% else %}
+                    {{ form.scoreboard_graph_type(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                {% endif %}
+            </div>
             <div class="flex items-center justify-between">
                 {{ form.submit(class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline shadow-md transform hover:scale-105 transition duration-300 ease-in-out") }}
             </div>

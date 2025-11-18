@@ -192,9 +192,12 @@ def create_app(config_class=Config):
                 
                 top_players_history[user.username] = user_history_list
 
+            graph_type = get_setting('SCOREBOARD_GRAPH_TYPE', 'line') # Get graph type setting
+
             return jsonify({
                 'top_players_history': top_players_history, # Now a dictionary of lists
-                'all_players_ranked': all_players_ranked
+                'all_players_ranked': all_players_ranked,
+                'graph_type': graph_type # Include graph type in the response
             })
         except Exception as e:
             current_app.logger.error(f"Error fetching scoreboard data: {e}")

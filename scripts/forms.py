@@ -98,4 +98,8 @@ class AdminSettingsForm(FlaskForm):
     top_x_scoreboard = IntegerField('Top X Scoreboard',
                                     validators=[DataRequired(), NumberRange(min=1, max=100)],
                                     default=10)
+    scoreboard_graph_type = SelectField('Scoreboard Graph Type',
+                                        choices=[('line', 'Line Graph'), ('area', 'Area Graph')],
+                                        validators=[DataRequired()],
+                                        default='line')
     submit = SubmitField('Save Settings')

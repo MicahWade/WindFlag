@@ -27,18 +27,30 @@ def index():
 def admin_settings():
     form = AdminSettingsForm()
     if form.validate_on_submit():
+        # Save TOP_X_SCOREBOARD setting
         top_x_val = str(form.top_x_scoreboard.data)
-        setting = Setting.query.filter_by(key='TOP_X_SCOREBOARD').first()
-        if setting:
-            setting.value = top_x_val
+        setting_top_x = Setting.query.filter_by(key='TOP_X_SCOREBOARD').first()
+        if setting_top_x:
+            setting_top_x.value = top_x_val
         else:
-            setting = Setting(key='TOP_X_SCOREBOARD', value=top_x_val)
-            db.session.add(setting)
+            setting_top_x = Setting(key='TOP_X_SCOREBOARD', value=top_x_val)
+            db.session.add(setting_top_x)
+
+        # Save SCOREBOARD_GRAPH_TYPE setting
+        graph_type_val = form.scoreboard_graph_type.data
+        setting_graph_type = Setting.query.filter_by(key='SCOREBOARD_GRAPH_TYPE').first()
+        if setting_graph_type:
+            setting_graph_type.value = graph_type_val
+        else:
+            setting_graph_type = Setting(key='SCOREBOARD_GRAPH_TYPE', value=graph_type_val)
+            db.session.add(setting_graph_type)
+
         db.session.commit()
         flash('Settings updated successfully!', 'success')
         return redirect(url_for('admin.admin_settings'))
     elif request.method == 'GET':
         form.top_x_scoreboard.data = int(get_setting('TOP_X_SCOREBOARD', '10')) # Default to 10
+        form.scoreboard_graph_type.data = get_setting('SCOREBOARD_GRAPH_TYPE', 'line') # Default to 'line'
     return render_template('admin/settings.html', title='Admin Settings', form=form)
 
 # Category CRUD

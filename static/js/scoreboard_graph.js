@@ -2,12 +2,12 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('/api/scoreboard_data')
         .then(response => response.json())
         .then(data => {
-            renderScoreboardGraph(data.top_players_history);
+            renderScoreboardGraph(data.top_players_history, data.graph_type);
             populatePlayerRankings(data.all_players_ranked);
         })
         .catch(error => console.error('Error fetching scoreboard data:', error));
 
-    function renderScoreboardGraph(topPlayersHistory) {
+    function renderScoreboardGraph(topPlayersHistory, graphType) {
         const ctx = document.getElementById('scoreboardChart').getContext('2d');
         
         if (!topPlayersHistory || Object.keys(topPlayersHistory).length === 0) {
@@ -36,14 +36,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 data: topPlayersHistory[playerName], // Directly use the player's history
                 borderColor: color,
                 backgroundColor: color,
-                fill: false,
+                fill: graphType === 'area', // Set fill based on graphType
                 tension: 0, // Render straight lines
                 spanGaps: true // Connect points across null or undefined data
             };
         });
 
         new Chart(ctx, {
-            type: 'line',
+            type: 'line', // Chart.js uses 'line' type for both line and area graphs, 'fill' property differentiates
             data: {
                 datasets: datasets
             },
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 interaction: {
                     mode: 'nearest',
                     intersect: false, // Allow tooltip to activate when near a data point
-                    hitRadius: 10 // Increased hit radius for tooltip activation
+                    hitRadius: 20 // Increased hit radius for tooltip activation
                 },
                 plugins: {
                     title: {
