@@ -273,4 +273,45 @@ def test_admin_toggle_user_admin_status(page: Page, seed_data):
     if not initial_admin_status: # If they became admin
         expect(user_row.locator("td").nth(5)).to_have_text("Yes") # Hidden should be Yes
 
+def test_view_solvers(page: Page, seed_data):
+    user = seed_data['users'][0]
+    challenge = seed_data['challenges'][0]
+
+    # Ensure the user has solved the challenge
+    with db.session.no_autoflush:
+        # Clear existing submissions for this challenge to ensure a clean test
+        Submission.query.filter_by(challenge_id=challenge.id).delete()
+        db.session.commit()
+
+        submission = Submission.query.filter_by(user_id=user.id, challenge_id=challenge.id).first()
+        if not submission:
+            from datetime import datetime, UTC
+            user.score += challenge.points
+            new_submission = Submission(user_id=user.id, challenge_id=challenge.id, timestamp=datetime.now(UTC), score_at_submission=user.score)
+            db.session.add(new_submission)
+            db.session.commit()
+
+    login(page, user.username, "userpass")
+    page.goto("/challenges")
+
+    # Click the challenge card to open the modal
+    page.locator(f"div.challenge-card[data-id='{challenge.id}']").click()
+    page.wait_for_selector("#challengeModal", state="visible")
+
+    # Click the "View Solvers" button
+    page.locator("#viewSolversBtn").click()
+
+    # Assert that the solvers content is visible and contains the correct solver information
+    expect(page.locator("#solversContent")).to_be_visible()
+    expect(page.locator("#challengeContent")).not_to_be_visible()
+    expect(page.locator("#solversList")).to_contain_text(user.username)
+    expect(page.locator("#solverCount")).to_have_text("1")
+
+    # Click the "Back" button
+    page.locator("#backToChallenge").click()
+
+    # Assert that the challenge content is visible again
+    expect(page.locator("#challengeContent")).to_be_visible()
+    expect(page.locator("#solversContent")).not_to_be_visible()
+
 # --- Graph Checking ---
