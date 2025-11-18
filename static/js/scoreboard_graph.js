@@ -37,7 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 borderColor: color,
                 backgroundColor: color,
                 fill: false,
-                tension: 0 // Render straight lines
+                tension: 0, // Render straight lines
+                spanGaps: true // Connect points across null or undefined data
             };
         });
 
@@ -49,6 +50,11 @@ document.addEventListener('DOMContentLoaded', function() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'nearest',
+                    intersect: false, // Allow tooltip to activate when near a data point
+                    hitRadius: 10 // Increased hit radius for tooltip activation
+                },
                 plugins: {
                     title: {
                         display: false, // Remove the chart title
@@ -57,8 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         display: false,
                     },
                     tooltip: {
-                        mode: 'index',
-                        intersect: false,
+                        // ... existing tooltip configuration ...
                         callbacks: {
                             filter: function(tooltipItem) {
                                 // Only show tooltip items if the y-value is not null/undefined AND the dataset index is valid
@@ -69,9 +74,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (!context || context.length === 0 || !context[0].parsed || context[0].parsed.y === null || context[0].parsed.y === undefined) {
                                     return '';
                                 }
-                                // Display formatted date as title
+                                // Explicitly format the date to ensure Month Day, Year
                                 if (context[0].parsed.x) {
-                                    return new Date(context[0].parsed.x).toLocaleString();
+                                    const date = new Date(context[0].parsed.x);
+                                    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
                                 }
                                 return '';
                             },
@@ -94,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         type: 'time', // Use time scale
                         time: {
                             unit: 'hour', // Adjust unit as needed (e.g., 'day', 'hour')
-                            tooltipFormat: 'MMM D, YYYY, h:mm:ss a',
+                            tooltipFormat: 'MMM D, YYYY', // Display only date, no time
                             displayFormats: {
                                 hour: 'MMM D, h:mm a',
                                 day: 'MMM D'
