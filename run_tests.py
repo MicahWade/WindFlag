@@ -10,6 +10,7 @@ TEST_SERVER_PORT = 5001 # Define a specific port for the test server
 
 from scripts.extensions import db # Added import
 
+from scripts.seed import seed_database
 import argparse
 
 def run_app():
@@ -29,7 +30,7 @@ if __name__ == '__main__':
     if args.demo:
         app = create_app(config_class=TestConfig)
         with app.app_context():
-            db.create_all()
+            seed_database()
         app.run(debug=True, host='0.0.0.0', port=TEST_SERVER_PORT)
     else:
         server_process = multiprocessing.Process(target=run_app)
