@@ -193,14 +193,6 @@ def create_app(config_class=Config):
             current_app.logger.error(f"Error fetching scoreboard data: {e}")
             return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
 
-    @app.route('/api/challenge/<int:challenge_id>/solvers')
-    @login_required
-    def get_challenge_solvers(challenge_id):
-        challenge = Challenge.query.get_or_404(challenge_id)
-        submissions = Submission.query.filter_by(challenge_id=challenge.id).all()
-        solvers = [submission.solver.username for submission in submissions]
-        return jsonify({'solvers': solvers, 'solver_count': len(solvers)})
-
     @app.route('/scoreboard')
     @login_required
     def scoreboard():

@@ -60,41 +60,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    const challengeContent = document.getElementById('challengeContent');
-    const solversContent = document.getElementById('solversContent');
-    const backToChallenge = document.getElementById('backToChallenge');
-    const solversList = document.getElementById('solversList');
-    const solverCount = document.getElementById('solverCount');
-    const viewSolversBtn = document.getElementById('viewSolversBtn');
-
-    viewSolversBtn.addEventListener('click', function() {
-        fetch(`/api/challenge/${currentChallengeId}/solvers`)
-            .then(response => response.json())
-            .then(data => {
-                solversList.innerHTML = '';
-                if (data.solvers.length > 0) {
-                    data.solvers.forEach(solver => {
-                        const li = document.createElement('li');
-                        li.textContent = solver;
-                        solversList.appendChild(li);
-                    });
-                } else {
-                    const li = document.createElement('li');
-                    li.textContent = 'No solvers yet.';
-                    solversList.appendChild(li);
-                }
-                solverCount.textContent = data.solver_count;
-                challengeContent.classList.add('hidden');
-                solversContent.classList.remove('hidden');
-            })
-            .catch(error => console.error('Error fetching solvers:', error));
-    });
-
-    backToChallenge.addEventListener('click', function() {
-        solversContent.classList.add('hidden');
-        challengeContent.classList.remove('hidden');
-    });
-
     // Handle AJAX form submission
     modalFlagForm.addEventListener('submit', function(event) {
         event.preventDefault(); // Prevent default form submission
