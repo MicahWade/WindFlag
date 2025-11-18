@@ -42,7 +42,7 @@ class Challenge(db.Model):
     # Removed 'flag' column
     case_sensitive = db.Column(db.Boolean, nullable=False, default=True)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
-    submissions = db.relationship('Submission', back_populates='challenge_rel', lazy=True, foreign_keys='Submission.challenge_id')
+    submissions = db.relationship('Submission', back_populates='challenge_rel', lazy=True, primaryjoin="Challenge.id == Submission.challenge_id")
     
     # New fields for multi-flag challenges
     multi_flag_type = db.Column(db.String(10), nullable=False, default='SINGLE') # e.g., 'SINGLE', 'ANY', 'ALL', 'N_OF_M'
@@ -68,6 +68,7 @@ class Submission(db.Model):
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
     score_at_submission = db.Column(db.Integer, nullable=False)
 
+    challenge_id = db.Column(db.Integer, db.ForeignKey('challenge.id'), nullable=False)
     # Modify explicit relationship to Challenge to use back_populates
     challenge_rel = db.relationship('Challenge', back_populates='submissions')
 

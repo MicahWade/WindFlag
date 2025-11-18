@@ -137,7 +137,7 @@ def seed_database():
     # Recalculate and update user scores based on actual submissions
     # This is more robust as it reflects the committed submissions
     for user in users:
-        user.score = sum(s.challenge_solved.points for s in Submission.query.filter_by(user_id=user.id).all())
+        user.score = sum(s.challenge_rel.points for s in Submission.query.filter_by(user_id=user.id).all())
     db.session.commit()
 
     # Set some users to hidden
