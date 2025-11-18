@@ -33,16 +33,12 @@ python app.py -admin <username> <password>
 
 Alternatively, you can manually create a user and set the `is_admin` flag to `True` in the database.
 
-## Test Mode
+## Testing
 
-You can run the application in test mode using the `-test` flag. In this mode, the application will use a separate database (`test_mode.db`) and will automatically shut down after a specified timeout.
+To run the automated tests, use the `run_tests.py` script. This will start the application in test mode and run the unit and end-to-end tests.
 
 ```bash
-# Run in test mode with default 30-minute timeout (1800 seconds)
-python app.py -test
-
-# Run in test mode with a custom timeout of 10 seconds
-python app.py -test 10
+python run_tests.py
 ```
 
 ## Environment Variables
