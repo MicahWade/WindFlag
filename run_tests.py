@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
         pytest_args = ['--base-url', f'http://127.0.0.1:{TEST_SERVER_PORT}']
         if args.playwright:
-            pytest_args.append('tests/test_playwright_e2e.py')
+            pytest_args.append('tests/e2e/')
         else:
             pytest_args.append('tests/') # Run all tests in the tests directory
 
