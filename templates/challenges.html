@@ -7,14 +7,25 @@
         {% if category.challenges %}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 {% for challenge in category.challenges %}
+                    {% set completion_percentage = 0 %}
+                    {% if challenge.is_completed %}
+                        {% set completion_percentage = 100 %}
+                    {% elif challenge.total_flags > 0 %}
+                        {% set completion_percentage = (challenge.submitted_flags_count / challenge.total_flags * 100) | round(0, 'floor') %}
+                    {% endif %}
                     <div class="bg-gray-800 p-6 rounded-lg shadow-lg challenge-card cursor-pointer transform hover:scale-105 transition duration-300 ease-in-out {% if challenge.is_completed %}completed-challenge{% endif %}"
                          data-id="{{ challenge.id }}"
                          data-name="{{ challenge.name }}"
                          data-description="{{ challenge.description }}"
                          data-points="{{ challenge.points }}"
-                         data-completed="{{ 'true' if challenge.is_completed else 'false' }}">
+                         data-completed="{{ 'true' if challenge.is_completed else 'false' }}"
+                         data-multi-flag-type="{{ challenge.multi_flag_type }}"
+                         data-submitted-flags-count="{{ challenge.submitted_flags_count }}"
+                         data-total-flags="{{ challenge.total_flags }}"
+                         data-completion-percentage="{{ completion_percentage }}"> {# New data attribute #}
                         <h5 class="text-xl font-bold text-gray-100 mb-2">{{ challenge.name }}</h5>
                         <p class="text-gray-300">{{ challenge.points }} pts</p>
+                        {# Removed: Flag progress display on card #}
                     </div>
                 {% endfor %}
             </div>
@@ -38,6 +49,7 @@
                     <p class="text-sm text-gray-300" id="modalChallengeDescription"></p>
                     <p class="text-lg font-bold text-gray-200 mt-4" id="modalChallengePoints"></p>
                     <div id="modalChallengeStatus" class="mt-2 text-green-400 font-semibold hidden"></div>
+                    <div id="modalFlagProgress" class="mt-2 text-gray-400 text-sm hidden"></div>
                     <form method="POST" action="" class="space-y-2 mt-4" id="modalFlagForm">
                         {{ flag_form.hidden_tag() }}
                         <div>
@@ -47,7 +59,7 @@
                     </form>
                 </div>
                 <div id="solversContent" class="hidden">
-                    <button class="text-gray-500 hover:text-gray-400" id="backToChallenge">
+                    <button class="text-gray-500 hover:bg-gray-400" id="backToChallenge">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                     </button>
                     <h3 class="text-2xl leading-6 font-medium text-gray-100 mt-4">Solvers (<span id="solverCount">0</span>)</h3>

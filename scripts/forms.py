@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, IntegerField, SelectField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
-from scripts.models import User, Category
+from scripts.models import User, Category, MULTI_FLAG_TYPES # Import MULTI_FLAG_TYPES
 from flask import current_app # Import current_app
 
 class RegistrationForm(FlaskForm):
@@ -69,8 +69,23 @@ class ChallengeForm(FlaskForm):
                        validators=[DataRequired(), Length(min=2, max=100)])
     description = TextAreaField('Description', validators=[DataRequired()])
     points = IntegerField('Points', validators=[DataRequired(), NumberRange(min=1)])
-    flag = StringField('Flag', validators=[DataRequired(), Length(min=1, max=100)])
-    case_sensitive = BooleanField('Flag is Case-Sensitive', default=True) # New field
+    
+    # Removed 'flag' field
+    # New fields for multi-flag challenges
+    multi_flag_type = SelectField('Multi-Flag Type',
+                                  choices=[(t, t.replace('_', ' ').title()) for t in MULTI_FLAG_TYPES],
+                                  validators=[DataRequired()],
+                                  default='SINGLE')
+    multi_flag_threshold = IntegerField('N of M Threshold (for N_OF_M type)',
+                                        validators=[NumberRange(min=1)],
+                                        render_kw={"placeholder": "Required for N_OF_M type"},
+                                        default=1) # Default to 1, but will be validated based on type
+    
+    flags_input = TextAreaField('Flags (one per line)',
+                                validators=[DataRequired()],
+                                render_kw={"rows": 5, "placeholder": "Enter each flag on a new line"})
+
+    case_sensitive = BooleanField('Flags are Case-Sensitive', default=True)
     category = SelectField('Category', coerce=int, choices=[(0, '--- Create New Category ---')])
     new_category_name = StringField('New Category Name', validators=[Length(max=50)])
     submit = SubmitField('Submit Challenge')
@@ -87,12 +102,23 @@ class ChallengeForm(FlaskForm):
             self.new_category_name.errors.append('Cannot select an existing category and provide a new category name.')
             return False
         
-        # If a new category name is provided, validate its uniqueness
-        if self.new_category_name.data:
-            existing_category = Category.query.filter_by(name=self.new_category_name.data).first()
-            if existing_category:
-                self.new_category_name.errors.append('A category with this name already exists.')
+        # Validate multi_flag_type and threshold
+        if self.multi_flag_type.data == 'N_OF_M':
+            if not self.multi_flag_threshold.data or self.multi_flag_threshold.data < 1:
+                self.multi_flag_threshold.errors.append('Threshold is required and must be at least 1 for N_OF_M type.')
                 return False
+            
+            # Count the number of flags provided
+            provided_flags = [f.strip() for f in self.flags_input.data.split('\n') if f.strip()]
+            if self.multi_flag_threshold.data > len(provided_flags):
+                self.multi_flag_threshold.errors.append(f'Threshold ({self.multi_flag_threshold.data}) cannot be greater than the number of provided flags ({len(provided_flags)}).')
+                return False
+        elif self.multi_flag_type.data == 'SINGLE':
+            provided_flags = [f.strip() for f in self.flags_input.data.split('\n') if f.strip()]
+            if len(provided_flags) != 1:
+                self.flags_input.errors.append('SINGLE type challenges must have exactly one flag.')
+                return False
+        
         return True
 
 class AdminSettingsForm(FlaskForm):

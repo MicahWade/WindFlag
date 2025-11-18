@@ -26,7 +26,7 @@ def create_app(config_class=Config):
     login_manager.unauthorized_handler(lambda: redirect(url_for('home')))
     bcrypt.init_app(app)
 
-    from scripts.models import User, Category, Challenge, Submission # Import models here
+    from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission # Import models here
 
     app.register_blueprint(admin_bp) # Register admin blueprint
 
@@ -93,15 +93,27 @@ def create_app(config_class=Config):
     @login_required
     def challenges():
         flag_form = FlagSubmissionForm()
-        categories = Category.query.options(joinedload(Category.challenges)).all()
+        categories = Category.query.options(joinedload(Category.challenges).joinedload(Challenge.flags)).all()
 
         # Get all challenge IDs completed by the current user
         completed_challenge_ids = {s.challenge_id for s in Submission.query.filter_by(user_id=current_user.id).all()}
 
-        # Add is_completed attribute to each challenge
+        # Get all flags submitted by the current user
+        submitted_flag_ids = {fs.challenge_flag_id for fs in FlagSubmission.query.filter_by(user_id=current_user.id).all()}
+
+        # Add is_completed and submitted_flags_count attribute to each challenge
         for category in categories:
             for challenge in category.challenges:
                 challenge.is_completed = challenge.id in completed_challenge_ids
+                
+                # Count how many flags the user has submitted for this specific challenge
+                challenge.submitted_flags_count = FlagSubmission.query.filter_by(
+                    user_id=current_user.id,
+                    challenge_id=challenge.id
+                ).count()
+                
+                # Determine total flags for the challenge
+                challenge.total_flags = len(challenge.flags)
 
         return render_template('challenges.html', title='Challenges', categories=categories, flag_form=flag_form)
 
@@ -110,28 +122,75 @@ def create_app(config_class=Config):
     def submit_flag(challenge_id):
         form = FlagSubmissionForm()
         if form.validate_on_submit():
-            challenge = Challenge.query.get_or_404(challenge_id)
-            flag_match = False
-            if challenge.case_sensitive:
-                if challenge.flag == form.flag.data:
-                    flag_match = True
-            else:
-                if challenge.flag.lower() == form.flag.data.lower():
-                    flag_match = True
+            challenge = Challenge.query.options(joinedload(Challenge.flags)).get_or_404(challenge_id)
 
-            if flag_match:
-                # Check if user already solved this challenge
-                submission = Submission.query.filter_by(user_id=current_user.id, challenge_id=challenge.id).first()
-                if submission:
-                    return jsonify({'success': False, 'message': 'You have already solved this challenge!'})
+            # 1. Check if challenge is already fully solved
+            if Submission.query.filter_by(user_id=current_user.id, challenge_id=challenge.id).first():
+                return jsonify({'success': False, 'message': 'You have already solved this challenge!'})
+
+            submitted_flag_content = form.flag.data
+            correct_flag_found = None # Will store the matching ChallengeFlag object
+
+            # 2. Find if the submitted flag matches any of the challenge's flags
+            for cf in challenge.flags:
+                if challenge.case_sensitive:
+                    if cf.flag_content == submitted_flag_content:
+                        correct_flag_found = cf
+                        break
                 else:
+                    if cf.flag_content.lower() == submitted_flag_content.lower():
+                        correct_flag_found = cf
+                        break
+            
+            if correct_flag_found:
+                # 3. Check if this specific flag has already been submitted by the user
+                if FlagSubmission.query.filter_by(user_id=current_user.id, challenge_flag_id=correct_flag_found.id).first():
+                    return jsonify({'success': False, 'message': 'You have already submitted this specific flag.'})
+                
+                # 4. Record the new flag submission
+                new_flag_submission = FlagSubmission(
+                    user_id=current_user.id,
+                    challenge_id=challenge.id,
+                    challenge_flag_id=correct_flag_found.id,
+                    timestamp=datetime.now(UTC)
+                )
+                db.session.add(new_flag_submission)
+                db.session.commit() # Commit to ensure the new flag submission is in the DB for counting
+
+                # 5. Re-evaluate if the challenge is now fully solved
+                is_challenge_solved = False
+                user_submitted_flags_for_challenge = FlagSubmission.query.filter_by(
+                    user_id=current_user.id,
+                    challenge_id=challenge.id
+                ).count()
+                
+                total_flags_for_challenge = len(challenge.flags)
+
+                if challenge.multi_flag_type == 'SINGLE' or challenge.multi_flag_type == 'ANY':
+                    is_challenge_solved = True # Any one correct flag solves it
+                elif challenge.multi_flag_type == 'ALL':
+                    if user_submitted_flags_for_challenge == total_flags_for_challenge:
+                        is_challenge_solved = True
+                elif challenge.multi_flag_type == 'N_OF_M':
+                    if challenge.multi_flag_threshold and user_submitted_flags_for_challenge >= challenge.multi_flag_threshold:
+                        is_challenge_solved = True
+                
+                if is_challenge_solved:
+                    # 6. Mark challenge as solved in Submission table
                     new_submission = Submission(user_id=current_user.id, challenge_id=challenge.id, timestamp=datetime.now(UTC))
                     db.session.add(new_submission)
                     current_user.score += challenge.points # Update user score
                     new_submission.score_at_submission = current_user.score # Record score at this submission
                     db.session.commit()
-                    return jsonify({'success': True, 'message': f'Correct Flag! You earned {challenge.points} points!'})
+                    return jsonify({'success': True, 'message': f'Correct Flag! Challenge Solved! You earned {challenge.points} points!'})
+                else:
+                    # 7. Flag was correct, but challenge not fully solved yet
+                    return jsonify({
+                        'success': True,
+                        'message': f'Correct Flag! You have submitted {user_submitted_flags_for_challenge} of {total_flags_for_challenge} flags for this challenge.'
+                    })
             else:
+                # 8. Incorrect Flag
                 return jsonify({'success': False, 'message': 'Incorrect Flag. Please try again.'})
         return jsonify({'success': False, 'message': 'Invalid form submission.'})
 

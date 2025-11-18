@@ -1,14 +1,14 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app # Import current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
-from scripts.extensions import db, get_setting # Import get_setting
-from scripts.models import Category, Challenge, Submission, User, Setting # Import Setting
-from scripts.forms import CategoryForm, ChallengeForm, AdminSettingsForm # Import AdminSettingsForm
-from functools import wraps # Import wraps
+from scripts.extensions import db, get_setting
+from scripts.models import Category, Challenge, Submission, User, Setting, ChallengeFlag # Import ChallengeFlag
+from scripts.forms import CategoryForm, ChallengeForm, AdminSettingsForm
+from functools import wraps
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 def admin_required(f):
-    @wraps(f) # Add wraps decorator
+    @wraps(f)
     @login_required
     def decorated_function(*args, **kwargs):
         if not current_user.is_admin:
@@ -49,8 +49,8 @@ def admin_settings():
         flash('Settings updated successfully!', 'success')
         return redirect(url_for('admin.admin_settings'))
     elif request.method == 'GET':
-        form.top_x_scoreboard.data = int(get_setting('TOP_X_SCOREBOARD', '10')) # Default to 10
-        form.scoreboard_graph_type.data = get_setting('SCOREBOARD_GRAPH_TYPE', 'line') # Default to 'line'
+        form.top_x_scoreboard.data = int(get_setting('TOP_X_SCOREBOARD', '10'))
+        form.scoreboard_graph_type.data = get_setting('SCOREBOARD_GRAPH_TYPE', 'line')
     return render_template('admin/settings.html', title='Admin Settings', form=form)
 
 # Category CRUD
@@ -118,11 +118,21 @@ def new_challenge():
             category_id = form.category.data
 
         challenge = Challenge(name=form.name.data, description=form.description.data,
-                              points=form.points.data, flag=form.flag.data,
-                              case_sensitive=form.case_sensitive.data, # New field
-                              category_id=category_id)
+                              points=form.points.data,
+                              case_sensitive=form.case_sensitive.data,
+                              category_id=category_id,
+                              multi_flag_type=form.multi_flag_type.data,
+                              multi_flag_threshold=form.multi_flag_threshold.data if form.multi_flag_type.data == 'N_OF_M' else None)
         db.session.add(challenge)
+        db.session.commit() # Commit to get challenge.id
+
+        # Add flags
+        flags_content = [f.strip() for f in form.flags_input.data.split('\n') if f.strip()]
+        for flag_content in flags_content:
+            challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
+            db.session.add(challenge_flag)
         db.session.commit()
+
         flash('Challenge has been created!', 'success')
         return redirect(url_for('admin.manage_challenges'))
     return render_template('admin/create_challenge.html', title='New Challenge', form=form)
@@ -146,9 +156,18 @@ def update_challenge(challenge_id):
         challenge.name = form.name.data
         challenge.description = form.description.data
         challenge.points = form.points.data
-        challenge.flag = form.flag.data
-        challenge.case_sensitive = form.case_sensitive.data # New field
+        challenge.case_sensitive = form.case_sensitive.data
         challenge.category_id = category_id
+        challenge.multi_flag_type = form.multi_flag_type.data
+        challenge.multi_flag_threshold = form.multi_flag_threshold.data if form.multi_flag_type.data == 'N_OF_M' else None
+        
+        # Delete existing flags and add new ones
+        ChallengeFlag.query.filter_by(challenge_id=challenge.id).delete()
+        flags_content = [f.strip() for f in form.flags_input.data.split('\n') if f.strip()]
+        for flag_content in flags_content:
+            challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
+            db.session.add(challenge_flag)
+        
         db.session.commit()
         flash('Challenge has been updated!', 'success')
         return redirect(url_for('admin.manage_challenges'))
@@ -156,9 +175,13 @@ def update_challenge(challenge_id):
         form.name.data = challenge.name
         form.description.data = challenge.description
         form.points.data = challenge.points
-        form.flag.data = challenge.flag
-        form.case_sensitive.data = challenge.case_sensitive # New field
+        # form.flag.data = challenge.flag # Removed
+        form.case_sensitive.data = challenge.case_sensitive
         form.category.data = challenge.category_id
+        form.multi_flag_type.data = challenge.multi_flag_type
+        form.multi_flag_threshold.data = challenge.multi_flag_threshold
+        form.flags_input.data = "\n".join([f.flag_content for f in challenge.flags])
+
     return render_template('admin/create_challenge.html', title='Update Challenge', form=form)
 
 @admin_bp.route('/challenge/<int:challenge_id>/delete', methods=['POST'])

@@ -44,19 +44,51 @@
                         {{ form.points(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
                     {% endif %}
                 </div>
+
+                {# New fields for multi-flag challenges #}
                 <div class="mb-4">
-                    {{ form.flag.label(class="block text-gray-300 text-sm font-bold mb-2") }}
-                    {% if form.flag.errors %}
-                        {{ form.flag(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                    {{ form.multi_flag_type.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                    {% if form.multi_flag_type.errors %}
+                        {{ form.multi_flag_type(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="multi_flag_type_select") }}
                         <p class="text-red-400 text-xs italic">
-                            {% for error in form.flag.errors %}
+                            {% for error in form.multi_flag_type.errors %}
                                 <span>{{ error }}</span>
                             {% endfor %}
                         </p>
                     {% else %}
-                        {{ form.flag(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                        {{ form.multi_flag_type(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="multi_flag_type_select") }}
                     {% endif %}
                 </div>
+
+                <div class="mb-4" id="multi_flag_threshold_field">
+                    {{ form.multi_flag_threshold.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                    {% if form.multi_flag_threshold.errors %}
+                        {{ form.multi_flag_threshold(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                        <p class="text-red-400 text-xs italic">
+                            {% for error in form.multi_flag_threshold.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </p>
+                    {% else %}
+                        {{ form.multi_flag_threshold(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    {{ form.flags_input.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                    {% if form.flags_input.errors %}
+                        {{ form.flags_input(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                        <p class="text-red-400 text-xs italic">
+                            {% for error in form.flags_input.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </p>
+                    {% else %}
+                        {{ form.flags_input(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                    {% endif %}
+                </div>
+                {# End new fields #}
+
                 <div class="mb-4 flex items-center">
                     {{ form.case_sensitive(class="mr-2 leading-tight") }}
                     {{ form.case_sensitive.label(class="text-gray-300 text-sm font-bold") }}
@@ -105,6 +137,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             var categorySelect = document.getElementById('category_select');
             var newCategoryNameField = document.getElementById('new_category_name_field');
+            var multiFlagTypeSelect = document.getElementById('multi_flag_type_select');
+            var multiFlagThresholdField = document.getElementById('multi_flag_threshold_field');
 
             function toggleNewCategoryField() {
                 if (categorySelect.value === '0') { // Assuming '0' is the value for "Create New Category"
@@ -114,10 +148,20 @@
                 }
             }
 
-            categorySelect.addEventListener('change', toggleNewCategoryField);
+            function toggleMultiFlagThresholdField() {
+                if (multiFlagTypeSelect.value === 'N_OF_M') {
+                    multiFlagThresholdField.style.display = 'block';
+                } else {
+                    multiFlagThresholdField.style.display = 'none';
+                }
+            }
 
-            // Initial check in case the page is loaded with 'Create New Category' already selected
+            categorySelect.addEventListener('change', toggleNewCategoryField);
+            multiFlagTypeSelect.addEventListener('change', toggleMultiFlagThresholdField);
+
+            // Initial checks in case the page is loaded with specific options already selected
             toggleNewCategoryField();
+            toggleMultiFlagThresholdField();
         });
     </script>
 {% endblock content %}
