@@ -224,7 +224,7 @@ def create_admin(username, password):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='WindFlag CTF Platform')
     parser.add_argument('-admin', nargs=2, metavar=('USERNAME', 'PASSWORD'), help='Create an admin user')
-    parser.add_argument('-test', nargs='?', type=int, const=40, help='Run the server in test mode with an optional timeout in seconds (default: 40)')
+    parser.add_argument('-test', nargs='?', type=int, const=1800, help='Run the server in test mode with an optional timeout in seconds (default: 1800)')
     args = parser.parse_args()
 
     # Determine which config to use
