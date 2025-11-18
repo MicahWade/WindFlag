@@ -34,6 +34,7 @@ class Challenge(db.Model):
     description = db.Column(db.Text, nullable=False)
     points = db.Column(db.Integer, nullable=False)
     flag = db.Column(db.String(100), nullable=False)
+    case_sensitive = db.Column(db.Boolean, nullable=False, default=True) # New field
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
     submissions = db.relationship('Submission', backref='challenge_solved', lazy=True)
 

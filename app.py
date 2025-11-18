@@ -111,7 +111,15 @@ def create_app(config_class=Config):
         form = FlagSubmissionForm()
         if form.validate_on_submit():
             challenge = Challenge.query.get_or_404(challenge_id)
-            if challenge.flag == form.flag.data:
+            flag_match = False
+            if challenge.case_sensitive:
+                if challenge.flag == form.flag.data:
+                    flag_match = True
+            else:
+                if challenge.flag.lower() == form.flag.data.lower():
+                    flag_match = True
+
+            if flag_match:
                 # Check if user already solved this challenge
                 submission = Submission.query.filter_by(user_id=current_user.id, challenge_id=challenge.id).first()
                 if submission:

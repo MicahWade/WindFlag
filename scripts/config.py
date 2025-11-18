@@ -14,3 +14,4 @@ class Config:
 
 class TestConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///test_mode.db' # Dedicated database for test mode
+    WTF_CSRF_ENABLED = False

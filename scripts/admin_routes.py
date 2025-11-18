@@ -119,6 +119,7 @@ def new_challenge():
 
         challenge = Challenge(name=form.name.data, description=form.description.data,
                               points=form.points.data, flag=form.flag.data,
+                              case_sensitive=form.case_sensitive.data, # New field
                               category_id=category_id)
         db.session.add(challenge)
         db.session.commit()
@@ -146,6 +147,7 @@ def update_challenge(challenge_id):
         challenge.description = form.description.data
         challenge.points = form.points.data
         challenge.flag = form.flag.data
+        challenge.case_sensitive = form.case_sensitive.data # New field
         challenge.category_id = category_id
         db.session.commit()
         flash('Challenge has been updated!', 'success')
@@ -155,6 +157,7 @@ def update_challenge(challenge_id):
         form.description.data = challenge.description
         form.points.data = challenge.points
         form.flag.data = challenge.flag
+        form.case_sensitive.data = challenge.case_sensitive # New field
         form.category.data = challenge.category_id
     return render_template('admin/create_challenge.html', title='Update Challenge', form=form)
 

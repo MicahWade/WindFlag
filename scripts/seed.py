@@ -40,7 +40,7 @@ def seed_database():
     for i in range(1, 21): # 20 challenges
         category_id = categories[(i-1) % len(categories)].id
         challenge = Challenge(name=f"Challenge {i}", description=f"Description for Challenge {i}",
-                              points=i * 10, flag=f"flag{{{i}}}", category_id=category_id)
+                              points=i * 10, flag=f"flag{{{i}}}", case_sensitive=True, category_id=category_id)
         challenges.append(challenge)
     db.session.add_all(challenges)
     db.session.commit()
