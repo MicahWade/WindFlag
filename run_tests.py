@@ -25,6 +25,8 @@ if __name__ == '__main__':
                         help='Run the server in demo mode with test data, without running tests.')
     parser.add_argument('-p', '--playwright', action='store_true',
                         help='Run only Playwright end-to-end tests.')
+    parser.add_argument('-f', '--file', type=str,
+                        help='Run a specific test file or directory (e.g., tests/unit/test_example.py).')
     args = parser.parse_args()
 
     if args.demo:
@@ -41,7 +43,9 @@ if __name__ == '__main__':
         time.sleep(1) # Increased sleep time
 
         pytest_args = ['--base-url', f'http://127.0.0.1:{TEST_SERVER_PORT}']
-        if args.playwright:
+        if args.file:
+            pytest_args.append(args.file)
+        elif args.playwright:
             pytest_args.append('tests/e2e/')
         else:
             pytest_args.append('tests/') # Run all tests in the tests directory
