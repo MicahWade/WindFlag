@@ -9,6 +9,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderScoreboardGraph(topPlayersHistory, graphType) {
         const ctx = document.getElementById('scoreboardChart').getContext('2d');
+
+        // Helper function to convert RGB to RGBA
+        function rgbToRgba(rgb, alpha) {
+            const parts = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+            if (parts) {
+                return `rgba(${parts[1]}, ${parts[2]}, ${parts[3]}, ${alpha})`;
+            }
+            return rgb; // Return original if format doesn't match
+        }
         
         if (!topPlayersHistory || Object.keys(topPlayersHistory).length === 0) {
             ctx.font = '18px Arial';
@@ -35,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 label: playerName,
                 data: topPlayersHistory[playerName], // Directly use the player's history
                 borderColor: color,
-                backgroundColor: color,
+                backgroundColor: graphType === 'area' ? rgbToRgba(color, 0.25) : color, // Set transparent background for area graph
                 fill: graphType === 'area', // Set fill based on graphType
                 tension: 0, // Render straight lines
                 spanGaps: true // Connect points across null or undefined data
