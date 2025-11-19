@@ -101,6 +101,10 @@ def seed_database():
     
     random.shuffle(all_user_challenge_pairs) # Randomize the order of completions
 
+    # Generate submissions
+    # Start submissions from a few weeks ago
+    start_date = datetime.now(UTC) - timedelta(weeks=3)
+    
     submissions_to_add = []
     flag_submissions_to_add = [] # New list for FlagSubmission
     
@@ -113,14 +117,13 @@ def seed_database():
     max_challenges_per_user = 15
 
     # Generate submissions
-    current_time = datetime.now(UTC)
-    time_offset_seconds = 0
-    
     for user, challenge in all_user_challenge_pairs:
         if len(user_solved_challenges[user.id]) < random.randint(min_challenges_per_user, max_challenges_per_user):
             if challenge.id not in user_solved_challenges[user.id]:
-                submission_time = current_time + timedelta(seconds=time_offset_seconds)
-                time_offset_seconds += random.randint(1, 60) # Vary submission times
+                # Randomly assign a submission time within the last 3 weeks
+                random_days_offset = random.randint(0, 20) # Up to 20 days ago
+                random_seconds_offset = random.randint(0, 24 * 60 * 60) # Random time within the day
+                submission_time = start_date + timedelta(days=random_days_offset, seconds=random_seconds_offset)
 
                 # For seeding, assume all flags for a multi-flag challenge are submitted correctly
                 # This will create a Submission entry, implying the challenge is solved.

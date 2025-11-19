@@ -4,6 +4,7 @@ from scripts.extensions import db, get_setting
 from scripts.models import Category, Challenge, Submission, User, Setting, ChallengeFlag, AwardCategory, Award # Import ChallengeFlag, AwardCategory, Award
 from scripts.forms import CategoryForm, ChallengeForm, AdminSettingsForm, AwardCategoryForm, InlineGiveAwardForm
 from functools import wraps
+from sqlalchemy import func
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -310,6 +311,65 @@ def delete_award_category(category_id):
     db.session.delete(award_category)
     db.session.commit()
     flash('Award Category has been deleted!', 'success')
-    return redirect(url_for('admin.manage_award_categories'))
-
     return redirect(url_for('admin.manage_users'))
+
+@admin_bp.route('/analytics')
+@admin_required
+def analytics():
+    # Data for Points by Category
+    # 1. Challenge points by category
+    challenge_points_by_category = db.session.query(
+        Category.name,
+        func.sum(Submission.score_at_submission)
+    ).join(Challenge, Category.id == Challenge.category_id).join(Submission, Challenge.id == Submission.challenge_id).group_by(Category.name).all()
+
+    # 2. Award points (aggregated into a single 'Awards' category)
+    total_award_points = db.session.query(
+        func.sum(Award.points_awarded)
+    ).scalar()
+    
+    category_data = {name: points for name, points in challenge_points_by_category}
+    if total_award_points:
+        category_data['Awards'] = category_data.get('Awards', 0) + total_award_points
+
+    category_labels = list(category_data.keys())
+    category_values = list(category_data.values())
+
+    # Data for Points by User
+    # 1. Challenge points by user
+    challenge_points_by_user = db.session.query(
+        User.username,
+        func.sum(Submission.score_at_submission)
+    ).join(Submission).group_by(User.username).all()
+
+    # 2. Award points by user
+    award_points_by_user = db.session.query(
+        User.username,
+        func.sum(Award.points_awarded)
+    ).join(Award, User.id == Award.user_id).group_by(User.username).all()
+
+    user_data = {username: points for username, points in challenge_points_by_user}
+    for username, points in award_points_by_user:
+        user_data[username] = user_data.get(username, 0) + points
+    
+    user_labels = list(user_data.keys())
+    user_values = list(user_data.values())
+
+    # Data for Challenges Solved Over Time
+    # Group submissions by date and count them
+    challenges_solved_over_time = db.session.query(
+        func.date(Submission.timestamp),
+        func.count(Submission.id)
+    ).group_by(func.date(Submission.timestamp)).order_by(func.date(Submission.timestamp)).all()
+
+    solved_dates = [str(date) for date, _ in challenges_solved_over_time]
+    solved_counts = [count for _, count in challenges_solved_over_time]
+
+    return render_template('admin/analytics.html', 
+                           title='Admin Analytics',
+                           category_labels=category_labels,
+                           category_values=category_values,
+                           user_labels=user_labels,
+                           user_values=user_values,
+                           solved_dates=solved_dates,
+                           solved_counts=solved_counts)
