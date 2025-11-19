@@ -26,6 +26,45 @@
         <canvas id="failsSucceedsChart"></canvas>
     </div>
 </div>
+
+<div class="mt-6 bg-gray-800 p-6 rounded-lg shadow-lg">
+    <h2 class="text-xl font-semibold mb-4 text-white">Challenges Solved Count</h2>
+    <canvas id="challengeSolveCountChart"></canvas>
+</div>
+
+<div class="mt-6 bg-gray-800 p-6 rounded-lg shadow-lg">
+    <h2 class="text-xl font-semibold mb-4 text-white">User Challenge Matrix</h2>
+    <div class="overflow-x-auto">
+        <table id="userChallengeMatrix" class="min-w-full divide-y divide-gray-700">
+            <thead class="bg-gray-700">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">User / Challenge</th>
+                    {% for challenge in all_challenges %}
+                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">{{ challenge.name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="bg-gray-800 divide-y divide-gray-700">
+                {% for user in all_users %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">{{ user.username }}</td>
+                    {% for challenge in all_challenges %}
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                        {% if user_challenge_status[user.id][challenge.id] == 'solved' %}
+                        <span class="text-green-500">✔</span>
+                        {% elif user_challenge_status[user.id][challenge.id] == 'attempted' %}
+                        <span class="text-yellow-500">●</span>
+                        {% else %}
+                        <span class="text-red-500">✖</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -39,6 +78,8 @@
     const flaskSolvedCounts = {{ solved_counts | tojson }};
     const flaskFailsSucceedsLabels = {{ fails_succeeds_labels | tojson }};
     const flaskFailsSucceedsValues = {{ fails_succeeds_values | tojson }};
+    const flaskChallengeSolveLabels = {{ challenge_solve_labels | tojson }};
+    const flaskChallengeSolveValues = {{ challenge_solve_values | tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/admin_analytics.js') }}"></script>
 {% endblock %}

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
 from scripts.extensions import db, get_setting
-from scripts.models import Category, Challenge, Submission, User, Setting, ChallengeFlag, FlagSubmission, AwardCategory, Award # Import ChallengeFlag, AwardCategory, Award
+from scripts.models import Category, Challenge, Submission, User, Setting, ChallengeFlag, FlagSubmission, AwardCategory, Award, FlagAttempt # Import FlagAttempt
 from scripts.forms import CategoryForm, ChallengeForm, AdminSettingsForm, AwardCategoryForm, InlineGiveAwardForm
 from functools import wraps
 from sqlalchemy import func
@@ -366,21 +366,55 @@ def analytics():
     solved_counts = [count for _, count in challenges_solved_over_time]
 
     # Data for Fails vs Succeeds
-    total_successful_submissions = db.session.query(func.count(Submission.id)).scalar()
-    total_flag_submissions = db.session.query(func.count(FlagSubmission.id)).scalar()
-
-    # Calculate fails as flag submissions that didn't result in a successful challenge solve
-    # This is an approximation given the current schema.
-    fails_count = total_flag_submissions - total_successful_submissions
-    if fails_count < 0: # Should not happen, but for safety
-        fails_count = 0
-
-    # Ensure successful submissions are not negative
-    if total_successful_submissions < 0:
-        total_successful_submissions = 0
+    total_successful_flag_attempts = db.session.query(func.count(FlagAttempt.id)).filter_by(is_correct=True).scalar()
+    total_failed_flag_attempts = db.session.query(func.count(FlagAttempt.id)).filter_by(is_correct=False).scalar()
 
     fails_succeeds_labels = ['Succeeds', 'Fails']
-    fails_succeeds_values = [total_successful_submissions, fails_count]
+    fails_succeeds_values = [total_successful_flag_attempts, total_failed_flag_attempts]
+
+    # Data for Challenges Solved Count (for bar graph)
+    challenge_solve_counts = db.session.query(
+        Challenge.name,
+        func.count(Submission.id)
+    ).join(Submission, Challenge.id == Submission.challenge_id).group_by(Challenge.name).order_by(func.count(Submission.id).desc()).all()
+
+    challenge_solve_labels = [name for name, count in challenge_solve_counts]
+    challenge_solve_values = [count for name, count in challenge_solve_counts]
+
+    # Data for User-Challenge Matrix Table
+    all_users = User.query.order_by(User.score.desc()).all()
+    # Order challenges by most solves
+    challenges_by_solves = db.session.query(
+        Challenge,
+        func.count(Submission.id).label('solve_count')
+    ).outerjoin(Submission, Challenge.id == Submission.challenge_id)\
+     .group_by(Challenge.id)\
+     .order_by(func.count(Submission.id).desc(), Challenge.name.asc())\
+     .all()
+    all_challenges = [c[0] for c in challenges_by_solves]
+
+    # Get all successful submissions
+    solved_submissions = Submission.query.all()
+    solved_map = {(s.user_id, s.challenge_id) for s in solved_submissions}
+
+    # Get all flag attempts (correct or incorrect)
+    all_flag_attempts = FlagAttempt.query.all()
+    # Create a set of (user_id, challenge_id) for all attempts
+    attempted_map = {(fa.user_id, fa.challenge_id) for fa in all_flag_attempts}
+
+    # Build the matrix
+    user_challenge_status = {} # {user_id: {challenge_id: 'solved'/'attempted'/'none'}}
+
+    for user in all_users:
+        user_challenge_status[user.id] = {}
+        for challenge in all_challenges:
+            if (user.id, challenge.id) in solved_map:
+                user_challenge_status[user.id][challenge.id] = 'solved'
+            elif (user.id, challenge.id) in attempted_map:
+                # Only mark as 'attempted' if not already 'solved'
+                user_challenge_status[user.id][challenge.id] = 'attempted'
+            else:
+                user_challenge_status[user.id][challenge.id] = 'none'
 
     return render_template('admin/analytics.html', 
                            title='Admin Analytics',
@@ -391,4 +425,9 @@ def analytics():
                            solved_dates=solved_dates,
                            solved_counts=solved_counts,
                            fails_succeeds_labels=fails_succeeds_labels,
-                           fails_succeeds_values=fails_succeeds_values)
+                           fails_succeeds_values=fails_succeeds_values,
+                           challenge_solve_labels=challenge_solve_labels,
+                           challenge_solve_values=challenge_solve_values,
+                           all_users=all_users,
+                           all_challenges=all_challenges,
+                           user_challenge_status=user_challenge_status)

@@ -27,7 +27,7 @@ def create_app(config_class=Config):
     login_manager.unauthorized_handler(lambda: redirect(url_for('home')))
     bcrypt.init_app(app)
 
-    from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission, Award, AwardCategory # Import models here
+    from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission, Award, AwardCategory, FlagAttempt # Import FlagAttempt
 
     app.register_blueprint(admin_bp) # Register admin blueprint
 
@@ -176,6 +176,16 @@ def create_app(config_class=Config):
 
             # 1. Check if challenge is already fully solved
             if Submission.query.filter_by(user_id=current_user.id, challenge_id=challenge.id).first():
+                # Record the attempt even if already solved
+                new_flag_attempt = FlagAttempt(
+                    user_id=current_user.id,
+                    challenge_id=challenge.id,
+                    submitted_flag=form.flag.data,
+                    is_correct=False, # Assume incorrect for already solved challenges
+                    timestamp=datetime.now(UTC)
+                )
+                db.session.add(new_flag_attempt)
+                db.session.commit()
                 return jsonify({'success': False, 'message': 'You have already solved this challenge!'})
 
             submitted_flag_content = form.flag.data
@@ -192,12 +202,23 @@ def create_app(config_class=Config):
                         correct_flag_found = cf
                         break
             
+            # Record the attempt in FlagAttempt table
+            new_flag_attempt = FlagAttempt(
+                user_id=current_user.id,
+                challenge_id=challenge.id,
+                submitted_flag=submitted_flag_content,
+                is_correct=(correct_flag_found is not None),
+                timestamp=datetime.now(UTC)
+            )
+            db.session.add(new_flag_attempt)
+            db.session.commit() # Commit the attempt immediately
+
             if correct_flag_found:
-                # 3. Check if this specific flag has already been submitted by the user
+                # 3. Check if this specific flag has already been submitted by the user (correctly)
                 if FlagSubmission.query.filter_by(user_id=current_user.id, challenge_flag_id=correct_flag_found.id).first():
                     return jsonify({'success': False, 'message': 'You have already submitted this specific flag.'})
                 
-                # 4. Record the new flag submission
+                # 4. Record the new flag submission in FlagSubmission table
                 new_flag_submission = FlagSubmission(
                     user_id=current_user.id,
                     challenge_id=challenge.id,

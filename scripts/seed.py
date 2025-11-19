@@ -1,10 +1,11 @@
 from scripts.extensions import db, bcrypt
-from scripts.models import User, Category, Challenge, Submission, Setting, ChallengeFlag, FlagSubmission, AwardCategory, Award, MULTI_FLAG_TYPES
+from scripts.models import User, Category, Challenge, Submission, Setting, ChallengeFlag, FlagSubmission, AwardCategory, Award, MULTI_FLAG_TYPES, FlagAttempt
 from datetime import datetime, UTC, timedelta
 import random
 
 def seed_database():
     # Clear existing data
+    db.session.query(FlagAttempt).delete() # New: Clear FlagAttempt
     db.session.query(FlagSubmission).delete() # New: Clear FlagSubmission
     db.session.query(Submission).delete()
     db.session.query(ChallengeFlag).delete() # New: Clear ChallengeFlag
@@ -99,6 +100,7 @@ def seed_database():
     
     submissions_to_add = []
     flag_submissions_to_add = []
+    flag_attempts_to_add = []
     
     min_challenges_per_user = 5
     max_challenges_per_user = 15
@@ -138,9 +140,53 @@ def seed_database():
                     flag_submission = FlagSubmission(user_id=user.id, challenge_id=challenge.id,
                                                      challenge_flag_id=flag.id, timestamp=submission_time)
                     flag_submissions_to_add.append(flag_submission)
+
+                    # Also create a successful FlagAttempt for this correct flag
+                    successful_flag_attempt = FlagAttempt(
+                        user_id=user.id,
+                        challenge_id=challenge.id,
+                        submitted_flag=flag.flag_content, # The correct flag content
+                        is_correct=True,
+                        timestamp=submission_time
+                    )
+                    flag_attempts_to_add.append(successful_flag_attempt) # Add to the list that gets committed later
     
     db.session.add_all(submissions_to_add)
     db.session.add_all(flag_submissions_to_add)
+    db.session.commit()
+
+    # Generate some failed attempts
+    for user in users:
+        # For each user, pick a few challenges they did NOT solve
+        unsolved_challenges = [c for c in challenges if c.id not in user_solved_challenges_ids]
+        
+        # Attempt a few random unsolved challenges
+        num_failed_attempts = random.randint(0, min(5, len(unsolved_challenges))) # 0 to 5 failed attempts per user
+        
+        for _ in range(num_failed_attempts):
+            if not unsolved_challenges:
+                break
+            
+            challenge_for_attempt = random.choice(unsolved_challenges)
+            unsolved_challenges.remove(challenge_for_attempt) # Ensure unique challenges for failed attempts
+
+            # Generate a random incorrect flag content
+            incorrect_flag_content = f"wrong_flag{{{challenge_for_attempt.id}}}-{random.randint(100, 999)}"
+            
+            # Generate a timestamp for the failed attempt
+            # It should be within the general submission timeframe
+            attempt_time = start_date + timedelta(days=random.randint(0, 20))
+
+            failed_attempt = FlagAttempt(
+                user_id=user.id,
+                challenge_id=challenge_for_attempt.id,
+                submitted_flag=incorrect_flag_content,
+                is_correct=False,
+                timestamp=attempt_time
+            )
+            flag_attempts_to_add.append(failed_attempt)
+    
+    db.session.add_all(flag_attempts_to_add)
     db.session.commit()
 
     # Recalculate and update user scores based on actual submissions

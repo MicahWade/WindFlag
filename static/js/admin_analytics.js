@@ -161,4 +161,56 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Data for Challenges Solved Count Bar Chart
+    const challengeSolveCountCanvas = document.getElementById('challengeSolveCountChart');
+    const challengeSolveLabels = flaskChallengeSolveLabels; // Access global variable
+    const challengeSolveValues = flaskChallengeSolveValues; // Access global variable
+    const challengeSolveCountCtx = challengeSolveCountCanvas.getContext('2d');
+
+    new Chart(challengeSolveCountCtx, {
+        type: 'bar',
+        data: {
+            labels: challengeSolveLabels,
+            datasets: [{
+                label: 'Times Solved',
+                data: challengeSolveValues,
+                backgroundColor: '#4BC0C0', // A distinct color
+                borderColor: '#4BC0C0',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y', // This makes it a horizontal bar chart
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false // Hide the legend
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Times Solved',
+                        color: 'white'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Challenge',
+                        color: 'white'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                }
+            }
+        }
+    });
 });

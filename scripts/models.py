@@ -91,6 +91,20 @@ class FlagSubmission(db.Model):
     def __repr__(self):
         return f"FlagSubmission(User: {self.user_id}, Challenge: {self.challenge_id}, Flag: {self.challenge_flag_id})"
 
+class FlagAttempt(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    challenge_id = db.Column(db.Integer, db.ForeignKey('challenge.id'), nullable=False)
+    submitted_flag = db.Column(db.String(256), nullable=False) # Store the actual submitted flag
+    is_correct = db.Column(db.Boolean, nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
+
+    user = db.relationship('User', backref='flag_attempts')
+    challenge = db.relationship('Challenge', backref='flag_attempts_for_challenge')
+
+    def __repr__(self):
+        return f"FlagAttempt(User: {self.user_id}, Challenge: {self.challenge_id}, Correct: {self.is_correct})"
+
 class Setting(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(64), unique=True, nullable=False)
