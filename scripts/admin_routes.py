@@ -365,6 +365,32 @@ def analytics():
     solved_dates = [str(date) for date, _ in challenges_solved_over_time]
     solved_counts = [count for _, count in challenges_solved_over_time]
 
+    # Data for Challenge Points Over Time Chart (Cumulative Score)
+    # Get all submissions ordered by timestamp
+    all_submissions_ordered = Submission.query.order_by(Submission.timestamp).all()
+
+    cumulative_scores = {}
+    current_cumulative_score = 0
+    
+    for submission in all_submissions_ordered:
+        # Assuming score_at_submission is the score of the challenge itself
+        # For cumulative, we need to sum up points of solved challenges
+        # This requires re-calculating cumulative score based on challenge points
+        # Or, if score_at_submission is already cumulative, use that.
+        # Let's assume score_at_submission is the score of the challenge itself,
+        # and we need to sum it up.
+        
+        # Find the challenge to get its points
+        challenge_points = Challenge.query.get(submission.challenge_id).points
+        current_cumulative_score += challenge_points
+        
+        date_key = submission.timestamp.strftime('%Y-%m-%d')
+        cumulative_scores[date_key] = current_cumulative_score # Store the latest cumulative score for this date
+
+    # Convert to lists for Chart.js
+    cumulative_points_dates = sorted(cumulative_scores.keys())
+    cumulative_points_values = [cumulative_scores[date] for date in cumulative_points_dates]
+
     # Data for Fails vs Succeeds
     total_successful_flag_attempts = db.session.query(func.count(FlagAttempt.id)).filter_by(is_correct=True).scalar()
     total_failed_flag_attempts = db.session.query(func.count(FlagAttempt.id)).filter_by(is_correct=False).scalar()
@@ -397,10 +423,9 @@ def analytics():
     solved_submissions = Submission.query.all()
     solved_map = {(s.user_id, s.challenge_id) for s in solved_submissions}
 
-    # Get all flag attempts (correct or incorrect)
-    all_flag_attempts = FlagAttempt.query.all()
-    # Create a set of (user_id, challenge_id) for all attempts
-    attempted_map = {(fa.user_id, fa.challenge_id) for fa in all_flag_attempts}
+    # Get all flag attempts that were unsuccessful
+    unsuccessful_flag_attempts = FlagAttempt.query.filter_by(is_correct=False).all()
+    unsuccessful_attempt_map = {(fa.user_id, fa.challenge_id) for fa in unsuccessful_flag_attempts}
 
     # Build the matrix
     user_challenge_status = {} # {user_id: {challenge_id: 'solved'/'attempted'/'none'}}
@@ -410,7 +435,7 @@ def analytics():
         for challenge in all_challenges:
             if (user.id, challenge.id) in solved_map:
                 user_challenge_status[user.id][challenge.id] = 'solved'
-            elif (user.id, challenge.id) in attempted_map:
+            elif (user.id, challenge.id) in unsuccessful_attempt_map:
                 # Only mark as 'attempted' if not already 'solved'
                 user_challenge_status[user.id][challenge.id] = 'attempted'
             else:
@@ -428,6 +453,8 @@ def analytics():
                            fails_succeeds_values=fails_succeeds_values,
                            challenge_solve_labels=challenge_solve_labels,
                            challenge_solve_values=challenge_solve_values,
+                           cumulative_points_dates=cumulative_points_dates,
+                           cumulative_points_values=cumulative_points_values,
                            all_users=all_users,
                            all_challenges=all_challenges,
                            user_challenge_status=user_challenge_status)

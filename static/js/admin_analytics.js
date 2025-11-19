@@ -108,11 +108,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     },
                     title: {
-                        display: true,
+                        display: false, // Hide title
                         text: 'Date',
                         color: 'white'
                     },
                     ticks: {
+                        display: false, // Hide ticks
                         color: 'white'
                     }
                 },
@@ -204,6 +205,74 @@ document.addEventListener('DOMContentLoaded', function() {
                     title: {
                         display: true,
                         text: 'Challenge',
+                        color: 'white'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                }
+            }
+        }
+    });
+
+    // Data for Challenge Points Over Time Chart
+    const challengePointsOverTimeCanvas = document.getElementById('challengePointsOverTimeChart');
+    const cumulativePointsDates = flaskCumulativePointsDates; // Access global variable
+    const cumulativePointsValues = flaskCumulativePointsValues; // Access global variable
+    const challengePointsOverTimeCtx = challengePointsOverTimeCanvas.getContext('2d');
+
+    new Chart(challengePointsOverTimeCtx, {
+        type: 'line',
+        interaction: {
+            mode: 'nearest',
+            intersect: false,
+            hitRadius: 20
+        },
+        data: {
+            labels: cumulativePointsDates,
+            datasets: [{
+                label: 'Cumulative Score',
+                data: cumulativePointsValues,
+                borderColor: '#FFCE56', // A distinct color
+                backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: 'white'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'day',
+                        tooltipFormat: 'MMM d, yyyy',
+                        displayFormats: {
+                            day: 'MMM d'
+                        }
+                    },
+                    title: {
+                        display: false, // Hide title
+                        text: 'Date',
+                        color: 'white'
+                    },
+                    ticks: {
+                        display: false, // Hide ticks
+                        color: 'white'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Cumulative Score',
                         color: 'white'
                     },
                     ticks: {

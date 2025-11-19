@@ -4,24 +4,27 @@
 <h1 class="text-3xl font-bold mb-6 text-white">Admin Analytics</h1>
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover-expand-card">
         <h2 class="text-xl font-semibold mb-4 text-white">Points Distribution by Category</h2>
         <canvas id="categoryPointsChart"></canvas>
     </div>
 
-    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover-expand-card">
         <h2 class="text-xl font-semibold mb-4 text-white">Points Distribution by User</h2>
         <canvas id="userPointsChart"></canvas>
     </div>
 </div>
 
 <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover-expand-card">
         <h2 class="text-xl font-semibold mb-4 text-white">Challenges Solved Over Time</h2>
         <canvas id="challengesSolvedChart"></canvas>
+
+        <h2 class="text-xl font-semibold mt-8 mb-4 text-white">Score from Challenges Over Time</h2>
+        <canvas id="challengePointsOverTimeChart"></canvas>
     </div>
 
-    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover-expand-card">
         <h2 class="text-xl font-semibold mb-4 text-white">Fails vs Succeeds</h2>
         <canvas id="failsSucceedsChart"></canvas>
     </div>
@@ -80,6 +83,8 @@
     const flaskFailsSucceedsValues = {{ fails_succeeds_values | tojson }};
     const flaskChallengeSolveLabels = {{ challenge_solve_labels | tojson }};
     const flaskChallengeSolveValues = {{ challenge_solve_values | tojson }};
+    const flaskCumulativePointsDates = {{ cumulative_points_dates | tojson }};
+    const flaskCumulativePointsValues = {{ cumulative_points_values | tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/admin_analytics.js') }}"></script>
 {% endblock %}

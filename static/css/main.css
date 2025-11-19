@@ -16,3 +16,13 @@ body {
 .completed-challenge:hover {
     background-color: #2d3748; /* Slightly darker on hover */
 }
+/* Hover effect for analytics cards */
+.hover-expand-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.hover-expand-card:hover {
+    transform: scale(1.04);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Larger shadow */
+    z-index: 10; /* Bring hovered card to front */
+}
