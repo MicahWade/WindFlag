@@ -67,6 +67,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     new Chart(challengesSolvedCtx, {
         type: 'line',
+        interaction: {
+            mode: 'nearest',
+            intersect: false, // Allow tooltip to activate when near a data point
+            hitRadius: 20 // Increased hit radius for tooltip activation
+        },
+        interaction: {
+            mode: 'nearest',
+            intersect: false, // Allow tooltip to activate when near a data point
+            hitRadius: 20 // Increased hit radius for tooltip activation
+        },
         data: {
             labels: solvedDates,
             datasets: [{

@@ -11,9 +11,9 @@
     <link rel="shortcut icon" href="{{ url_for('static', filename='icon/favicon.ico') }}">
     <meta name="theme-color" content="#ffffff">
     {% if title %}
-        <title>WindFlag - {{ title }}</title>
+        <title>{{ config['APP_NAME'] }} - {{ title }}</title>
     {% else %}
-        <title>WindFlag</title>
+        <title>{{ config['APP_NAME'] }}</title>
     {% endif %}
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
@@ -40,7 +40,7 @@
 <body class="bg-gray-900 text-gray-200 leading-normal tracking-normal">
     <header class="bg-gray-950 p-4 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
-            <a class="text-white text-xl font-bold" href="{% if current_user.is_authenticated %}{{ url_for('challenges') }}{% else %}/{% endif %}">WindFlag</a>
+            <a class="text-white text-xl font-bold" href="{% if current_user.is_authenticated %}{{ url_for('challenges') }}{% else %}/{% endif %}">{{ config['APP_NAME'] }}</a>
             <nav class="space-x-4">
                 {% if current_user.is_authenticated %}
                     <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('challenges') }}">Challenges</a>

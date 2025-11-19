@@ -21,6 +21,7 @@ def create_app(config_class=Config):
     # Load environment variables from .env file in the project root
     load_dotenv(os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), '.env'))
     app.config.from_object(config_class)
+    app.config['APP_NAME'] = os.getenv('APP_NAME', 'WindFlag') # Add this line
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.unauthorized_handler(lambda: redirect(url_for('home')))
