@@ -16,26 +16,7 @@
         <title>{{ config['APP_NAME'] }}</title>
     {% endif %}
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <style>
-        body {
-            font-family: 'Raleway', sans-serif;
-        }
-        /* Basic Modal Overlay */
-        #challengeModal {
-            z-index: 1000; /* Ensure modal is on top */
-            /* Temporary diagnostic style */
-            background-color: rgba(0, 0, 0, 0.75) !important; /* Even darker black, 75% opacity */
-        }
-        /* Completed Challenge Styling */
-        .completed-challenge {
-            background-color: #1a202c; /* Darker background for completed challenges */
-            border: 1px solid #2d3748; /* Darker border */
-            color: #a0aec0; /* Lighter text color */
-        }
-        .completed-challenge:hover {
-            background-color: #2d3748; /* Slightly darker on hover */
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 <body class="bg-gray-900 text-gray-200 leading-normal tracking-normal">
     <header class="bg-gray-950 p-4 shadow-lg">
