@@ -144,9 +144,82 @@ def create_app(config_class=Config):
             give_award_form = InlineGiveAwardForm()
             give_award_form.category.choices = [(ac.id, ac.name) for ac in AwardCategory.query.order_by(AwardCategory.name).all()]
 
+        # --- Chart Data Generation ---
+        profile_charts_data = {}
+
+        # 1. Points Over Time Chart
+        if get_setting('PROFILE_POINTS_OVER_TIME_CHART_ENABLED', 'True').lower() == 'true':
+            points_over_time_data = []
+            cumulative_score = 0
+            # Get all submissions for the target user, ordered by timestamp
+            submissions_for_chart = Submission.query.filter_by(user_id=target_user.id).order_by(Submission.timestamp.asc()).all()
+            
+            if submissions_for_chart:
+                # Add an initial 0 score point slightly before the first submission
+                initial_timestamp = submissions_for_chart[0].timestamp - timedelta(microseconds=1)
+                points_over_time_data.append({'x': initial_timestamp.isoformat(), 'y': 0})
+
+                for submission in submissions_for_chart:
+                    cumulative_score += submission.challenge_rel.points
+                    points_over_time_data.append({'x': submission.timestamp.isoformat(), 'y': cumulative_score})
+            else:
+                # If no submissions, just a single 0 score point at current time
+                points_over_time_data.append({'x': datetime.now(UTC).isoformat(), 'y': 0})
+            
+            profile_charts_data['points_over_time'] = points_over_time_data
+
+        # 2. Fails vs. Succeeds Chart
+        if get_setting('PROFILE_FAILS_VS_SUCCEEDS_CHART_ENABLED', 'True').lower() == 'true':
+            successful_attempts = FlagAttempt.query.filter_by(user_id=target_user.id, is_correct=True).count()
+            failed_attempts = FlagAttempt.query.filter_by(user_id=target_user.id, is_correct=False).count()
+            profile_charts_data['fails_vs_succeeds'] = {
+                'labels': ['Succeeds', 'Fails'],
+                'values': [successful_attempts, failed_attempts]
+            }
+
+        # 3. Categories per Score Chart
+        if get_setting('PROFILE_CATEGORIES_PER_SCORE_CHART_ENABLED', 'True').lower() == 'true':
+            category_scores = db.session.query(
+                Category.name,
+                func.sum(Challenge.points)
+            ).join(Challenge, Category.id == Challenge.category_id)\
+             .join(Submission, Challenge.id == Submission.challenge_id)\
+             .filter(Submission.user_id == target_user.id)\
+             .group_by(Category.name)\
+             .all()
+            
+            category_labels = [cs[0] for cs in category_scores]
+            category_values = [cs[1] for cs in category_scores]
+            profile_charts_data['categories_per_score'] = {
+                'labels': category_labels,
+                'values': category_values
+            }
+
+        # 4. Challenges Complete Chart (Cumulative count of solved challenges over time)
+        if get_setting('PROFILE_CHALLENGES_COMPLETE_CHART_ENABLED', 'True').lower() == 'true':
+            challenges_complete_data = []
+            cumulative_count = 0
+            submissions_for_count_chart = Submission.query.filter_by(user_id=target_user.id).order_by(Submission.timestamp.asc()).all()
+
+            if submissions_for_count_chart:
+                # Add an initial 0 count point slightly before the first submission
+                initial_timestamp = submissions_for_count_chart[0].timestamp - timedelta(microseconds=1)
+                challenges_complete_data.append({'x': initial_timestamp.isoformat(), 'y': 0})
+
+                for submission in submissions_for_count_chart:
+                    cumulative_count += 1
+                    challenges_complete_data.append({'x': submission.timestamp.isoformat(), 'y': cumulative_count})
+            else:
+                # If no submissions, just a single 0 count point at current time
+                challenges_complete_data.append({'x': datetime.now(UTC).isoformat(), 'y': 0})
+            
+            profile_charts_data['challenges_complete'] = challenges_complete_data
+
+
         return render_template('profile.html', title=f"{target_user.username}'s Profile",
                                user=target_user, submissions=user_submissions, user_rank=user_rank,
-                               give_award_form=give_award_form)
+                               give_award_form=give_award_form,
+                               profile_charts_data=profile_charts_data)
 
     @app.route('/challenges')
     @login_required

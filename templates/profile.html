@@ -110,6 +110,62 @@
         </div>
         {% endif %}
 
+        <div class="col-12 mt-4">
+            {% if profile_charts_data.points_over_time %}
+            <div id="pointsOverTimeChartContainer" class="card bg-dark text-white shadow-lg mb-4">
+                <div class="card-header bg-secondary text-center">
+                    <h3 class="card-title mb-0">Points Over Time</h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="pointsOverTimeChart" style="max-height: 300px;"></canvas>
+                    <script type="application/json" id="points-over-time-data">{{ profile_charts_data.points_over_time | tojson }}</script>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="flex flex-wrap -mx-4"> {# New flex container for side-by-side charts #}
+                {% if profile_charts_data.fails_vs_succeeds %}
+                <div class="w-full lg:w-1/2 px-4"> {# Half width on large screens #}
+                    <div id="failsVsSucceedsChartContainer" class="card bg-dark text-white shadow-lg mb-4 chart-hover-scale">
+                        <div class="card-header bg-secondary text-center">
+                            <h3 class="card-title mb-0">Flag Attempts: Succeeds vs. Fails</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="failsVsSucceedsChart" style="max-height: 300px;"></canvas>
+                            <script type="application/json" id="fails-vs-succeeds-data">{{ profile_charts_data.fails_vs_succeeds | tojson }}</script>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if profile_charts_data.categories_per_score %}
+                <div class="w-full lg:w-1/2 px-4"> {# Half width on large screens #}
+                    <div id="categoriesPerScoreChartContainer" class="card bg-dark text-white shadow-lg mb-4 chart-hover-scale">
+                        <div class="card-header bg-secondary text-center">
+                            <h3 class="card-title mb-0">Points per Category</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="categoriesPerScoreChart" style="max-height: 300px;"></canvas>
+                            <script type="application/json" id="categories-per-score-data">{{ profile_charts_data.categories_per_score | tojson }}</script>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div> {# End flex container #}
+
+            {% if profile_charts_data.challenges_complete %}
+            <div id="challengesCompleteChartContainer" class="card bg-dark text-white shadow-lg mb-4">
+                <div class="card-header bg-secondary text-center">
+                    <h3 class="card-title mb-0">Challenges Solved Over Time</h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="challengesCompleteChart" style="max-height: 300px;"></canvas>
+                    <script type="application/json" id="challenges-complete-data">{{ profile_charts_data.challenges_complete | tojson }}</script>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
 
         </div>
     </div>
@@ -160,4 +216,7 @@
         modal.classList.toggle('hidden');
     }
 </script>
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/profile_charts.js') }}"></script>
+{% endblock scripts %}
 {% endblock %}

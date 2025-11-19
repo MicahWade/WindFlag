@@ -129,6 +129,13 @@ class AdminSettingsForm(FlaskForm):
                                         choices=[('line', 'Line Graph'), ('area', 'Area Graph')],
                                         validators=[DataRequired()],
                                         default='line')
+    
+    # New fields for profile chart toggles
+    profile_points_over_time_chart_enabled = BooleanField('Enable "Points Over Time" Chart on Profile', default=True)
+    profile_fails_vs_succeeds_chart_enabled = BooleanField('Enable "Fails vs. Succeeds" Chart on Profile', default=True)
+    profile_categories_per_score_chart_enabled = BooleanField('Enable "Categories per Score" Chart on Profile', default=True)
+    profile_challenges_complete_chart_enabled = BooleanField('Enable "Challenges Complete" Chart on Profile', default=True)
+
     submit = SubmitField('Save Settings')
 
 class AwardCategoryForm(FlaskForm):

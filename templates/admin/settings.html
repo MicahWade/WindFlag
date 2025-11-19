@@ -30,6 +30,26 @@
                     {{ form.scoreboard_graph_type(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
                 {% endif %}
             </div>
+
+            <h2 class="text-xl font-bold text-gray-100 mb-4 mt-6">Profile Page Chart Settings</h2>
+
+            <div class="mb-4 flex items-center">
+                {{ form.profile_points_over_time_chart_enabled(class="form-checkbox h-5 w-5 text-blue-600") }}
+                {{ form.profile_points_over_time_chart_enabled.label(class="ml-2 block text-gray-300 text-sm font-bold") }}
+            </div>
+            <div class="mb-4 flex items-center">
+                {{ form.profile_fails_vs_succeeds_chart_enabled(class="form-checkbox h-5 w-5 text-blue-600") }}
+                {{ form.profile_fails_vs_succeeds_chart_enabled.label(class="ml-2 block text-gray-300 text-sm font-bold") }}
+            </div>
+            <div class="mb-4 flex items-center">
+                {{ form.profile_categories_per_score_chart_enabled(class="form-checkbox h-5 w-5 text-blue-600") }}
+                {{ form.profile_categories_per_score_chart_enabled.label(class="ml-2 block text-gray-300 text-sm font-bold") }}
+            </div>
+            <div class="mb-4 flex items-center">
+                {{ form.profile_challenges_complete_chart_enabled(class="form-checkbox h-5 w-5 text-blue-600") }}
+                {{ form.profile_challenges_complete_chart_enabled.label(class="ml-2 block text-gray-300 text-sm font-bold") }}
+            </div>
+
             <div class="flex items-center justify-between">
                 {{ form.submit(class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline shadow-md transform hover:scale-105 transition duration-300 ease-in-out") }}
             </div>

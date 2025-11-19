@@ -46,12 +46,48 @@ def admin_settings():
             setting_graph_type = Setting(key='SCOREBOARD_GRAPH_TYPE', value=graph_type_val)
             db.session.add(setting_graph_type)
 
+        # Save PROFILE_POINTS_OVER_TIME_CHART_ENABLED setting
+        setting_ppot = Setting.query.filter_by(key='PROFILE_POINTS_OVER_TIME_CHART_ENABLED').first()
+        if setting_ppot:
+            setting_ppot.value = str(form.profile_points_over_time_chart_enabled.data)
+        else:
+            setting_ppot = Setting(key='PROFILE_POINTS_OVER_TIME_CHART_ENABLED', value=str(form.profile_points_over_time_chart_enabled.data))
+            db.session.add(setting_ppot)
+
+        # Save PROFILE_FAILS_VS_SUCCEEDS_CHART_ENABLED setting
+        setting_pfvs = Setting.query.filter_by(key='PROFILE_FAILS_VS_SUCCEEDS_CHART_ENABLED').first()
+        if setting_pfvs:
+            setting_pfvs.value = str(form.profile_fails_vs_succeeds_chart_enabled.data)
+        else:
+            setting_pfvs = Setting(key='PROFILE_FAILS_VS_SUCCEEDS_CHART_ENABLED', value=str(form.profile_fails_vs_succeeds_chart_enabled.data))
+            db.session.add(setting_pfvs)
+
+        # Save PROFILE_CATEGORIES_PER_SCORE_CHART_ENABLED setting
+        setting_pcps = Setting.query.filter_by(key='PROFILE_CATEGORIES_PER_SCORE_CHART_ENABLED').first()
+        if setting_pcps:
+            setting_pcps.value = str(form.profile_categories_per_score_chart_enabled.data)
+        else:
+            setting_pcps = Setting(key='PROFILE_CATEGORIES_PER_SCORE_CHART_ENABLED', value=str(form.profile_categories_per_score_chart_enabled.data))
+            db.session.add(setting_pcps)
+
+        # Save PROFILE_CHALLENGES_COMPLETE_CHART_ENABLED setting
+        setting_pcc = Setting.query.filter_by(key='PROFILE_CHALLENGES_COMPLETE_CHART_ENABLED').first()
+        if setting_pcc:
+            setting_pcc.value = str(form.profile_challenges_complete_chart_enabled.data)
+        else:
+            setting_pcc = Setting(key='PROFILE_CHALLENGES_COMPLETE_CHART_ENABLED', value=str(form.profile_challenges_complete_chart_enabled.data))
+            db.session.add(setting_pcc)
+
         db.session.commit()
         flash('Settings updated successfully!', 'success')
         return redirect(url_for('admin.admin_settings'))
     elif request.method == 'GET':
         form.top_x_scoreboard.data = int(get_setting('TOP_X_SCOREBOARD', '10'))
         form.scoreboard_graph_type.data = get_setting('SCOREBOARD_GRAPH_TYPE', 'line')
+        form.profile_points_over_time_chart_enabled.data = get_setting('PROFILE_POINTS_OVER_TIME_CHART_ENABLED', 'True').lower() == 'true'
+        form.profile_fails_vs_succeeds_chart_enabled.data = get_setting('PROFILE_FAILS_VS_SUCCEEDS_CHART_ENABLED', 'True').lower() == 'true'
+        form.profile_categories_per_score_chart_enabled.data = get_setting('PROFILE_CATEGORIES_PER_SCORE_CHART_ENABLED', 'True').lower() == 'true'
+        form.profile_challenges_complete_chart_enabled.data = get_setting('PROFILE_CHALLENGES_COMPLETE_CHART_ENABLED', 'True').lower() == 'true'
     return render_template('admin/settings.html', title='Admin Settings', form=form)
 
 # Category CRUD
