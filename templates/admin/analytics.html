@@ -15,9 +15,16 @@
     </div>
 </div>
 
-<div class="mt-6 bg-gray-800 p-6 rounded-lg shadow-lg">
-    <h2 class="text-xl font-semibold mb-4 text-white">Challenges Solved Over Time</h2>
-    <canvas id="challengesSolvedChart"></canvas>
+<div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+        <h2 class="text-xl font-semibold mb-4 text-white">Challenges Solved Over Time</h2>
+        <canvas id="challengesSolvedChart"></canvas>
+    </div>
+
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+        <h2 class="text-xl font-semibold mb-4 text-white">Fails vs Succeeds</h2>
+        <canvas id="failsSucceedsChart"></canvas>
+    </div>
 </div>
 
 <script>
@@ -134,6 +141,36 @@
                             color: 'white'
                         },
                         ticks: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Data for Fails vs Succeeds Chart
+        const failsSucceedsLabels = {{ fails_succeeds_labels | tojson }};
+        const failsSucceedsValues = {{ fails_succeeds_values | tojson }};
+
+        const failsSucceedsCtx = document.getElementById('failsSucceedsChart').getContext('2d');
+        new Chart(failsSucceedsCtx, {
+            type: 'pie',
+            data: {
+                labels: failsSucceedsLabels,
+                datasets: [{
+                    data: failsSucceedsValues,
+                    backgroundColor: [
+                        '#4CAF50', // Green for Succeeds
+                        '#F44336'  // Red for Fails
+                    ],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
                             color: 'white'
                         }
                     }

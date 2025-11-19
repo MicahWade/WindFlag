@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
 from scripts.extensions import db, get_setting
-from scripts.models import Category, Challenge, Submission, User, Setting, ChallengeFlag, AwardCategory, Award # Import ChallengeFlag, AwardCategory, Award
+from scripts.models import Category, Challenge, Submission, User, Setting, ChallengeFlag, FlagSubmission, AwardCategory, Award # Import ChallengeFlag, AwardCategory, Award
 from scripts.forms import CategoryForm, ChallengeForm, AdminSettingsForm, AwardCategoryForm, InlineGiveAwardForm
 from functools import wraps
 from sqlalchemy import func
@@ -365,6 +365,23 @@ def analytics():
     solved_dates = [str(date) for date, _ in challenges_solved_over_time]
     solved_counts = [count for _, count in challenges_solved_over_time]
 
+    # Data for Fails vs Succeeds
+    total_successful_submissions = db.session.query(func.count(Submission.id)).scalar()
+    total_flag_submissions = db.session.query(func.count(FlagSubmission.id)).scalar()
+
+    # Calculate fails as flag submissions that didn't result in a successful challenge solve
+    # This is an approximation given the current schema.
+    fails_count = total_flag_submissions - total_successful_submissions
+    if fails_count < 0: # Should not happen, but for safety
+        fails_count = 0
+
+    # Ensure successful submissions are not negative
+    if total_successful_submissions < 0:
+        total_successful_submissions = 0
+
+    fails_succeeds_labels = ['Succeeds', 'Fails']
+    fails_succeeds_values = [total_successful_submissions, fails_count]
+
     return render_template('admin/analytics.html', 
                            title='Admin Analytics',
                            category_labels=category_labels,
@@ -372,4 +389,6 @@ def analytics():
                            user_labels=user_labels,
                            user_values=user_values,
                            solved_dates=solved_dates,
-                           solved_counts=solved_counts)
+                           solved_counts=solved_counts,
+                           fails_succeeds_labels=fails_succeeds_labels,
+                           fails_succeeds_values=fails_succeeds_values)
