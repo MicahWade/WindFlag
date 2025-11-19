@@ -32,7 +32,7 @@ def seed_database():
     
     # New: Create 'test' admin user
     test_admin_password = bcrypt.generate_password_hash("test").decode('utf-8')
-    test_admin = User(username="test", email="test@example.com", password_hash=test_admin_password, is_admin=True, hidden=True, score=0)
+    test_admin = User(username="test", email="test@example.com", password_hash=test_admin_password, is_admin=True, is_super_admin=True, hidden=True, score=0)
 
     db.session.add_all([admin1, admin2, test_admin]) # Add test_admin
     db.session.commit()

@@ -204,7 +204,8 @@ def view_submissions():
 @admin_required
 def manage_users():
     users = User.query.order_by(User.id.asc()).all()
-    return render_template('admin/manage_users.html', title='Manage Users', users=users)
+    users_super_admin_status = {user.id: user.is_super_admin for user in users}
+    return render_template('admin/manage_users.html', title='Manage Users', users=users, is_current_user_super_admin=current_user.is_super_admin, users_super_admin_status=users_super_admin_status)
 
 @admin_bp.route('/user/<int:user_id>/toggle_hidden', methods=['POST'])
 @admin_required
@@ -218,9 +219,17 @@ def toggle_user_hidden(user_id):
 @admin_bp.route('/user/<int:user_id>/toggle_admin', methods=['POST'])
 @admin_required
 def toggle_user_admin(user_id):
+    if not current_user.is_super_admin: # Only super admins can toggle admin status
+        flash('You do not have permission to change admin status.', 'danger')
+        return redirect(url_for('admin.manage_users'))
+
     user = User.query.get_or_404(user_id)
     if user.id == current_user.id:
         flash('You cannot change your own admin status.', 'danger')
+    elif user.is_super_admin and user.is_admin and not current_user.is_super_admin: # A super admin's admin status cannot be revoked by a non-super admin
+        flash('You cannot revoke admin status from a Super Admin.', 'danger')
+    elif user.is_super_admin and not current_user.is_super_admin: # A super admin's admin status cannot be changed by a non-super admin
+        flash('Only Super Admins can manage other Super Admins\' status.', 'danger')
     else:
         user.is_admin = not user.is_admin
         # If a user is made admin, they should be hidden by default

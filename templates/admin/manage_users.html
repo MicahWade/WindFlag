@@ -28,12 +28,12 @@
             </thead>
             <tbody>
                 {% for user in users %}
-                    <tr class="user-row cursor-pointer hover:bg-gray-700" data-user-id="{{ user.id }}" data-is-admin="{{ 'true' if user.is_admin else 'false' }}" data-is-hidden="{{ 'true' if user.hidden else 'false' }}">
+                    <tr class="user-row cursor-pointer hover:bg-gray-700" data-user-id="{{ user.id }}" data-is-admin="{{ 'true' if user.is_admin else 'false' }}" data-is-super-admin="{{ 'true' if user.is_super_admin else 'false' }}" data-is-hidden="{{ 'true' if user.hidden else 'false' }}">
                         <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
                             <p class="text-gray-200 whitespace-no-wrap">{{ user.id }}</p>
                         </td>
                         <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
-                            <p class="text-gray-200 whitespace-no-wrap">{{ user.username }}</p>
+                            <p class="text-gray-200 whitespace-no-wrap">{{ user.username }} {% if user.is_super_admin %}<span class="text-purple-400">(Super)</span>{% endif %}</p>
                         </td>
                         <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
                             <p class="text-gray-200 whitespace-no-wrap">{{ user.email if user.email else 'N/A' }}</p>
@@ -80,11 +80,17 @@
             const toggleAdminButton = document.getElementById('toggle-admin-button');
             let currentUserId = null;
 
+            // Pass current user's super admin status from Flask
+            const isCurrentUserSuperAdmin = {{ is_current_user_super_admin | tojson }};
+            const usersSuperAdminStatus = {{ users_super_admin_status | tojson }}; // New: Map of user_id to is_super_admin
+
             userRows.forEach(row => {
                 row.addEventListener('click', function(event) {
                     event.stopPropagation(); // Prevent document click from immediately closing
                     currentUserId = this.dataset.userId;
                     const isAdmin = this.dataset.isAdmin === 'true';
+                    // Get target user's super admin status from the passed map
+                    const isTargetUserSuperAdmin = usersSuperAdminStatus[currentUserId];
                     const isHidden = this.dataset.isHidden === 'true';
 
                     // Update hidden toggle button
@@ -94,6 +100,21 @@
                     // Update admin toggle button
                     toggleAdminForm.action = `/admin/user/${currentUserId}/toggle_admin`;
                     toggleAdminButton.textContent = isAdmin ? 'Revoke Admin' : 'Make Admin';
+
+                    // Admin status toggle logic
+                    if (currentUserId == {{ current_user.id | tojson }}) { // Cannot change own admin status
+                        toggleAdminButton.disabled = true;
+                        toggleAdminButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    } else if (!isCurrentUserSuperAdmin) { // Only super admins can toggle admin status
+                        toggleAdminButton.disabled = true;
+                        toggleAdminButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    } else if (isTargetUserSuperAdmin && isAdmin) { // Super admin cannot revoke admin status from another super admin via UI
+                        toggleAdminButton.disabled = true;
+                        toggleAdminButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        toggleAdminButton.disabled = false;
+                        toggleAdminButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
 
                     // Position and show dropdown
                     const rect = this.getBoundingClientRect();

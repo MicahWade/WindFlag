@@ -13,6 +13,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=True)
     password_hash = db.Column(db.String(128), nullable=False)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
+    is_super_admin = db.Column(db.Boolean, nullable=False, default=False) # New field
     hidden = db.Column(db.Boolean, nullable=False, default=False)
     last_seen = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
     score = db.Column(db.Integer, nullable=False, default=0)

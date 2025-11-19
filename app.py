@@ -350,16 +350,17 @@ def create_admin(username, password):
     with create_app().app_context():
         from scripts.models import User
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        admin = User(username=username, email=None, password_hash=hashed_password, is_admin=True, hidden=True)
+        admin = User(username=username, email=None, password_hash=hashed_password, is_admin=True, is_super_admin=True, hidden=True)
         db.session.add(admin)
         db.session.commit()
-        print(f"Admin user with username {username} created successfully.")
+        print(f"Super Admin user with username {username} created successfully.")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='WindFlag CTF Platform', add_help=False)
     parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                         help='Show this help message and exit.')
     parser.add_argument('-admin', nargs=2, metavar=('USERNAME', 'PASSWORD'), help='Create an admin user')
+    parser.add_argument('-admin-r', type=str, metavar='USERNAME', help='Remove a super admin user. Only super admins can be removed this way.') # New argument
     parser.add_argument('-test', nargs='?', type=int, const=1800, help='Run the server in test mode with an optional timeout in seconds (default: 1800)')
     args = parser.parse_args()
 
@@ -383,8 +384,20 @@ if __name__ == '__main__':
             print(f"Database '{db_path}' created successfully.")
 
     if args.admin:
-        # If -admin is used, just create the admin and exit
         create_admin(args.admin[0], args.admin[1])
+    elif args.admin_r: # New conditional for removing super admin
+        with app.app_context():
+            from scripts.models import User
+            user_to_remove = User.query.filter_by(username=args.admin_r).first()
+            if user_to_remove:
+                if user_to_remove.is_super_admin:
+                    db.session.delete(user_to_remove)
+                    db.session.commit()
+                    print(f"Super Admin user {args.admin_r} removed successfully.")
+                else:
+                    print(f"Error: User {args.admin_r} is not a Super Admin. Only Super Admins can be removed this way.")
+            else:
+                print(f"Error: User {args.admin_r} not found.")
     else:
         # Otherwise, run the Flask app
         if args.test is not None:
