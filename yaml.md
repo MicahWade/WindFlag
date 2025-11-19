@@ -70,6 +70,66 @@ python app.py -y path/to/your/challenges.yaml
 *   Categories will be created automatically if they do not exist.
 *   Ensure your YAML file is correctly formatted to avoid parsing errors.
 
+## Importing Users from JSON
+
+You can import user accounts from a JSON file using the `-users` or `-u` command-line argument.
+
+### JSON File Format
+
+The JSON file should contain a list of user objects. Each user object must have at least `username` and `password` keys.
+
+*   **`username`** (string, required): The unique username for the user.
+*   **`password`** (string, required): The plain-text password for the user. This will be hashed upon import.
+*   **`email`** (string, optional): The user's email address.
+*   **`is_admin`** (boolean, optional): Set to `true` if the user should be an administrator. Defaults to `false`.
+*   **`is_super_admin`** (boolean, optional): Set to `true` if the user should be a super administrator. Defaults to `false`.
+*   **`hidden`** (boolean, optional): Set to `true` if the user should be hidden from the scoreboard. Defaults to `false`.
+
+### Example JSON
+
+```json
+[
+  {
+    "username": "newuser1",
+    "email": "newuser1@example.com",
+    "password": "password123",
+    "is_admin": false,
+    "is_super_admin": false,
+    "hidden": false
+  },
+  {
+    "username": "admin_json",
+    "email": "admin_json@example.com",
+    "password": "adminpassword",
+    "is_admin": true,
+    "is_super_admin": false,
+    "hidden": true
+  },
+  {
+    "username": "superadmin_json",
+    "email": "superadmin_json@example.com",
+    "password": "superadminpassword",
+    "is_admin": true,
+    "is_super_admin": true,
+    "hidden": true
+  }
+]
+```
+
+### How to Import Users
+
+To import users from a JSON file, use the `-users` or `-u` command-line argument when running `app.py`, followed by the path to your JSON file:
+
+```bash
+python app.py -users path/to/your/users.json
+# or
+python app.py -u path/to/your/users.json
+```
+
+**Important Notes:**
+*   If a user with the same `username` already exists in the database, they will be skipped.
+*   Ensure your JSON file is correctly formatted to avoid parsing errors.
+
 ## Exporting Data to YAML
 
 You can export various types of data from the database to a YAML file using the `-export-yaml` or `-e` command-line argument.

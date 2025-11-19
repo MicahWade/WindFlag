@@ -34,7 +34,9 @@
                 {% else %}
                     <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('home') }}">Home</a>
                     <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('login') }}">Login</a>
-                    <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('register') }}">Register</a>
+                    {% if not disable_signup %}
+                        <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('register') }}">Register</a>
+                    {% endif %}
                 {% endif %}
             </nav>
         </div>

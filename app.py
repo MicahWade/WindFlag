@@ -33,6 +33,10 @@ def create_app(config_class=Config):
 
     app.register_blueprint(admin_bp) # Register admin blueprint
 
+    @app.context_processor
+    def inject_global_config():
+        return dict(disable_signup=app.config['DISABLE_SIGNUP'])
+
     @app.route('/')
     @app.route('/home')
     def home():
@@ -42,6 +46,9 @@ def create_app(config_class=Config):
 
     @app.route('/register', methods=['GET', 'POST'])
     def register():
+        if app.config['DISABLE_SIGNUP']:
+            flash('User registration is currently disabled.', 'info')
+            return redirect(url_for('home'))
         if current_user.is_authenticated:
             return redirect(url_for('home'))
         # Pass app.config to the RegistrationForm to allow dynamic field validation
@@ -445,6 +452,49 @@ def export_data_to_yaml(output_file_path, data_type='all'):
         except IOError as e:
             print(f"Error writing to file {output_file_path}: {e}")
 
+def import_users_from_json(json_file_path):
+    with create_app().app_context():
+        from scripts.models import User
+        try:
+            with open(json_file_path, 'r') as f:
+                users_data = json.load(f)
+        except FileNotFoundError:
+            print(f"Error: JSON file not found at {json_file_path}")
+            return
+        except json.JSONDecodeError as e:
+            print(f"Error parsing JSON file: {e}")
+            return
+
+        if not isinstance(users_data, list):
+            print("Error: JSON file must contain a list of user objects.")
+            return
+
+        for user_data in users_data:
+            username = user_data.get('username')
+            password = user_data.get('password')
+            if not username or not password:
+                print(f"Skipping user: 'username' and 'password' are required. Data: {user_data}")
+                continue
+
+            existing_user = User.query.filter_by(username=username).first()
+            if existing_user:
+                print(f"Warning: User '{username}' already exists. Skipping import.")
+                continue
+
+            hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+            user = User(
+                username=username,
+                email=user_data.get('email'),
+                password_hash=hashed_password,
+                is_admin=user_data.get('is_admin', False),
+                is_super_admin=user_data.get('is_super_admin', False),
+                hidden=user_data.get('hidden', False)
+            )
+            db.session.add(user)
+            db.session.commit()
+            print(f"User '{username}' imported successfully.")
+        print("User import process completed.")
+
 def import_challenges_from_yaml(yaml_file_path):
     with create_app().app_context():
         from scripts.models import Category, Challenge, ChallengeFlag
@@ -521,7 +571,8 @@ if __name__ == '__main__':
     parser.add_argument('-admin', nargs=2, metavar=('USERNAME', 'PASSWORD'), help='Create an admin user')
     parser.add_argument('-admin-r', type=str, metavar='USERNAME', help='Remove a super admin user. Only super admins can be removed this way.')
     parser.add_argument('-yaml', '-y', type=str, metavar='YAML_FILE', help='Import challenges from a YAML file.')
-    parser.add_argument('-export-yaml', '-e', nargs='+', metavar=('OUTPUT_FILE', 'DATA_TYPE'), help='Export data to a YAML file. Specify "all", "users", "challenges", "categories", "submissions", "flag_attempts", or "awards".') # New argument
+    parser.add_argument('-users', '-u', type=str, metavar='JSON_FILE', help='Import users from a JSON file.') # New argument
+    parser.add_argument('-export-yaml', '-e', nargs='+', metavar=('OUTPUT_FILE', 'DATA_TYPE'), help='Export data to a YAML file. Specify "all", "users", "challenges", "categories", "submissions", "flag_attempts", or "awards".')
     parser.add_argument('-test', nargs='?', type=int, const=1800, help='Run the server in test mode with an optional timeout in seconds (default: 1800)')
     args = parser.parse_args()
 
@@ -561,7 +612,9 @@ if __name__ == '__main__':
                 print(f"Error: User {args.admin_r} not found.")
     elif args.yaml:
         import_challenges_from_yaml(args.yaml)
-    elif args.export_yaml: # New conditional for YAML export
+    elif args.users: # New conditional for JSON user import
+        import_users_from_json(args.users)
+    elif args.export_yaml:
         output_file = args.export_yaml[0]
         data_type = 'all'
         if len(args.export_yaml) > 1:

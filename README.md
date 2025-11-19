@@ -46,9 +46,9 @@ python app.py -admin <username> <password>
 
 Alternatively, you can manually create a user and set the `is_admin` flag to `True` in the database.
 
-## Importing and Exporting Challenges via YAML
+## Importing and Exporting Data via YAML/JSON
 
-Challenges can be imported from a YAML file using the `-yaml` or `-y` command-line argument. Data can also be exported to YAML using `-export-yaml` or `-e`. For details on the YAML format and usage for both import and export, refer to [yaml.md](yaml.md).
+Challenges can be imported from a YAML file using the `-yaml` or `-y` command-line argument. Users can be imported from a JSON file using `-users` or `-u`. Data can also be exported to YAML using `-export-yaml` or `-e`. For details on the YAML/JSON formats and usage for import and export, refer to [yaml.md](yaml.md).
 
 
 ## Testing

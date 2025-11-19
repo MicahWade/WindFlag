@@ -12,7 +12,9 @@ class Config:
     JOIN_CODE = os.environ.get('JOIN_CODE') if REQUIRE_JOIN_CODE else None
     REQUIRE_EMAIL = os.environ.get('REQUIRE_EMAIL', 'True').lower() == 'true'
     BASIC_INDEX_PAGE = os.environ.get('BASIC_INDEX_PAGE', 'False').lower() == 'true'
+    DISABLE_SIGNUP = os.environ.get('DISABLE_SIGNUP', 'False').lower() == 'true' # New setting
 
 class TestConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///test.db' # Dedicated database for test mode
     WTF_CSRF_ENABLED = False
+    DISABLE_SIGNUP = True # Disable signup in test mode by default
