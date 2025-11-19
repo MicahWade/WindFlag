@@ -93,50 +93,46 @@ def seed_database():
     db.session.add_all(challenge_flags)
     db.session.commit()
 
-    # Make users complete challenges
-    all_user_challenge_pairs = []
-    for user in users:
-        for challenge in challenges:
-            all_user_challenge_pairs.append((user, challenge))
-    
-    random.shuffle(all_user_challenge_pairs) # Randomize the order of completions
-
     # Generate submissions
     # Start submissions from a few weeks ago
     start_date = datetime.now(UTC) - timedelta(weeks=3)
     
     submissions_to_add = []
-    flag_submissions_to_add = [] # New list for FlagSubmission
+    flag_submissions_to_add = []
     
-    # Keep track of solved challenges per user to avoid duplicates and control count
-    user_solved_challenges = {user.id: set() for user in users}
-    
-    # To ensure varied scores, let's aim for each user to solve a random number of challenges
-    # between, say, 5 and 15 challenges.
     min_challenges_per_user = 5
     max_challenges_per_user = 15
 
-    # Generate submissions
-    for user, challenge in all_user_challenge_pairs:
-        if len(user_solved_challenges[user.id]) < random.randint(min_challenges_per_user, max_challenges_per_user):
-            if challenge.id not in user_solved_challenges[user.id]:
-                # Randomly assign a submission time within the last 3 weeks
-                random_days_offset = random.randint(0, 20) # Up to 20 days ago
-                random_seconds_offset = random.randint(0, 24 * 60 * 60) # Random time within the day
-                submission_time = start_date + timedelta(days=random_days_offset, seconds=random_seconds_offset)
+    for user in users:
+        user_current_score = 0
+        user_solved_challenges_ids = set()
+        
+        # Initialize last_submission_time for this user
+        last_submission_time = start_date
+        
+        # Select a random subset of challenges for this user to solve
+        num_challenges_to_solve = random.randint(min_challenges_per_user, max_challenges_per_user)
+        
+        # Shuffle challenges and pick the first 'num_challenges_to_solve'
+        # Sort them by ID to ensure a consistent (monotonic) score progression
+        challenges_for_user = random.sample(challenges, min(num_challenges_to_solve, len(challenges)))
+        challenges_for_user.sort(key=lambda c: c.id) # Sort by challenge ID for consistent progression
 
-                # For seeding, assume all flags for a multi-flag challenge are submitted correctly
-                # This will create a Submission entry, implying the challenge is solved.
-                # We also need to create FlagSubmission entries for each flag of the challenge.
-                
-                # Temporarily update user score for score_at_submission
-                user.score += challenge.points
-                submission = Submission(user_id=user.id, challenge_id=challenge.id, timestamp=submission_time, score_at_submission=user.score)
+        # Generate submissions for this user
+        for challenge in challenges_for_user:
+            if challenge.id not in user_solved_challenges_ids:
+                # Generate a submission time that is strictly after the last one for this user
+                # Add a random timedelta between 1 hour and 2 days to the last submission time
+                time_delta = timedelta(hours=random.randint(1, 48))
+                submission_time = last_submission_time + time_delta
+                last_submission_time = submission_time # Update last_submission_time for the next submission
+
+                user_current_score += challenge.points
+                submission = Submission(user_id=user.id, challenge_id=challenge.id, timestamp=submission_time, score_at_submission=user_current_score)
                 submissions_to_add.append(submission)
-                user_solved_challenges[user.id].add(challenge.id)
+                user_solved_challenges_ids.add(challenge.id)
 
                 # Create FlagSubmission entries for all flags of this challenge
-                # Ensure challenge.flags is loaded
                 db.session.refresh(challenge) # Refresh to load flags relationship
                 for flag in challenge.flags:
                     flag_submission = FlagSubmission(user_id=user.id, challenge_id=challenge.id,
@@ -144,7 +140,7 @@ def seed_database():
                     flag_submissions_to_add.append(flag_submission)
     
     db.session.add_all(submissions_to_add)
-    db.session.add_all(flag_submissions_to_add) # Add new FlagSubmission entries
+    db.session.add_all(flag_submissions_to_add)
     db.session.commit()
 
     # Recalculate and update user scores based on actual submissions

@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         type: 'time', // Use time scale
                         time: {
                             unit: 'hour', // Adjust unit as needed (e.g., 'day', 'hour')
-                            tooltipFormat: 'MMM d, YYYY', // Display only date, no time
+                            tooltipFormat: 'MMM d, yyyy', // Display only date, no time
                             displayFormats: {
                                 hour: 'MMM d, h:mm a',
                                 day: 'MMM d'
