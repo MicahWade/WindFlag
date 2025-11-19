@@ -348,6 +348,103 @@ def create_app(config_class=Config):
 
     return app
 
+def export_data_to_yaml(output_file_path, data_type='all'):
+    with create_app().app_context():
+        from scripts.models import User, Category, Challenge, ChallengeFlag, Submission, FlagSubmission, FlagAttempt, AwardCategory, Award
+        exported_data = {}
+
+        if data_type == 'users' or data_type == 'all':
+            users = User.query.all()
+            users_data = []
+            for user in users:
+                users_data.append({
+                    'username': user.username,
+                    'email': user.email,
+                    'is_admin': user.is_admin,
+                    'is_super_admin': user.is_super_admin,
+                    'hidden': user.hidden,
+                    'score': user.score
+                    # Password hash is not exported for security reasons
+                })
+            exported_data['users'] = users_data
+
+        if data_type == 'categories' or data_type == 'all':
+            categories = Category.query.all()
+            categories_data = []
+            for category in categories:
+                categories_data.append({
+                    'name': category.name
+                })
+            exported_data['categories'] = categories_data
+
+        if data_type == 'challenges' or data_type == 'all':
+            challenges = Challenge.query.all()
+            challenges_data = []
+            for challenge in challenges:
+                flags_data = [flag.flag_content for flag in challenge.flags]
+                challenges_data.append({
+                    'name': challenge.name,
+                    'description': challenge.description,
+                    'points': challenge.points,
+                    'category': challenge.category.name,
+                    'case_sensitive': challenge.case_sensitive,
+                    'multi_flag_type': challenge.multi_flag_type,
+                    'multi_flag_threshold': challenge.multi_flag_threshold,
+                    'flags': flags_data
+                })
+            exported_data['challenges'] = challenges_data
+        
+        # Export other data types if needed (e.g., submissions, flag_attempts, awards)
+        # For 'all', we might want to include everything, but for now, let's stick to core entities.
+        # Submissions, FlagSubmissions, FlagAttempts, Awards are usually tied to specific user/challenge IDs
+        # and might be complex to re-import without careful ID management.
+        # For a simple export, we can just list them.
+
+        if data_type == 'submissions' or data_type == 'all':
+            submissions = Submission.query.all()
+            submissions_data = []
+            for submission in submissions:
+                submissions_data.append({
+                    'username': submission.solver.username,
+                    'challenge_name': submission.challenge_rel.name,
+                    'timestamp': submission.timestamp.isoformat(),
+                    'score_at_submission': submission.score_at_submission
+                })
+            exported_data['submissions'] = submissions_data
+
+        if data_type == 'flag_attempts' or data_type == 'all':
+            flag_attempts = FlagAttempt.query.all()
+            flag_attempts_data = []
+            for attempt in flag_attempts:
+                flag_attempts_data.append({
+                    'username': attempt.user.username,
+                    'challenge_name': attempt.challenge.name,
+                    'submitted_flag': attempt.submitted_flag,
+                    'is_correct': attempt.is_correct,
+                    'timestamp': attempt.timestamp.isoformat()
+                })
+            exported_data['flag_attempts'] = flag_attempts_data
+
+        if data_type == 'awards' or data_type == 'all':
+            awards = Award.query.all()
+            awards_data = []
+            for award in awards:
+                awards_data.append({
+                    'recipient_username': award.recipient.username,
+                    'category_name': award.category.name,
+                    'points_awarded': award.points_awarded,
+                    'giver_username': award.giver.username,
+                    'timestamp': award.timestamp.isoformat()
+                })
+            exported_data['awards'] = awards_data
+
+        try:
+            with open(output_file_path, 'w') as f:
+                yaml.dump(exported_data, f, default_flow_style=False, sort_keys=False)
+            print(f"Data of type '{data_type}' exported successfully to {output_file_path}")
+        except IOError as e:
+            print(f"Error writing to file {output_file_path}: {e}")
+
 def import_challenges_from_yaml(yaml_file_path):
     with create_app().app_context():
         from scripts.models import Category, Challenge, ChallengeFlag
@@ -423,7 +520,8 @@ if __name__ == '__main__':
                         help='Show this help message and exit.')
     parser.add_argument('-admin', nargs=2, metavar=('USERNAME', 'PASSWORD'), help='Create an admin user')
     parser.add_argument('-admin-r', type=str, metavar='USERNAME', help='Remove a super admin user. Only super admins can be removed this way.')
-    parser.add_argument('-yaml', '-y', type=str, metavar='YAML_FILE', help='Import challenges from a YAML file.') # New argument
+    parser.add_argument('-yaml', '-y', type=str, metavar='YAML_FILE', help='Import challenges from a YAML file.')
+    parser.add_argument('-export-yaml', '-e', nargs='+', metavar=('OUTPUT_FILE', 'DATA_TYPE'), help='Export data to a YAML file. Specify "all", "users", "challenges", "categories", "submissions", "flag_attempts", or "awards".') # New argument
     parser.add_argument('-test', nargs='?', type=int, const=1800, help='Run the server in test mode with an optional timeout in seconds (default: 1800)')
     args = parser.parse_args()
 
@@ -461,8 +559,14 @@ if __name__ == '__main__':
                     print(f"Error: User {args.admin_r} is not a Super Admin. Only Super Admins can be removed this way.")
             else:
                 print(f"Error: User {args.admin_r} not found.")
-    elif args.yaml: # New conditional for YAML import
+    elif args.yaml:
         import_challenges_from_yaml(args.yaml)
+    elif args.export_yaml: # New conditional for YAML export
+        output_file = args.export_yaml[0]
+        data_type = 'all'
+        if len(args.export_yaml) > 1:
+            data_type = args.export_yaml[1]
+        export_data_to_yaml(output_file, data_type)
     else:
         # Otherwise, run the Flask app
         if args.test is not None:

@@ -69,3 +69,46 @@ python app.py -y path/to/your/challenges.yaml
 *   If a challenge with the same `name` already exists in the database, it will be skipped.
 *   Categories will be created automatically if they do not exist.
 *   Ensure your YAML file is correctly formatted to avoid parsing errors.
+
+## Exporting Data to YAML
+
+You can export various types of data from the database to a YAML file using the `-export-yaml` or `-e` command-line argument.
+
+### Usage
+
+```bash
+python app.py -export-yaml <output_file_path> [data_type]
+# or
+python app.py -e <output_file_path> [data_type]
+```
+
+*   `<output_file_path>`: The path to the YAML file where the data will be saved.
+*   `[data_type]`: (Optional) Specifies the type of data to export. If omitted, `all` data types will be exported.
+    *   `all`: Exports users, categories, challenges, submissions, flag_attempts, and awards.
+    *   `users`: Exports user data (username, email, admin status, hidden status, score).
+    *   `categories`: Exports category data (name).
+    *   `challenges`: Exports challenge data (name, description, points, category, case sensitivity, multi-flag type, threshold, flags).
+    *   `submissions`: Exports submission data (solver username, challenge name, timestamp, score at submission).
+    *   `flag_attempts`: Exports flag attempt data (user username, challenge name, submitted flag, correctness, timestamp).
+    *   `awards`: Exports award data (recipient username, category name, points awarded, giver username, timestamp).
+
+### Examples
+
+Export all data to `all_data.yaml`:
+```bash
+python app.py -export-yaml all_data.yaml
+```
+
+Export only challenges to `challenges_export.yaml`:
+```bash
+python app.py -export-yaml challenges_export.yaml challenges
+```
+
+Export user data to `users.yaml`:
+```bash
+python app.py -e users.yaml users
+```
+
+**Important Notes:**
+*   Password hashes are not exported for security reasons.
+*   Timestamps are exported in ISO format.
