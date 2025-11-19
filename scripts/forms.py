@@ -130,3 +130,25 @@ class AdminSettingsForm(FlaskForm):
                                         validators=[DataRequired()],
                                         default='line')
     submit = SubmitField('Save Settings')
+
+class AwardCategoryForm(FlaskForm):
+    name = StringField('Category Name',
+                       validators=[DataRequired(), Length(min=2, max=50)])
+    default_points = IntegerField('Default Points',
+                                  validators=[DataRequired(), NumberRange(min=0)],
+                                  default=0)
+    submit = SubmitField('Submit Category')
+
+    def validate_name(self, name):
+        from scripts.models import AwardCategory # Import here to avoid circular dependency
+        category = AwardCategory.query.filter_by(name=name.data).first()
+        if category:
+            raise ValidationError('That award category name is taken. Please choose a different one.')
+
+class InlineGiveAwardForm(FlaskForm):
+    category = SelectField('Award Category', coerce=int, validators=[DataRequired()])
+    points = IntegerField('Points to Award',
+                          validators=[DataRequired(), NumberRange(min=1)])
+    submit = SubmitField('Give Award')
+
+

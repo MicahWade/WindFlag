@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
 from scripts.extensions import db, get_setting
-from scripts.models import Category, Challenge, Submission, User, Setting, ChallengeFlag # Import ChallengeFlag
-from scripts.forms import CategoryForm, ChallengeForm, AdminSettingsForm
+from scripts.models import Category, Challenge, Submission, User, Setting, ChallengeFlag, AwardCategory, Award # Import ChallengeFlag, AwardCategory, Award
+from scripts.forms import CategoryForm, ChallengeForm, AdminSettingsForm, AwardCategoryForm, InlineGiveAwardForm
 from functools import wraps
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -227,4 +227,89 @@ def toggle_user_admin(user_id):
             user.hidden = True
         db.session.commit()
         flash(f'User {user.username} admin status toggled to {user.is_admin}.', 'success')
+    return redirect(url_for('admin.manage_users'))
+
+@admin_bp.route('/profile/<username>/give_award_inline', methods=['POST'])
+@admin_required
+def give_award_to_user(username):
+    target_user = User.query.filter_by(username=username).first_or_404()
+    form = InlineGiveAwardForm()
+    form.category.choices = [(ac.id, ac.name) for ac in AwardCategory.query.order_by(AwardCategory.name).all()]
+
+    if form.validate_on_submit():
+        award_category = AwardCategory.query.get(form.category.data)
+        points_to_award = form.points.data
+
+        if not award_category:
+            flash('Invalid award category selected.', 'danger')
+            return redirect(url_for('user_profile', username=username))
+
+        # Create the award record
+        award = Award(
+            user_id=target_user.id,
+            category_id=award_category.id,
+            points_awarded=points_to_award,
+            admin_id=current_user.id
+        )
+        db.session.add(award)
+
+        # Update recipient's score
+        target_user.score += points_to_award
+        db.session.commit()
+
+        flash(f'Award "{award_category.name}" with {points_to_award} points given to {target_user.username}!', 'success')
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"Error in {getattr(form, field).label.text}: {error}", 'danger')
+    
+    return redirect(url_for('user_profile', username=username))
+
+# Award Category CRUD
+@admin_bp.route('/award_categories')
+@admin_required
+def manage_award_categories():
+    award_categories = AwardCategory.query.all()
+    return render_template('admin/manage_award_categories.html', title='Manage Award Categories', award_categories=award_categories)
+
+@admin_bp.route('/award_category/new', methods=['GET', 'POST'])
+@admin_required
+def new_award_category():
+    form = AwardCategoryForm()
+    if form.validate_on_submit():
+        award_category = AwardCategory(name=form.name.data, default_points=form.default_points.data)
+        db.session.add(award_category)
+        db.session.commit()
+        flash('Award Category has been created!', 'success')
+        return redirect(url_for('admin.manage_award_categories'))
+    return render_template('admin/create_award_category.html', title='New Award Category', form=form)
+
+@admin_bp.route('/award_category/<int:category_id>/update', methods=['GET', 'POST'])
+@admin_required
+def update_award_category(category_id):
+    award_category = AwardCategory.query.get_or_404(category_id)
+    form = AwardCategoryForm()
+    if form.validate_on_submit():
+        award_category.name = form.name.data
+        award_category.default_points = form.default_points.data
+        db.session.commit()
+        flash('Award Category has been updated!', 'success')
+        return redirect(url_for('admin.manage_award_categories'))
+    elif request.method == 'GET':
+        form.name.data = award_category.name
+        form.default_points.data = award_category.default_points
+    return render_template('admin/create_award_category.html', title='Update Award Category', form=form)
+
+@admin_bp.route('/award_category/<int:category_id>/delete', methods=['POST'])
+@admin_required
+def delete_award_category(category_id):
+    award_category = AwardCategory.query.get_or_404(category_id)
+    if award_category.awards: # Check if there are any awards associated with this category
+        flash('Cannot delete category with associated awards. Please delete awards first.', 'danger')
+        return redirect(url_for('admin.manage_award_categories'))
+    db.session.delete(award_category)
+    db.session.commit()
+    flash('Award Category has been deleted!', 'success')
+    return redirect(url_for('admin.manage_award_categories'))
+
     return redirect(url_for('admin.manage_users'))

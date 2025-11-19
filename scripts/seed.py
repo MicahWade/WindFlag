@@ -1,5 +1,5 @@
 from scripts.extensions import db, bcrypt
-from scripts.models import User, Category, Challenge, Submission, Setting, ChallengeFlag, FlagSubmission, MULTI_FLAG_TYPES
+from scripts.models import User, Category, Challenge, Submission, Setting, ChallengeFlag, FlagSubmission, AwardCategory, Award, MULTI_FLAG_TYPES
 from datetime import datetime, UTC, timedelta
 import random
 
@@ -12,6 +12,16 @@ def seed_database():
     db.session.query(Category).delete()
     db.session.query(User).delete()
     db.session.query(Setting).delete()
+    db.session.query(Award).delete() # New: Clear Award
+    db.session.query(AwardCategory).delete() # New: Clear AwardCategory
+    db.session.commit()
+
+    # Create default Award Categories
+    award_category_bug = AwardCategory(name="Bug Report", default_points=50)
+    award_category_feature = AwardCategory(name="Feature Suggestion", default_points=30)
+    award_category_community = AwardCategory(name="Community Contributor", default_points=100)
+    award_category_helpful = AwardCategory(name="Helpful User", default_points=20)
+    db.session.add_all([award_category_bug, award_category_feature, award_category_community, award_category_helpful])
     db.session.commit()
 
     # Create 2 Admins

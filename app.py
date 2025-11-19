@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
 from scripts.config import Config
-from scripts.forms import RegistrationForm, LoginForm, FlagSubmissionForm # Import forms
+from scripts.forms import RegistrationForm, LoginForm, FlagSubmissionForm, InlineGiveAwardForm # Import forms
 from datetime import datetime, UTC, timedelta # Import datetime, UTC, and timedelta
 from sqlalchemy import func # Import func for aggregation
 from sqlalchemy.orm import joinedload # Import joinedload for eager loading
@@ -26,7 +26,7 @@ def create_app(config_class=Config):
     login_manager.unauthorized_handler(lambda: redirect(url_for('home')))
     bcrypt.init_app(app)
 
-    from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission # Import models here
+    from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission, Award, AwardCategory # Import models here
 
     app.register_blueprint(admin_bp) # Register admin blueprint
 
@@ -91,8 +91,17 @@ def create_app(config_class=Config):
     @app.route('/profile/<username>')
     @login_required
     def user_profile(username):
-        from scripts.models import User, Submission, Challenge, Category # Import Category
-        target_user = User.query.filter_by(username=username).first_or_404()
+        # Start building the query for target_user
+        user_query = User.query.filter_by(username=username)
+
+        # If current user is admin, eager load awards received and given
+        if current_user.is_admin:
+            user_query = user_query.options(
+                joinedload(User.awards_received).joinedload(Award.category),
+                joinedload(User.awards_received).joinedload(Award.giver)
+            )
+        
+        target_user = user_query.first_or_404()
 
         # Access control: If user is hidden and current user is not admin, deny access
         if target_user.hidden and not current_user.is_admin:
@@ -119,8 +128,15 @@ def create_app(config_class=Config):
                                            .order_by(Submission.timestamp.desc())\
                                            .all()
 
+        # Initialize InlineGiveAwardForm
+        give_award_form = None
+        if current_user.is_admin:
+            give_award_form = InlineGiveAwardForm()
+            give_award_form.category.choices = [(ac.id, ac.name) for ac in AwardCategory.query.order_by(AwardCategory.name).all()]
+
         return render_template('profile.html', title=f"{target_user.username}'s Profile",
-                               user=target_user, submissions=user_submissions, user_rank=user_rank)
+                               user=target_user, submissions=user_submissions, user_rank=user_rank,
+                               give_award_form=give_award_form)
 
     @app.route('/challenges')
     @login_required

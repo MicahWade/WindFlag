@@ -98,3 +98,28 @@ class Setting(db.Model):
 
     def __repr__(self):
         return f"Setting('{self.key}', '{self.value}')"
+
+class AwardCategory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    default_points = db.Column(db.Integer, nullable=False, default=0)
+    awards = db.relationship('Award', backref='category', lazy=True)
+
+    def __repr__(self):
+        return f"AwardCategory('{self.name}', Points: {self.default_points})"
+
+class Award(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # User receiving the award
+    category_id = db.Column(db.Integer, db.ForeignKey('award_category.id'), nullable=False)
+    points_awarded = db.Column(db.Integer, nullable=False)
+    admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # Admin giving the award
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
+
+    # Relationships
+    recipient = db.relationship('User', foreign_keys=[user_id], backref='awards_received')
+    giver = db.relationship('User', foreign_keys=[admin_id], backref='awards_given')
+
+    def __repr__(self):
+        return f"Award(Recipient: {self.user_id}, Category: {self.category_id}, Points: {self.points_awarded}, Giver: {self.admin_id})"
+
