@@ -3,56 +3,66 @@
 {% block content %}
 <div class="container mt-4">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card bg-dark text-white shadow-lg mb-4">
-                <div class="card-header bg-secondary text-center">
-                    <h1 class="card-title mb-0">{{ user.username }}'s Profile</h1>
+        <div class="col-md-10 col-lg-8"> {# Increased column size for better centering and content display #}
+            <div class="card bg-dark text-white shadow-lg mb-4"> {# Removed text-center from here #}
+                <div class="card-header bg-secondary text-center"> {# Centered header #}
+                    <h2 class="card-title text-2xl display-1 mb-0">{{ user.username }}'s Profile</h2> {# Bigger and centered #}
                 </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <p class="lead mb-1"><strong>Score:</strong> <span class="text-info">{{ user.score }}</span></p>
+                <div class="card-body text-center"> {# Centered content within the card body #}
+                    <div class="row mb-3 justify-content-center"> {# Centered the row itself #}
+                        <div class="col-md-auto mx-3"> {# Auto-width column, horizontal margin #}
                             {% if user_rank %}
                                 <p class="lead mb-1"><strong>Rank:</strong> <span class="text-info">#{{ user_rank }}</span></p>
                             {% else %}
                                 <p class="lead mb-1"><strong>Rank:</strong> <span class="text-muted">N/A (Hidden User)</span></p>
                             {% endif %}
+                            <p class="lead mb-1"><strong>Score:</strong> <span class="text-info">{{ user.score }}</span></p>
                         </div>
-                        <div class="col-md-6 text-md-end">
+                        <div class="col-md-auto mx-3"> {# Auto-width column, horizontal margin #}
                             <p class="mb-1"><small class="text-muted">Last Seen: {{ user.last_seen.strftime('%Y-%m-%d') }}</small></p>
-                            {% if user.is_admin %}
-                                <span class="badge bg-danger me-1">Administrator</span>
-                            {% endif %}
-                            {% if user.hidden %}
-                                <span class="badge bg-secondary">Hidden User</span>
-                            {% endif %}
+                            <div class="mt-2"> {# Badges in their own row/block #}
+                                {% if user.is_admin %}
+                                    <span class="badge bg-danger me-1">Administrator</span>
+                                {% endif %}
+                                {% if user.hidden %}
+                                    <span class="badge bg-secondary">Hidden User</span>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="card bg-dark text-white shadow-lg">
-                <div class="card-header bg-secondary">
+                <div class="card-header bg-secondary text-center"> {# Centered header #}
                     <h3 class="card-title mb-0">Solved Challenges</h3>
                 </div>
                 <div class="card-body">
                     {% if submissions %}
-                        <div class="list-group">
-                            {% for submission in submissions %}
-                                <div class="list-group-item list-group-item-action bg-dark text-white border-secondary mb-2 rounded">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1 text-primary">{{ submission.challenge_rel.name }}</h5>
-                                        <small class="text-muted">{{ submission.timestamp.strftime('%Y-%m-%d') }}</small>
-                                    </div>
-                                    <p class="mb-1">
-                                        <span class="badge bg-info me-2">{{ submission.challenge_rel.category.name }}</span>
-                                        <span class="badge bg-success">{{ submission.challenge_rel.points }} points</span>
-                                    </p>
-                                </div>
-                            {% endfor %}
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Challenge</th>
+                                        <th scope="col">Category</th>
+                                        <th scope="col">Points</th>
+                                        <th scope="col">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for submission in submissions %}
+                                    <tr>
+                                        <td><a href="{{ url_for('challenges') }}" class="text-primary text-decoration-none">{{ submission.challenge_rel.name }}</a></td>
+                                        <td>{{ submission.challenge_rel.category.name }}</td>
+                                        <td>{{ submission.challenge_rel.points }}</td>
+                                        <td>{{ submission.timestamp.strftime('%Y-%m-%d') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     {% else %}
-                        <p class="text-muted">No challenges solved yet.</p>
+                        <p class="text-muted text-center">No challenges solved yet.</p> {# Centered text #}
                     {% endif %}
                 </div>
             </div>

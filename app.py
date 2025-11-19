@@ -86,8 +86,7 @@ def create_app(config_class=Config):
     @app.route('/profile')
     @login_required
     def profile():
-        # This will be expanded later to show solved challenges
-        return render_template('profile.html', title='Profile')
+        return user_profile(current_user.username) # Call the user_profile function with current_user's username
 
     @app.route('/profile/<username>')
     @login_required
