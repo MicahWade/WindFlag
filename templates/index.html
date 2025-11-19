@@ -1,8 +1,85 @@
 {% extends "base.html" %}
 {% block content %}
-    <div class="max-w-md mx-auto bg-gray-800 p-8 rounded-lg shadow-lg text-center">
-        <h1 class="text-3xl font-bold text-gray-100 mb-4">Welcome to {{ config['APP_NAME'] }}!</h1>
-        <p class="text-gray-300 mb-2">This is the home page of your CTF platform.</p>
-        <p class="text-gray-300">Please register or log in to start solving challenges.</p>
+    <div class="container mx-auto px-4 py-8">
+        <!-- Welcome Section -->
+        <section class="bg-gray-800 p-8 rounded-lg shadow-lg text-center mb-12">
+            <h1 class="text-4xl font-extrabold text-gray-100 mb-4">Welcome to {{ config['APP_NAME'] }}!</h1>
+            <p class="text-gray-300 text-lg mb-6">Dive into the thrilling world of Capture The Flag challenges and sharpen your cybersecurity skills.</p>
+            <a href="/register" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full transition duration-300 ease-in-out transform hover:scale-105">Get Started Now!</a>
+        </section>
+
+        {% if not config['BASIC_INDEX_PAGE'] %}
+        <!-- About Us Section -->
+        <section class="bg-gray-900 p-8 rounded-lg shadow-lg mb-12">
+            <h2 class="text-3xl font-bold text-gray-100 mb-6 text-center">About Our Platform</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div>
+                    <p class="text-gray-300 mb-4">Our CTF platform is designed for enthusiasts and professionals alike, offering a dynamic environment to learn, practice, and compete in various cybersecurity domains. From web exploitation to reverse engineering, cryptography, and forensics, we cover a wide spectrum of challenges.</p>
+                    <p class="text-gray-300">We believe in hands-on learning. Our challenges are crafted to simulate real-world scenarios, providing you with practical experience that theoretical knowledge alone cannot offer. Join a vibrant community of hackers, share knowledge, and grow together.</p>
+                </div>
+                <div class="flex justify-center">
+                    <!-- Placeholder for an image -->
+                    <img src="https://placehold.co/400x250/2d3748/cbd5e0?text=About+Image" alt="About Us" class="rounded-lg shadow-md">
+                </div>
+            </div>
+        </section>
+
+        <!-- What We Offer Section -->
+        <section class="bg-gray-800 p-8 rounded-lg shadow-lg mb-12">
+            <h2 class="text-3xl font-bold text-gray-100 mb-6 text-center">What We Offer</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="text-blue-400 text-5xl mb-4">💡</div>
+                    <h3 class="text-xl font-semibold text-gray-100 mb-2">Diverse Challenges</h3>
+                    <p class="text-gray-300">Explore a wide range of challenges from beginner-friendly to expert-level across various categories.</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-green-400 text-5xl mb-4">🏆</div>
+                    <h3 class="text-xl font-semibold text-gray-100 mb-2">Competitive Leaderboards</h3>
+                    <p class="text-gray-300">Compete with players globally and see your name climb the ranks on our dynamic scoreboard.</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-purple-400 text-5xl mb-4">🤝</div>
+                    <h3 class="text-xl font-semibold text-gray-100 mb-2">Community & Learning</h3>
+                    <p class="text-gray-300">Engage with a supportive community, share write-ups, and learn from others' solutions.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section class="bg-gray-900 p-8 rounded-lg shadow-lg mb-12">
+            <h2 class="text-3xl font-bold text-gray-100 mb-6 text-center">How It Works</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="flex justify-center order-2 md:order-1">
+                    <!-- Placeholder for an image -->
+                    <img src="https://placehold.co/400x250/2d3748/cbd5e0?text=How+It+Works" alt="How It Works" class="rounded-lg shadow-md">
+                </div>
+                <div class="order-1 md:order-2">
+                    <ol class="list-decimal list-inside text-gray-300 space-y-4">
+                        <li><strong class="text-gray-100">Register/Login:</strong> Create an account or log in to access the challenges.</li>
+                        <li><strong class="text-gray-100">Browse Challenges:</strong> Navigate through categories like Web, Crypto, Reversing, Pwn, and Forensics.</li>
+                        <li><strong class="text-gray-100">Solve & Submit:</strong> Download challenge files, exploit vulnerabilities, find the flag, and submit it.</li>
+                        <li><strong class="text-gray-100">Earn Points:</strong> Correct submissions earn you points, boosting your position on the leaderboard.</li>
+                        <li><strong class="text-gray-100">Learn & Grow:</strong> Review solutions, discuss with peers, and continuously improve your skills.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials/Call to Action Section -->
+        <section class="bg-gray-800 p-8 rounded-lg shadow-lg text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-100 mb-6">Ready to Take the Challenge?</h2>
+            <p class="text-gray-300 text-lg mb-8">Join thousands of cybersecurity enthusiasts and start your journey today. Whether you're looking to learn, compete, or just have fun, our platform is the perfect place.</p>
+            <div class="flex justify-center space-x-4">
+                <a href="/register" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full transition duration-300 ease-in-out transform hover:scale-105">Sign Up Now</a>
+                <a href="/challenges" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full transition duration-300 ease-in-out transform hover:scale-105">View Challenges</a>
+            </div>
+        </section>
+
+        <!-- Footer-like content to ensure length -->
+        <section class="text-center text-gray-500 text-sm mt-12">
+            <p>&copy; 2025 {{ config['APP_NAME'] }}. All rights reserved. | <a href="#" class="text-blue-400 hover:underline">Privacy Policy</a> | <a href="#" class="text-blue-400 hover:underline">Terms of Service</a></p>
+        </section>
+        {% endif %}
     </div>
 {% endblock content %}
