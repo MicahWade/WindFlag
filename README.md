@@ -2,6 +2,19 @@
 
 WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwind CSS.
 
+## Features
+
+*   **User Authentication**: Secure registration, login, and logout.
+*   **Challenge Management**: Create, update, and delete challenges with various flag types (single, any, all, N of M).
+*   **Category Management**: Organize challenges into categories.
+*   **Scoreboard**: Dynamic scoreboard with user rankings and points.
+*   **Admin Panel**: Comprehensive administration interface for managing users, challenges, categories, and settings.
+*   **Analytics Dashboard**: Visual analytics for category points, user points, challenges solved over time, fails vs. succeeds, and a user-challenge matrix.
+*   **Super Admin Role**: Granular permissions for super administrators, including managing other admin accounts.
+*   **Award System**: Admins can grant awards to users with customizable categories and points.
+*   **YAML Challenge Import**: Easily import challenges from a structured YAML file.
+*   **Responsive Design**: Built with Tailwind CSS for a modern and responsive user interface.
+
 ## How to Run
 
 1.  **Install Dependencies:**
