@@ -57,30 +57,14 @@
         const userValues = {{ user_values | tojson }};
 
         const userCtx = document.getElementById('userPointsChart').getContext('2d');
-        new Chart(userCtx, {
-            type: 'pie',
-            data: {
-                labels: userLabels,
-                datasets: [{
-                    data: userValues,
-                    backgroundColor: [
-                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
-                        '#E7E9ED', '#8AC926', '#FFCA3A', '#1982C4', '#6A4C93', '#F45B69'
-                    ],
-                    hoverOffset: 4
-                }]
-            },
             options: {
                 responsive: true,
                 plugins: {
                     legend: {
-                        labels: {
-                            color: 'white' // Set legend text color to white
-                        }
+                        display: false // Hide the legend
                     }
                 }
             }
-        });
 
         // Data for Challenges Solved Over Time Chart
         const solvedDates = {{ solved_dates | tojson }};
