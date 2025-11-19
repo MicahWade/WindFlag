@@ -11,6 +11,7 @@ The application uses a `.env` file to manage environment variables. You can crea
 -   `REQUIRE_JOIN_CODE`: Set to `True` to require a join code for new user registrations. Set to `False` (default) to allow anyone to register without a join code.
 -   `JOIN_CODE`: The specific code that users must enter to register if `REQUIRE_JOIN_CODE` is set to `True`. This variable is ignored if `REQUIRE_JOIN_CODE` is `False`.
 -   `REQUIRE_EMAIL`: Set to `False` to make the email field optional during user registration. Set to `True` (default) to make it a required field.
+-   `BASIC_INDEX_PAGE`: Set to `true` to display a minimal home page containing only the welcome section. Set to `false` (default) or omit to display the full, expanded home page with additional content and graphics.
 
 ## `.env.template`
 
