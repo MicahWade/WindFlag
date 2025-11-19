@@ -1,0 +1,19 @@
+challenges:
+  - name: "YAML Test Challenge 1"
+    description: "This is a test challenge imported from YAML."
+    points: 100
+    category: "YAML Category"
+    case_sensitive: true
+    multi_flag_type: SINGLE
+    flags:
+      - "flag{yaml_test_1}"
+
+  - name: "YAML Test Challenge 2 Multi"
+    description: "Another test challenge with multiple flags."
+    points: 150
+    category: "YAML Category"
+    case_sensitive: false
+    multi_flag_type: ALL
+    flags:
+      - "flag{yaml_test_2_part1}"
+      - "flag{yaml_test_2_part2}"

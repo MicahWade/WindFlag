@@ -33,6 +33,11 @@ python app.py -admin <username> <password>
 
 Alternatively, you can manually create a user and set the `is_admin` flag to `True` in the database.
 
+## Importing Challenges via YAML
+
+Challenges can be imported from a YAML file using the `-yaml` or `-y` command-line argument. For details on the YAML format and usage, refer to [yaml.md](yaml.md).
+
+
 ## Testing
 
 To run the automated tests, use the `run_tests.py` script. This will start the application in test mode and run the unit and end-to-end tests.

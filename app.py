@@ -12,6 +12,8 @@ import argparse # Import argparse
 import threading # Import threading
 import os # Import os
 import json # Import json
+import yaml # Import yaml
+import os # Import os
 
 import os # Import os
 from dotenv import load_dotenv # Import load_dotenv
@@ -346,6 +348,66 @@ def create_app(config_class=Config):
 
     return app
 
+def import_challenges_from_yaml(yaml_file_path):
+    with create_app().app_context():
+        from scripts.models import Category, Challenge, ChallengeFlag
+        try:
+            with open(yaml_file_path, 'r') as f:
+                data = yaml.safe_load(f)
+        except FileNotFoundError:
+            print(f"Error: YAML file not found at {yaml_file_path}")
+            return
+        except yaml.YAMLError as e:
+            print(f"Error parsing YAML file: {e}")
+            return
+
+        if 'challenges' not in data:
+            print("Error: YAML file must contain a 'challenges' key.")
+            return
+
+        for challenge_data in data['challenges']:
+            # Get or create category
+            category_name = challenge_data.get('category', 'Uncategorized')
+            category = Category.query.filter_by(name=category_name).first()
+            if not category:
+                category = Category(name=category_name)
+                db.session.add(category)
+                db.session.commit() # Commit to get category ID
+
+            # Create challenge
+            challenge_name = challenge_data.get('name')
+            if not challenge_name:
+                print(f"Skipping challenge: 'name' is required. Data: {challenge_data}")
+                continue
+
+            existing_challenge = Challenge.query.filter_by(name=challenge_name).first()
+            if existing_challenge:
+                print(f"Warning: Challenge '{challenge_name}' already exists. Skipping import.")
+                continue
+
+            challenge = Challenge(
+                name=challenge_name,
+                description=challenge_data.get('description', ''),
+                points=challenge_data.get('points', 0),
+                case_sensitive=challenge_data.get('case_sensitive', True),
+                category_id=category.id,
+                multi_flag_type=challenge_data.get('multi_flag_type', 'SINGLE'),
+                multi_flag_threshold=challenge_data.get('multi_flag_threshold')
+            )
+            db.session.add(challenge)
+            db.session.commit() # Commit to get challenge ID
+
+            # Add flags
+            flags = challenge_data.get('flags', [])
+            if not flags:
+                print(f"Warning: Challenge '{challenge_name}' has no flags defined.")
+            for flag_content in flags:
+                challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
+                db.session.add(challenge_flag)
+            db.session.commit()
+            print(f"Challenge '{challenge_name}' imported successfully.")
+        print("Challenge import process completed.")
+
 def create_admin(username, password):
     with create_app().app_context():
         from scripts.models import User
@@ -360,21 +422,22 @@ if __name__ == '__main__':
     parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                         help='Show this help message and exit.')
     parser.add_argument('-admin', nargs=2, metavar=('USERNAME', 'PASSWORD'), help='Create an admin user')
-    parser.add_argument('-admin-r', type=str, metavar='USERNAME', help='Remove a super admin user. Only super admins can be removed this way.') # New argument
+    parser.add_argument('-admin-r', type=str, metavar='USERNAME', help='Remove a super admin user. Only super admins can be removed this way.')
+    parser.add_argument('-yaml', '-y', type=str, metavar='YAML_FILE', help='Import challenges from a YAML file.') # New argument
     parser.add_argument('-test', nargs='?', type=int, const=1800, help='Run the server in test mode with an optional timeout in seconds (default: 1800)')
     args = parser.parse_args()
 
     # Determine which config to use
-    if args.test is not None or '-playwright' in sys.argv: # Modified condition
+    if args.test is not None or '-playwright' in sys.argv:
         from scripts.config import TestConfig
         app = create_app(config_class=TestConfig)
-        if '-playwright' in sys.argv: # Added condition for playwright
-            test_mode_timeout = 360 # Set timeout for playwright tests
+        if '-playwright' in sys.argv:
+            test_mode_timeout = 360
         else:
             test_mode_timeout = args.test
     else:
         app = create_app()
-        test_mode_timeout = None # Not in test mode, no timeout
+        test_mode_timeout = None
 
     # Check if the database file exists, if not, create it
     db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
@@ -385,7 +448,7 @@ if __name__ == '__main__':
 
     if args.admin:
         create_admin(args.admin[0], args.admin[1])
-    elif args.admin_r: # New conditional for removing super admin
+    elif args.admin_r:
         with app.app_context():
             from scripts.models import User
             user_to_remove = User.query.filter_by(username=args.admin_r).first()
@@ -398,6 +461,8 @@ if __name__ == '__main__':
                     print(f"Error: User {args.admin_r} is not a Super Admin. Only Super Admins can be removed this way.")
             else:
                 print(f"Error: User {args.admin_r} not found.")
+    elif args.yaml: # New conditional for YAML import
+        import_challenges_from_yaml(args.yaml)
     else:
         # Otherwise, run the Flask app
         if args.test is not None:

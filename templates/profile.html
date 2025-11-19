@@ -115,6 +115,7 @@
     </div>
 </div>
 
+{% if give_award_form %}
 <!-- Tailwind CSS Modal for Give Award -->
 <div id="giveAwardModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
     <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-auto p-6">
@@ -151,6 +152,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <script>
     function toggleGiveAwardModal() {
