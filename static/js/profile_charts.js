@@ -296,6 +296,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
                 scales: {
                     x: {
                         type: 'time',
