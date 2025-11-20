@@ -83,8 +83,8 @@
     const flaskFailsSucceedsValues = {{ fails_succeeds_values | tojson }};
     const flaskChallengeSolveLabels = {{ challenge_solve_labels | tojson }};
     const flaskChallengeSolveValues = {{ challenge_solve_values | tojson }};
-    const flaskCumulativePointsDates = {{ cumulative_points_dates | tojson }};
-    const flaskCumulativePointsValues = {{ cumulative_points_values | tojson }};
+    const flaskGlobalStatsOverTime = {{ global_stats_over_time | tojson }};
+    const flaskUserScoresOverTime = {{ user_scores_over_time | tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/admin_analytics.js') }}"></script>
 {% endblock %}

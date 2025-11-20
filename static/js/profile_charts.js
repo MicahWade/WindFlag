@@ -1,6 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Function to create a line/bar chart
     function createChart(ctx, type, data, options) {
+        // Destroy existing chart instance if it exists
+        if (Chart.getChart(ctx)) {
+            Chart.getChart(ctx).destroy();
+        }
+        // Register the annotation plugin if it's available
+        if (window.ChartAnnotation) {
+            Chart.register(window.ChartAnnotation);
+        }
         new Chart(ctx, {
             type: type,
             data: data,
@@ -9,22 +17,152 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 1. Points Over Time Chart
-    const pointsOverTimeDataElement = document.getElementById('points-over-time-data');
-    if (pointsOverTimeDataElement) {
-        const pointsOverTimeData = JSON.parse(pointsOverTimeDataElement.textContent);
-        if (pointsOverTimeData && pointsOverTimeData.length > 0) {
+    const profileStatsDataElement = document.getElementById('profile-stats-data');
+    const profileChartsDataElement = document.getElementById('profile-charts-data'); // New element
+
+    if (profileChartsDataElement) {
+        const profileStatsData = profileStatsDataElement ? JSON.parse(profileStatsDataElement.textContent) : {};
+        const profileChartsData = profileChartsDataElement ? JSON.parse(profileChartsDataElement.textContent) : {}; // New data
+
+        const targetUserScoreHistory = profileChartsData.target_user_score_history;
+        const globalStatsOverTime = profileChartsData.global_stats_over_time;
+
+        if (targetUserScoreHistory && targetUserScoreHistory.length > 0) {
             const ctx = document.getElementById('pointsOverTimeChart').getContext('2d');
-            createChart(ctx, 'line', {
-                datasets: [{
-                    label: 'Cumulative Score',
-                    data: pointsOverTimeData,
-                    borderColor: 'rgb(75, 192, 192)',
+
+            // Define a color palette for categories (this part remains for the cumulative score line)
+            const categoryColors = {
+                'Start': 'rgb(128, 128, 128)', // Grey for initial point
+                'General Skills': 'rgb(255, 99, 132)',
+                'Web Exploitation': 'rgb(54, 162, 235)',
+                'Cryptography': 'rgb(255, 205, 86)',
+                'Reverse Engineering': 'rgb(75, 192, 192)',
+                'Forensics': 'rgb(153, 102, 255)',
+                'Pwn': 'rgb(255, 159, 64)',
+                'Miscellaneous': 'rgb(201, 203, 207)',
+                'Uncategorized': 'rgb(100, 100, 100)'
+                // Add more colors for other categories as needed
+            };
+
+            const datasets = [{
+                label: 'User Score',
+                data: targetUserScoreHistory,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1,
+                fill: false,
+                pointBackgroundColor: targetUserScoreHistory.map(point => categoryColors[point.category] || 'rgb(0, 0, 0)'), // Color nodes by category
+                pointRadius: 5, // Make points visible
+                pointHoverRadius: 7
+            }];
+
+            // Add global statistics lines
+            if (globalStatsOverTime && globalStatsOverTime.length > 0) {
+                datasets.push({
+                    label: 'Average Score',
+                    data: globalStatsOverTime.map(d => ({
+                        x: d.x,
+                        y: d.avg
+                    })),
+                    borderColor: 'rgb(255, 0, 0)', // Red for average
+                    borderDash: [5, 5],
                     tension: 0.1,
-                    fill: false
-                }]
-            }, {
+                    fill: false,
+                    pointRadius: 0
+                });
+
+                datasets.push({
+                    label: 'Max Score',
+                    data: globalStatsOverTime.map(d => ({
+                        x: d.x,
+                        y: d.max
+                    })),
+                    borderColor: 'rgb(0, 200, 0)', // Green for max
+                    borderDash: [2, 2],
+                    tension: 0.1,
+                    fill: false,
+                    pointRadius: 0
+                });
+
+                datasets.push({
+                    label: 'Min Score',
+                    data: globalStatsOverTime.map(d => ({
+                        x: d.x,
+                        y: d.min
+                    })),
+                    borderColor: 'rgb(200, 0, 0)', // Dark Red for min
+                    borderDash: [2, 2],
+                    tension: 0.1,
+                    fill: false,
+                    pointRadius: 0
+                });
+
+                datasets.push({
+                    label: 'Q3',
+                    data: globalStatsOverTime.map(d => ({
+                        x: d.x,
+                        y: d.q3
+                    })),
+                    borderColor: 'rgb(128, 0, 128)', // Purple for IQR
+                    borderDash: [2, 2],
+                    tension: 0.1,
+                    fill: '+1', // Fill to Q1
+                    backgroundColor: 'rgba(128, 0, 128, 0.1)',
+                    pointRadius: 0
+                });
+
+                datasets.push({
+                    label: 'Q1',
+                    data: globalStatsOverTime.map(d => ({
+                        x: d.x,
+                        y: d.q1
+                    })),
+                    borderColor: 'rgb(128, 0, 128)', // Purple for IQR
+                    borderDash: [2, 2],
+                    tension: 0.1,
+                    fill: '-1', // Fill to the dataset below (nothing below, so fills to 0)
+                    backgroundColor: 'rgba(128, 0, 128, 0.1)',
+                    pointRadius: 0
+                });
+
+                // +1 Standard Deviation Band
+                datasets.push({
+                    label: '+1 Std Dev',
+                    data: globalStatsOverTime.map(d => ({
+                        x: d.x,
+                        y: d.avg + d.std_dev
+                    })),
+                    borderColor: 'rgb(255, 165, 0)', // Orange for std dev
+                    borderDash: [2, 2],
+                    tension: 0.1,
+                    fill: '+1', // Fill to the dataset below (average)
+                    backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                    pointRadius: 0
+                });
+
+                // -1 Standard Deviation Band
+                datasets.push({
+                    label: '-1 Std Dev',
+                    data: globalStatsOverTime.map(d => ({
+                        x: d.x,
+                        y: d.avg - d.std_dev
+                    })),
+                    borderColor: 'rgb(255, 165, 0)', // Orange for std dev
+                    borderDash: [2, 2],
+                    tension: 0.1,
+                    fill: '-1', // Fill to the dataset below (nothing below, so fills to 0)
+                    backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                    pointRadius: 0
+                });
+            }
+
+            const chartOptions = {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'nearest',
+                    intersect: false,
+                    hitRadius: 20
+                },
                 scales: {
                     x: {
                         type: 'time',
@@ -43,8 +181,43 @@ document.addEventListener('DOMContentLoaded', function() {
                             text: 'Score'
                         }
                     }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                if (context[0].dataset.label === 'User Score') {
+                                    return context[0].label; // Show date as title for User Score
+                                }
+                                return null; // Hide title for other datasets
+                            },
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label === 'User Score') {
+                                    if (context.parsed.y !== null) {
+                                        label += ': ' + context.parsed.y;
+                                    }
+                                    return label;
+                                }
+                                return null; // Hide other labels
+                            }
+                        }
+                    },
+                    annotation: {
+                        annotations: {} // Clear annotations
+                    }
                 }
-            });
+            };
+
+            // Remove annotations for Max, Min, IQR as they are now dynamic lines
+            // The tooltip will still show the overall stats.
+            // No need to modify chartOptions.plugins.annotation.annotations here.
+            // The previous annotations for Max, Min, IQR are removed.
+            // The tooltip will still show the overall stats.
+
+            createChart(ctx, 'line', {
+                datasets: datasets
+            }, chartOptions);
         } else {
             document.getElementById('pointsOverTimeChartContainer').innerHTML = '<p class="text-gray-400 text-center">No submissions yet to display points over time.</p>';
         }
@@ -61,8 +234,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     data: failsVsSucceedsData.values,
                     backgroundColor: [
-                        'rgb(75, 192, 75)',  // Succeeds (Green)
-                        'rgb(255, 99, 132)'  // Fails (Red)
+                        'rgb(75, 192, 75)', // Succeeds (Green)
+                        'rgb(255, 99, 132)' // Fails (Red)
                     ],
                     hoverOffset: 4
                 }]

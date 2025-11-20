@@ -411,30 +411,11 @@ def analytics():
     solved_counts = [count for _, count in challenges_solved_over_time]
 
     # Data for Challenge Points Over Time Chart (Cumulative Score)
-    # Get all submissions ordered by timestamp
-    all_submissions_ordered = Submission.query.order_by(Submission.timestamp).all()
+    from scripts.chart_data_utils import get_global_score_history_data
+    global_chart_data = get_global_score_history_data()
 
-    cumulative_scores = {}
-    current_cumulative_score = 0
-    
-    for submission in all_submissions_ordered:
-        # Assuming score_at_submission is the score of the challenge itself
-        # For cumulative, we need to sum up points of solved challenges
-        # This requires re-calculating cumulative score based on challenge points
-        # Or, if score_at_submission is already cumulative, use that.
-        # Let's assume score_at_submission is the score of the challenge itself,
-        # and we need to sum it up.
-        
-        # Find the challenge to get its points
-        challenge_points = Challenge.query.get(submission.challenge_id).points
-        current_cumulative_score += challenge_points
-        
-        date_key = submission.timestamp.strftime('%Y-%m-%d')
-        cumulative_scores[date_key] = current_cumulative_score # Store the latest cumulative score for this date
-
-    # Convert to lists for Chart.js
-    cumulative_points_dates = sorted(cumulative_scores.keys())
-    cumulative_points_values = [cumulative_scores[date] for date in cumulative_points_dates]
+    global_stats_over_time = global_chart_data['global_stats_over_time']
+    user_scores_over_time = global_chart_data['user_scores_over_time']
 
     # Data for Fails vs Succeeds
     total_successful_flag_attempts = db.session.query(func.count(FlagAttempt.id)).filter_by(is_correct=True).scalar()

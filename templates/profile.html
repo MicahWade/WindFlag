@@ -117,8 +117,10 @@
                     <h3 class="card-title mb-0">Points Over Time</h3>
                 </div>
                 <div class="card-body">
-                    <canvas id="pointsOverTimeChart" style="max-height: 300px;"></canvas>
-                    <script type="application/json" id="points-over-time-data">{{ profile_charts_data.points_over_time | tojson }}</script>
+                    <canvas id="pointsOverTimeChart" style="height: 500px;"></canvas>
+                    <script type="application/json" id="profile-stats-data">{{ profile_stats_data | tojson }}</script>
+                    <script type="application/json" id="is-admin-data">{{ current_user.is_admin | tojson }}</script>
+                    <script type="application/json" id="profile-charts-data">{{ profile_charts_data | tojson }}</script>
                 </div>
             </div>
             {% endif %}

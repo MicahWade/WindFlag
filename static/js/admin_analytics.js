@@ -215,71 +215,201 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Data for Challenge Points Over Time Chart
-    const challengePointsOverTimeCanvas = document.getElementById('challengePointsOverTimeChart');
-    const cumulativePointsDates = flaskCumulativePointsDates; // Access global variable
-    const cumulativePointsValues = flaskCumulativePointsValues; // Access global variable
-    const challengePointsOverTimeCtx = challengePointsOverTimeCanvas.getContext('2d');
+    // Data for Global Points Over Time Chart (Admin View)
+    const globalPointsOverTimeCanvas = document.getElementById('challengePointsOverTimeChart');
+    const globalStatsOverTime = flaskGlobalStatsOverTime; // Access global variable
+    const userScoresOverTime = flaskUserScoresOverTime; // Access global variable
+    const globalPointsOverTimeCtx = globalPointsOverTimeCanvas.getContext('2d');
 
-    new Chart(challengePointsOverTimeCtx, {
-        type: 'line',
-        interaction: {
-            mode: 'nearest',
-            intersect: false,
-            hitRadius: 20
-        },
-        data: {
-            labels: cumulativePointsDates,
-            datasets: [{
-                label: 'Cumulative Score',
-                data: cumulativePointsValues,
-                borderColor: '#FFCE56', // A distinct color
-                backgroundColor: 'rgba(255, 206, 86, 0.2)',
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    labels: {
-                        color: 'white'
-                    }
-                }
+    if (globalStatsOverTime && globalStatsOverTime.length > 0) {
+        const datasets = [];
+
+        // Add global statistics lines
+        datasets.push({
+            label: 'Global Average Score',
+            data: globalStatsOverTime.map(d => ({ x: d.x, y: d.avg })),
+            borderColor: 'rgb(255, 0, 0)', // Red for average
+            borderDash: [5, 5],
+            tension: 0.1,
+            fill: false,
+            pointRadius: 0
+        });
+
+        datasets.push({
+            label: 'Global Max Score',
+            data: globalStatsOverTime.map(d => ({ x: d.x, y: d.max })),
+            borderColor: 'rgb(0, 200, 0)', // Green for max
+            borderDash: [2, 2],
+            tension: 0.1,
+            fill: false,
+            pointRadius: 0
+        });
+
+        datasets.push({
+            label: 'Global Min Score',
+            data: globalStatsOverTime.map(d => ({ x: d.x, y: d.min })),
+            borderColor: 'rgb(200, 0, 0)', // Dark Red for min
+            borderDash: [2, 2],
+            tension: 0.1,
+            fill: false,
+            pointRadius: 0
+        });
+
+        datasets.push({
+            label: 'Global Q3 (75th Percentile)',
+            data: globalStatsOverTime.map(d => ({ x: d.x, y: d.q3 })),
+            borderColor: 'rgb(128, 0, 128)', // Purple for IQR
+            borderDash: [2, 2],
+            tension: 0.1,
+            fill: '+1', // Fill to Q1
+            backgroundColor: 'rgba(128, 0, 128, 0.1)',
+            pointRadius: 0
+        });
+        datasets.push({
+            label: 'Global Q1 (25th Percentile)',
+            data: globalStatsOverTime.map(d => ({ x: d.x, y: d.q1 })),
+            borderColor: 'rgb(128, 0, 128)', // Purple for IQR
+            borderDash: [2, 2],
+            tension: 0.1,
+            fill: '-1', // Fill to the dataset below (nothing below, so fills to 0)
+            backgroundColor: 'rgba(128, 0, 128, 0.1)',
+            pointRadius: 0
+        });
+
+        // +1 Standard Deviation Band
+        datasets.push({
+            label: 'Global Avg +1 Std Dev',
+            data: globalStatsOverTime.map(d => ({ x: d.x, y: d.avg + d.std_dev })),
+            borderColor: 'rgb(255, 165, 0)', // Orange for std dev
+            borderDash: [2, 2],
+            tension: 0.1,
+            fill: '+1', // Fill to the dataset below (average)
+            backgroundColor: 'rgba(255, 165, 0, 0.1)',
+            pointRadius: 0
+        });
+
+        // -1 Standard Deviation Band
+        datasets.push({
+            label: 'Global Avg -1 Std Dev',
+            data: globalStatsOverTime.map(d => ({ x: d.x, y: d.avg - d.std_dev })),
+            borderColor: 'rgb(255, 165, 0)', // Orange for std dev
+            borderDash: [2, 2],
+            tension: 0.1,
+            fill: '-1', // Fill to the dataset below (nothing below, so fills to 0)
+            backgroundColor: 'rgba(255, 165, 0, 0.1)',
+            pointRadius: 0
+        });
+
+        // Add individual user scores
+        const userColors = [
+            '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+            '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+        ]; // A set of distinct colors
+        let colorIndex = 0;
+
+        for (const username in userScoresOverTime) {
+            if (userScoresOverTime.hasOwnProperty(username)) {
+                datasets.push({
+                    label: username,
+                    data: userScoresOverTime[username],
+                    borderColor: userColors[colorIndex % userColors.length],
+                    tension: 0.1,
+                    fill: false,
+                    pointRadius: 2,
+                    pointHoverRadius: 5
+                });
+                colorIndex++;
+            }
+        }
+
+        new Chart(globalPointsOverTimeCtx, {
+            type: 'line',
+            interaction: {
+                mode: 'nearest',
+                intersect: false,
+                hitRadius: 20
             },
-            scales: {
-                x: {
-                    type: 'time',
-                    time: {
-                        unit: 'day',
-                        tooltipFormat: 'MMM d, yyyy',
-                        displayFormats: {
-                            day: 'MMM d'
+            data: {
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
                         }
                     },
-                    title: {
-                        display: false, // Hide title
-                        text: 'Date',
-                        color: 'white'
-                    },
-                    ticks: {
-                        display: false, // Hide ticks
-                        color: 'white'
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                return context[0].label; // Show date as title
+                            },
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y.toFixed(2);
+                                }
+                                return label;
+                            },
+                            afterBody: function(context) {
+                                // Find the global stats for the current timestamp
+                                const currentTimestamp = context[0].parsed.x;
+                                const globalStat = globalStatsOverTime.find(d => new Date(d.x).getTime() === currentTimestamp);
+                                if (globalStat) {
+                                    return [
+                                        '', // Empty line for spacing
+                                        '--- Global Statistics ---',
+                                        `Min: ${globalStat.min.toFixed(2)}`,
+                                        `Max: ${globalStat.max.toFixed(2)}`,
+                                        `Avg: ${globalStat.avg.toFixed(2)}`,
+                                        `Std Dev: ${globalStat.std_dev.toFixed(2)}`,
+                                        `Q1: ${globalStat.q1.toFixed(2)}`,
+                                        `Q3: ${globalStat.q3.toFixed(2)}`
+                                    ];
+                                }
+                                return null;
+                            }
+                        }
                     }
                 },
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Cumulative Score',
-                        color: 'white'
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            tooltipFormat: 'MMM d, yyyy',
+                            displayFormats: {
+                                day: 'MMM d'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Date',
+                            color: 'white'
+                        },
+                        ticks: {
+                            color: 'white'
+                        }
                     },
-                    ticks: {
-                        color: 'white'
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Score',
+                            color: 'white'
+                        },
+                        ticks: {
+                            color: 'white'
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+    } else {
+        document.getElementById('challengePointsOverTimeChartContainer').innerHTML = '<p class="text-gray-400 text-center">No submissions yet to display global points over time.</p>';
+    }
 });

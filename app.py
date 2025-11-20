@@ -14,6 +14,7 @@ import os # Import os
 import json # Import json
 import yaml # Import yaml
 import os # Import os
+import numpy as np # Import numpy for statistics
 
 import os # Import os
 from dotenv import load_dotenv # Import load_dotenv
@@ -146,27 +147,105 @@ def create_app(config_class=Config):
 
         # --- Chart Data Generation ---
         profile_charts_data = {}
+        profile_stats_data = {} # New dictionary for statistics
 
         # 1. Points Over Time Chart
         if get_setting('PROFILE_POINTS_OVER_TIME_CHART_ENABLED', 'True').lower() == 'true':
             points_over_time_data = []
             cumulative_score = 0
-            # Get all submissions for the target user, ordered by timestamp
-            submissions_for_chart = Submission.query.filter_by(user_id=target_user.id).order_by(Submission.timestamp.asc()).all()
+            all_scores = [] # To calculate stats
+            
+            # Get all submissions for the target user, ordered by timestamp, with challenge and category
+            submissions_for_chart = Submission.query.filter_by(user_id=target_user.id)\
+                                                    .options(joinedload(Submission.challenge_rel).joinedload(Challenge.category))\
+                                                    .order_by(Submission.timestamp.asc())\
+                                                    .all()
             
             if submissions_for_chart:
                 # Add an initial 0 score point slightly before the first submission
                 initial_timestamp = submissions_for_chart[0].timestamp - timedelta(microseconds=1)
-                points_over_time_data.append({'x': initial_timestamp.isoformat(), 'y': 0})
+                points_over_time_data.append({'x': initial_timestamp.isoformat(), 'y': 0, 'category': 'Start'})
 
                 for submission in submissions_for_chart:
                     cumulative_score += submission.challenge_rel.points
-                    points_over_time_data.append({'x': submission.timestamp.isoformat(), 'y': cumulative_score})
+                    all_scores.append(cumulative_score)
+                    points_over_time_data.append({
+                        'x': submission.timestamp.isoformat(),
+                        'y': cumulative_score,
+                        'category': submission.challenge_rel.category.name if submission.challenge_rel.category else 'Uncategorized'
+                    })
             else:
                 # If no submissions, just a single 0 score point at current time
-                points_over_time_data.append({'x': datetime.now(UTC).isoformat(), 'y': 0})
+                points_over_time_data.append({'x': datetime.now(UTC).isoformat(), 'y': 0, 'category': 'Start'})
             
             profile_charts_data['points_over_time'] = points_over_time_data
+
+            # Get global score history data
+            from scripts.chart_data_utils import get_global_score_history_data
+            global_chart_data = get_global_score_history_data()
+            
+            profile_charts_data['global_stats_over_time'] = global_chart_data['global_stats_over_time']
+            
+            # Extract target user's score history from the global data
+            target_user_history = global_chart_data['user_scores_over_time'].get(target_user.username, [])
+            # Ensure the target user's history starts with 0 if it's empty or doesn't start at 0
+            if not target_user_history or target_user_history[0]['y'] != 0:
+                target_user_history.insert(0, {'x': datetime.min.replace(tzinfo=UTC).isoformat(), 'y': 0})
+            profile_charts_data['target_user_score_history'] = target_user_history
+
+            # Calculate statistics if there are scores
+            if all_scores:
+                import numpy as np
+                
+                # Calculate overall statistics from all eligible users
+                all_eligible_users_submissions = Submission.query.join(User)\
+                                                                 .filter(User.hidden == False)\
+                                                                 .options(joinedload(Submission.challenge_rel))\
+                                                                 .order_by(Submission.timestamp.asc())\
+                                                                 .all()
+                
+                # Calculate overall statistics from all eligible users
+                # Get all non-hidden users who have at least one submission
+                eligible_users = User.query.filter(User.hidden == False)\
+                                           .join(Submission, User.id == Submission.user_id)\
+                                           .group_by(User.id)\
+                                           .having(func.count(Submission.id) > 0)\
+                                           .all()
+                
+                overall_scores_list = []
+                for user in eligible_users:
+                    if user.score > 0: # Ensure only users with positive scores are considered
+                        overall_scores_list.append(user.score)
+
+                if overall_scores_list:
+                    overall_scores_np = np.array(overall_scores_list)
+                    profile_stats_data['max_score'] = float(np.max(overall_scores_np))
+                    profile_stats_data['min_score'] = float(np.min(overall_scores_np))
+                    profile_stats_data['average_score'] = float(np.mean(overall_scores_np))
+                    profile_stats_data['std_dev'] = float(np.std(overall_scores_np))
+                    
+                    q1, q3 = np.percentile(overall_scores_np, [25, 75])
+                    profile_stats_data['iqr'] = float(q3 - q1)
+                else:
+                    profile_stats_data['max_score'] = 0.0
+                    profile_stats_data['min_score'] = 0.0
+                    profile_stats_data['average_score'] = 0.0
+                    profile_stats_data['std_dev'] = 0.0
+                    profile_stats_data['iqr'] = 0.0
+
+            else:
+                profile_stats_data['max_score'] = 0.0
+                profile_stats_data['min_score'] = 0.0
+                profile_stats_data['average_score'] = 0.0
+                profile_stats_data['std_dev'] = 0.0
+                profile_stats_data['iqr'] = 0.0
+                profile_charts_data['moving_average'] = []
+                profile_charts_data['plus_one_std_dev'] = []
+                profile_charts_data['minus_one_std_dev'] = []
+                profile_charts_data['moving_max'] = []
+                profile_charts_data['moving_min'] = []
+                profile_charts_data['moving_q1'] = []
+                profile_charts_data['moving_q3'] = []
 
         # 2. Fails vs. Succeeds Chart
         if get_setting('PROFILE_FAILS_VS_SUCCEEDS_CHART_ENABLED', 'True').lower() == 'true':
@@ -219,7 +298,8 @@ def create_app(config_class=Config):
         return render_template('profile.html', title=f"{target_user.username}'s Profile",
                                user=target_user, submissions=user_submissions, user_rank=user_rank,
                                give_award_form=give_award_form,
-                               profile_charts_data=profile_charts_data)
+                               profile_charts_data=profile_charts_data,
+                               profile_stats_data=profile_stats_data)
 
     @app.route('/challenges')
     @login_required
