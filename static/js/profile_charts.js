@@ -176,6 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     y: {
                         beginAtZero: true,
+                        min: 0, // Ensure the y-axis always starts at 0
                         title: {
                             display: true,
                             text: 'Score'
