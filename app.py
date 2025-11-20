@@ -30,7 +30,7 @@ def create_app(config_class=Config):
     login_manager.unauthorized_handler(lambda: redirect(url_for('home')))
     bcrypt.init_app(app)
 
-    from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission, Award, AwardCategory, FlagAttempt # Import FlagAttempt
+    from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission, Award, AwardCategory, FlagAttempt, Hint, UserHint # Import FlagAttempt, Hint, UserHint
 
     app.register_blueprint(admin_bp) # Register admin blueprint
 
@@ -305,7 +305,13 @@ def create_app(config_class=Config):
     @login_required
     def challenges():
         flag_form = FlagSubmissionForm()
-        categories = Category.query.options(joinedload(Category.challenges).joinedload(Challenge.flags)).all()
+        # Eager load hints for each challenge
+        categories = Category.query.options(
+            joinedload(Category.challenges)
+            .joinedload(Challenge.flags),
+            joinedload(Category.challenges)
+            .joinedload(Challenge.hints) # Eager load hints
+        ).all()
 
         # Get all challenge IDs completed by the current user
         completed_challenge_ids = {s.challenge_id for s in Submission.query.filter_by(user_id=current_user.id).all()}
@@ -313,7 +319,10 @@ def create_app(config_class=Config):
         # Get all flags submitted by the current user
         submitted_flag_ids = {fs.challenge_flag_id for fs in FlagSubmission.query.filter_by(user_id=current_user.id).all()}
 
-        # Add is_completed and submitted_flags_count attribute to each challenge
+        # Get all hints revealed by the current user
+        revealed_hint_ids = {uh.hint_id for uh in UserHint.query.filter_by(user_id=current_user.id).all()}
+
+        # Add is_completed, submitted_flags_count, total_flags, and hint information to each challenge
         for category in categories:
             for challenge in category.challenges:
                 challenge.is_completed = challenge.id in completed_challenge_ids
@@ -327,7 +336,11 @@ def create_app(config_class=Config):
                 # Determine total flags for the challenge
                 challenge.total_flags = len(challenge.flags)
 
-        return render_template('challenges.html', title='Challenges', categories=categories, flag_form=flag_form)
+                # Add hint information
+                for hint in challenge.hints:
+                    hint.is_revealed = hint.id in revealed_hint_ids
+
+        return render_template('challenges.html', title='Challenges', categories=categories, flag_form=flag_form, current_user_score=current_user.score)
 
     @app.route('/submit_flag/<int:challenge_id>', methods=['POST'])
     @login_required
@@ -427,6 +440,29 @@ def create_app(config_class=Config):
                 return jsonify({'success': False, 'message': 'Incorrect Flag. Please try again.'})
         return jsonify({'success': False, 'message': 'Invalid form submission.'})
 
+    @app.route('/reveal_hint/<int:hint_id>', methods=['POST'])
+    @login_required
+    def reveal_hint(hint_id):
+        hint = Hint.query.get_or_404(hint_id)
+        
+        # Check if user has already revealed this hint
+        if UserHint.query.filter_by(user_id=current_user.id, hint_id=hint.id).first():
+            return jsonify({'success': False, 'message': 'You have already revealed this hint.', 'hint_content': hint.content})
+
+        # Check if user has enough points
+        if current_user.score < hint.cost:
+            return jsonify({'success': False, 'message': 'Not enough points to reveal this hint.'})
+
+        # Deduct points from user
+        current_user.score -= hint.cost
+        
+        # Record hint revelation
+        user_hint = UserHint(user_id=current_user.id, hint_id=hint.id)
+        db.session.add(user_hint)
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': f'Hint revealed! {hint.cost} points deducted.', 'hint_content': hint.content, 'new_score': current_user.score})
+
     @app.route('/api/scoreboard_data')
     @login_required
     def scoreboard_data():
@@ -500,6 +536,42 @@ def create_app(config_class=Config):
         submissions = Submission.query.filter_by(challenge_id=challenge.id).all()
         solvers = [submission.solver.username for submission in submissions]
         return jsonify({'solvers': solvers, 'solver_count': len(solvers)})
+
+    @app.route('/api/challenge_details/<int:challenge_id>')
+    @login_required
+    def get_challenge_details(challenge_id):
+        challenge = Challenge.query.options(joinedload(Challenge.hints)).get_or_404(challenge_id)
+        
+        # Get all hints revealed by the current user for this challenge
+        revealed_hint_ids = {uh.hint_id for uh in UserHint.query.filter_by(user_id=current_user.id).all()}
+
+        hints_data = []
+        for hint in challenge.hints:
+            hints_data.append({
+                'id': hint.id,
+                'title': hint.title, # New: Include hint title
+                'content': hint.content if hint.id in revealed_hint_ids else None, # Only send content if revealed
+                'cost': hint.cost,
+                'is_revealed': hint.id in revealed_hint_ids
+            })
+        
+        # Get completion status and flag counts
+        is_completed = Submission.query.filter_by(user_id=current_user.id, challenge_id=challenge.id).first() is not None
+        submitted_flags_count = FlagSubmission.query.filter_by(user_id=current_user.id, challenge_id=challenge.id).count()
+        total_flags = len(challenge.flags)
+
+        return jsonify({
+            'id': challenge.id,
+            'name': challenge.name,
+            'description': challenge.description,
+            'points': challenge.points,
+            'is_completed': is_completed,
+            'multi_flag_type': challenge.multi_flag_type,
+            'submitted_flags_count': submitted_flags_count,
+            'total_flags': total_flags,
+            'hints': hints_data,
+            'current_user_score': current_user.score # Pass current user's score for client-side checks
+        })
 
     @app.route('/scoreboard')
     @login_required

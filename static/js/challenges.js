@@ -11,12 +11,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalFlagForm = document.getElementById('modalFlagForm');
     const flagInput = document.getElementById('modalFlagInput');
     const submitButton = document.getElementById('modalSubmitButton');
+    const hintsList = document.getElementById('hintsList'); // New: Get hints list container
+    const userScoreDisplay = document.getElementById('userScoreDisplay'); // Assuming you have a score display element
+
     let currentChallengeId = null;
 
     // Function to get a color based on percentage
     function getColorForPercentage(percentage) {
-        // Define color stops (e.g., red for 0%, yellow for 50%, green for 100%)
-        // Using Tailwind CSS color classes
         if (percentage === 100) {
             return 'bg-green-600'; // Completed
         } else if (percentage >= 75) {
@@ -32,6 +33,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Function to display flash messages
+    function showFlashMessage(message, category) {
+        const flashContainer = document.getElementById('flash-messages'); // Assuming a container for flash messages
+        if (!flashContainer) {
+            console.warn('Flash message container not found. Message:', message);
+            alert(message); // Fallback to alert
+            return;
+        }
+
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `p-3 mb-3 rounded-md text-sm ${category === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
+        alertDiv.textContent = message;
+        flashContainer.appendChild(alertDiv);
+
+        // Automatically remove after 5 seconds
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+
     challengeCards.forEach(card => {
         const completionPercentage = parseInt(card.dataset.completionPercentage);
         const isCompleted = card.dataset.completed === 'true';
@@ -44,60 +65,146 @@ document.addEventListener('DOMContentLoaded', function() {
 
         card.addEventListener('click', function() {
             currentChallengeId = this.dataset.id;
-            modalChallengeName.textContent = this.dataset.name;
-            modalChallengeDescription.textContent = this.dataset.description;
-            modalChallengePoints.textContent = this.dataset.points + ' pts';
+            
+            // Fetch challenge details including hints
+            fetch(`/api/challenge_details/${currentChallengeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    modalChallengeName.textContent = data.name;
+                    modalChallengeDescription.textContent = data.description;
+                    modalChallengePoints.textContent = data.points + ' pts';
 
-            const isCompleted = this.dataset.completed === 'true';
-            const multiFlagType = this.dataset.multiFlagType;
-            let submittedFlagsCount = parseInt(this.dataset.submittedFlagsCount);
-            let totalFlags = parseInt(this.dataset.totalFlags);
+                    const isCompleted = data.is_completed;
+                    const multiFlagType = data.multi_flag_type;
+                    let submittedFlagsCount = data.submitted_flags_count;
+                    let totalFlags = data.total_flags;
 
-            // Reset modal status and progress
-            modalChallengeStatus.classList.add('hidden');
-            modalFlagProgress.classList.add('hidden');
-            modalFlagProgress.textContent = '';
+                    // Reset modal status and progress
+                    modalChallengeStatus.classList.add('hidden');
+                    modalFlagProgress.classList.add('hidden');
+                    modalFlagProgress.textContent = '';
 
-            if (isCompleted) {
-                modalChallengeStatus.textContent = 'You have already completed this challenge!';
-                modalChallengeStatus.classList.remove('hidden');
-                flagInput.disabled = true;
-                submitButton.disabled = true;
-                submitButton.classList.add('opacity-50', 'cursor-not-allowed');
-            } else {
-                flagInput.disabled = false;
-                submitButton.disabled = false;
-                submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    if (isCompleted) {
+                        modalChallengeStatus.textContent = 'You have already completed this challenge!';
+                        modalChallengeStatus.classList.remove('hidden');
+                        flagInput.disabled = true;
+                        submitButton.disabled = true;
+                        submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        flagInput.disabled = false;
+                        submitButton.disabled = false;
+                        submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
 
-                // Display flag progress for multi-flag challenges that are not yet completed
-                // Changed condition to totalFlags > 1
-                if (totalFlags > 1) {
-                    modalFlagProgress.textContent = `Flags submitted: ${submittedFlagsCount} / ${totalFlags}`;
-                    modalFlagProgress.classList.remove('hidden');
-                }
+                        if (totalFlags > 1) {
+                            modalFlagProgress.textContent = `Flags submitted: ${submittedFlagsCount} / ${totalFlags}`;
+                            modalFlagProgress.classList.remove('hidden');
+                        }
+                    }
+
+                    // Populate hints section
+                    if (data.hints && data.hints.length > 0) {
+                        hintsList.innerHTML = ''; // Clear previous hints
+                        document.getElementById('modalHintsSection').classList.remove('hidden'); // Show the section
+                        data.hints.forEach(hint => {
+                            const hintDiv = document.createElement('div');
+                            hintDiv.className = 'hint-item mb-2 p-3 bg-gray-700 rounded-md';
+                            if (hint.is_revealed) {
+                                hintDiv.innerHTML = `<p class="text-gray-300">${hint.content}</p>`;
+                            } else {
+                                hintDiv.className += ' flex justify-between items-center';
+                                hintDiv.innerHTML = `
+                                    <span class="text-gray-300">${hint.title} (Cost: ${hint.cost} pts)</span>
+                                    <button class="reveal-hint-btn bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1 px-3 rounded text-xs" data-hint-id="${hint.id}" data-hint-cost="${hint.cost}">Reveal Hint</button>
+                                `;
+                            }
+                            hintsList.appendChild(hintDiv);
+                        });
+                    } else {
+                        document.getElementById('modalHintsSection').classList.add('hidden'); // Hide the section
+                        hintsList.innerHTML = ''; // Ensure it's empty
+                    }
+
+                    // Update form action for submission
+                    modalFlagForm.action = `/submit_flag/${currentChallengeId}`;
+                    
+                    // Show modal with animation
+                    challengeModal.classList.remove('opacity-0', 'pointer-events-none');
+                    modalContent.classList.remove('-translate-y-full');
+                })
+                .catch(error => {
+                    console.error('Error fetching challenge details:', error);
+                    showFlashMessage('Error loading challenge details.', 'danger');
+                });
+        });
+    });
+
+    // Event delegation for reveal hint buttons
+    hintsList.addEventListener('click', function(event) {
+        const revealBtn = event.target.closest('.reveal-hint-btn');
+        if (revealBtn) {
+            const hintId = revealBtn.dataset.hintId;
+            const hintCost = parseInt(revealBtn.dataset.hintCost);
+            const currentUserScore = parseInt(userScoreDisplay ? userScoreDisplay.textContent : '0'); // Get current score from display
+
+            if (currentUserScore < hintCost) {
+                showFlashMessage('You do not have enough points to reveal this hint.', 'danger');
+                return;
             }
 
-            // Update form action for submission
-            modalFlagForm.action = `/submit_flag/${currentChallengeId}`;
-            
-            // Show modal with animation
-            challengeModal.classList.remove('opacity-0', 'pointer-events-none');
-            modalContent.classList.remove('-translate-y-full');
-        });
+            if (!confirm(`Are you sure you want to reveal this hint for ${hintCost} points?`)) {
+                return;
+            }
+
+            fetch(`/reveal_hint/${hintId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // If CSRF token is needed, add it here
+                },
+                body: JSON.stringify({}) // Send empty body for POST request
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showFlashMessage(data.message, 'success');
+                    // Update the hint display
+                    const hintDiv = revealBtn.closest('.hint-item');
+                    if (hintDiv) {
+                        hintDiv.innerHTML = `<p class="text-gray-300">${data.hint_content}</p>`;
+                        hintDiv.classList.remove('flex', 'justify-between', 'items-center');
+                    }
+                    // Update user score display
+                    if (userScoreDisplay) {
+                        userScoreDisplay.textContent = data.new_score;
+                    }
+                } else {
+                    showFlashMessage(data.message, 'danger');
+                    // If hint was already revealed, update its content
+                    if (data.message.includes('already revealed') && data.hint_content) {
+                        const hintDiv = revealBtn.closest('.hint-item');
+                        if (hintDiv) {
+                            hintDiv.innerHTML = `<p class="text-gray-300">${data.hint_content}</p>`;
+                            hintDiv.classList.remove('flex', 'justify-between', 'items-center');
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error revealing hint:', error);
+                showFlashMessage('An error occurred while revealing the hint.', 'danger');
+            });
+        }
     });
 
     closeModalButtons.forEach(button => {
         button.addEventListener('click', function() {
-            // Hide modal with animation
             challengeModal.classList.add('opacity-0', 'pointer-events-none');
             modalContent.classList.add('-translate-y-full');
         });
     });
 
-    // Close modal when clicking outside of it
     challengeModal.addEventListener('click', function(event) {
         if (event.target === challengeModal) {
-            // Hide modal with animation
             challengeModal.classList.add('opacity-0', 'pointer-events-none');
             modalContent.classList.add('-translate-y-full');
         }
@@ -105,96 +212,92 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const challengeContent = document.getElementById('challengeContent');
     const solversContent = document.getElementById('solversContent');
-    const backToChallenge = document.getElementById('backToChallenge');
     const solversList = document.getElementById('solversList');
     const solverCount = document.getElementById('solverCount');
     const viewSolversBtn = document.getElementById('viewSolversBtn');
 
+    let showingSolvers = false; // State to track what is currently shown
+
     viewSolversBtn.addEventListener('click', function() {
-        fetch(`/api/challenge/${currentChallengeId}/solvers`)
-            .then(response => response.json())
-            .then(data => {
-                solversList.innerHTML = '';
-                if (data.solvers.length > 0) {
-                    data.solvers.forEach(solver => {
+        if (!showingSolvers) {
+            // Currently showing challenge content, switch to solvers
+            fetch(`/api/challenge/${currentChallengeId}/solvers`)
+                .then(response => response.json())
+                .then(data => {
+                    solversList.innerHTML = '';
+                    if (data.solvers.length > 0) {
+                        data.solvers.forEach(solver => {
+                            const li = document.createElement('li');
+                            li.textContent = solver;
+                            solversList.appendChild(li);
+                        });
+                    } else {
                         const li = document.createElement('li');
-                        li.textContent = solver;
+                            li.textContent = 'No solvers yet.';
                         solversList.appendChild(li);
-                    });
-                } else {
-                    const li = document.createElement('li');
-                        li.textContent = 'No solvers yet.';
-                    solversList.appendChild(li);
-                }
-                solverCount.textContent = data.solver_count;
-                challengeContent.classList.add('hidden');
-                solversContent.classList.remove('hidden');
-            })
-            .catch(error => console.error('Error fetching solvers:', error));
+                    }
+                    solverCount.textContent = data.solver_count;
+                    challengeContent.classList.add('hidden');
+                    solversContent.classList.remove('hidden');
+                    viewSolversBtn.textContent = 'View Challenge';
+                    showingSolvers = true;
+                })
+                .catch(error => console.error('Error fetching solvers:', error));
+        } else {
+            // Currently showing solvers content, switch back to challenge
+            solversContent.classList.add('hidden');
+            challengeContent.classList.remove('hidden');
+            viewSolversBtn.textContent = 'View Solvers';
+            showingSolvers = false;
+        }
     });
 
-    backToChallenge.addEventListener('click', function() {
-        solversContent.classList.add('hidden');
-        challengeContent.classList.remove('hidden');
-    });
-
-    // Handle AJAX form submission
     modalFlagForm.addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent default form submission
+        event.preventDefault();
 
         const formData = new FormData(modalFlagForm);
-        const challengeId = currentChallengeId; // Use the stored currentChallengeId
+        const challengeId = currentChallengeId;
 
         fetch(`/submit_flag/${challengeId}`, {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json()) // Assuming the server responds with JSON
+        .then(response => response.json())
         .then(data => {
-            alert(data.message); // Display message from server
+            showFlashMessage(data.message, data.success ? 'success' : 'danger');
 
             if (data.success) {
-                // Update the challenge card on the main page
                 const currentCard = document.querySelector(`.challenge-card[data-id="${challengeId}"]`);
                 if (currentCard) {
-                    // If challenge is fully solved
                     if (data.message.includes('Challenge Solved!')) {
                         currentCard.dataset.completed = 'true';
                         currentCard.classList.add('completed-challenge');
-                        // Update card color to green
                         currentCard.classList.remove(getColorForPercentage(parseInt(currentCard.dataset.completionPercentage)));
                         currentCard.classList.add(getColorForPercentage(100));
 
-                        // Disable modal inputs
                         flagInput.disabled = true;
                         submitButton.disabled = true;
                         submitButton.classList.add('opacity-50', 'cursor-not-allowed');
-                        modalChallengeStatus.textContent = data.message; // Changed this line
+                        modalChallengeStatus.textContent = data.message;
                         modalChallengeStatus.classList.remove('hidden');
-                        modalFlagProgress.classList.add('hidden'); // Hide progress if solved
+                        modalFlagProgress.classList.add('hidden');
                     } else {
-                        // Partial submission success, update flag count
                         const submittedCountMatch = data.message.match(/submitted (\d+) of (\d+) flags/);
                         if (submittedCountMatch) {
                             const newSubmittedCount = parseInt(submittedCountMatch[1]);
                             const totalCount = parseInt(submittedCountMatch[2]);
                             currentCard.dataset.submittedFlagsCount = newSubmittedCount;
                             
-                            // Recalculate and update completion percentage
                             const newCompletionPercentage = (newSubmittedCount / totalCount * 100);
                             currentCard.dataset.completionPercentage = newCompletionPercentage;
 
-                            // Update card color
-                            currentCard.classList.remove(getColorForPercentage(parseInt(currentCard.dataset.completionPercentage))); // Remove old color
-                            currentCard.classList.add(getColorForPercentage(newCompletionPercentage)); // Add new color
+                            currentCard.classList.remove(getColorForPercentage(parseInt(currentCard.dataset.completionPercentage)));
+                            currentCard.classList.add(getColorForPercentage(newCompletionPercentage));
 
-                            // Update the displayed progress in the card
                             const cardFlagProgress = currentCard.querySelector('p:last-child');
                             if (cardFlagProgress) {
                                 cardFlagProgress.textContent = `Flags: ${newSubmittedCount} / ${totalCount}`;
                             }
-                            // Update modal progress
-                            // Changed condition to totalFlags > 1
                             if (totalCount > 1) {
                                 modalFlagProgress.textContent = `Flags submitted: ${newSubmittedCount} / ${totalCount}`;
                                 modalFlagProgress.classList.remove('hidden');
@@ -204,12 +307,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 }
-                flagInput.value = ''; // Clear flag input
+                flagInput.value = '';
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred during submission.');
+            showFlashMessage('An error occurred during submission.', 'danger');
         });
     });
 });

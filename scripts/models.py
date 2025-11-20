@@ -40,6 +40,7 @@ class Challenge(db.Model):
     name = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=False)
     points = db.Column(db.Integer, nullable=False)
+    hint_cost = db.Column(db.Integer, nullable=False, default=0)
     # Removed 'flag' column
     case_sensitive = db.Column(db.Boolean, nullable=False, default=True)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
@@ -137,4 +138,31 @@ class Award(db.Model):
 
     def __repr__(self):
         return f"Award(Recipient: {self.user_id}, Category: {self.category_id}, Points: {self.points_awarded}, Giver: {self.admin_id})"
+
+class Hint(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    challenge_id = db.Column(db.Integer, db.ForeignKey('challenge.id'), nullable=False)
+    title = db.Column(db.String(100), nullable=False, default="Hint") # New field for hint title
+    content = db.Column(db.Text, nullable=False)
+    cost = db.Column(db.Integer, nullable=False, default=0)
+    challenge = db.relationship('Challenge', backref='hints', lazy=True)
+
+    def __repr__(self):
+        return f"Hint(Challenge ID: {self.challenge_id}, Cost: {self.cost})"
+
+class UserHint(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    hint_id = db.Column(db.Integer, db.ForeignKey('hint.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
+
+    user = db.relationship('User', backref='revealed_hints', lazy=True)
+    hint = db.relationship('Hint', backref='revealed_by_users', lazy=True)
+
+    # Ensure a user can only reveal a specific hint once
+    __table_args__ = (db.UniqueConstraint('user_id', 'hint_id', name='_user_hint_uc'),)
+
+    def __repr__(self):
+        return f"UserHint(User: {self.user_id}, Hint: {self.hint_id})"
+
 

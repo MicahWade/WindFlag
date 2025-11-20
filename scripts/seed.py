@@ -1,5 +1,5 @@
 from scripts.extensions import db, bcrypt
-from scripts.models import User, Category, Challenge, Submission, Setting, ChallengeFlag, FlagSubmission, AwardCategory, Award, MULTI_FLAG_TYPES, FlagAttempt
+from scripts.models import User, Category, Challenge, Submission, Setting, ChallengeFlag, FlagSubmission, AwardCategory, Award, MULTI_FLAG_TYPES, FlagAttempt, Hint, UserHint
 from datetime import datetime, UTC, timedelta
 import random
 
@@ -15,6 +15,8 @@ def seed_database():
     db.session.query(Setting).delete()
     db.session.query(Award).delete() # New: Clear Award
     db.session.query(AwardCategory).delete() # New: Clear AwardCategory
+    db.session.query(UserHint).delete() # New: Clear UserHint
+    db.session.query(Hint).delete() # New: Clear Hint
     db.session.commit()
 
     # Create default Award Categories
@@ -92,6 +94,20 @@ def seed_database():
             challenge_flags.append(challenge_flag)
     
     db.session.add_all(challenge_flags)
+    db.session.commit()
+
+    # Generate Hints for Challenges
+    hints_to_add = []
+    for challenge in challenges:
+        num_hints = random.randint(0, 2) # 0 to 2 hints per challenge
+        for i in range(num_hints):
+            # Hint cost can be a percentage of challenge points, e.g., 10-30%
+            hint_cost = int(challenge.points * random.uniform(0.1, 0.3))
+            hint_title = f"Hint {i+1} for {challenge.name}" # New: Generate a title
+            hint_content = f"This is hint {i+1} for Challenge {challenge.name}. It costs {hint_cost} points."
+            hint = Hint(challenge_id=challenge.id, title=hint_title, content=hint_content, cost=hint_cost) # New: Pass title
+            hints_to_add.append(hint)
+    db.session.add_all(hints_to_add)
     db.session.commit()
 
     # Generate submissions

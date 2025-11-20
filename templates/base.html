@@ -24,6 +24,7 @@
             <a class="text-white text-xl font-bold" href="{% if current_user.is_authenticated %}{{ url_for('challenges') }}{% else %}/{% endif %}">{{ config['APP_NAME'] }}</a>
             <nav class="space-x-4">
                 {% if current_user.is_authenticated %}
+                    <span class="text-gray-300">Score: <span id="userScoreDisplay">{{ current_user.score }}</span></span>
                     <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('challenges') }}">Challenges</a>
                     <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('scoreboard') }}">Scoreboard</a>
                     <a class="text-gray-300 hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('profile') }}">Profile</a>
@@ -42,6 +43,7 @@
         </div>
     </header>
     <main class="container mx-auto mt-8 p-4">
+        <div id="flash-messages" class="mb-4"></div> {# Container for dynamically added flash messages #}
         <div class="flex flex-wrap -mx-4">
             <div class="w-full lg:w-3/4 px-4">
                 {% with messages = get_flashed_messages(with_categories=true) %}

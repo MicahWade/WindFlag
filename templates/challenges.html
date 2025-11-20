@@ -50,6 +50,24 @@
                     <p class="text-lg font-bold text-gray-200 mt-4" id="modalChallengePoints"></p>
                     <div id="modalChallengeStatus" class="mt-2 text-green-400 font-semibold hidden"></div>
                     <div id="modalFlagProgress" class="mt-2 text-gray-400 text-sm hidden"></div>
+                    
+                    <div id="modalHintsSection" class="mt-4 border-t border-gray-700 pt-4">
+                        <h4 class="text-lg font-semibold text-gray-100 mb-2">Hints</h4>
+                        <div id="hintsList">
+                            {# Hints will be dynamically added here by JavaScript #}
+                            {# The structure below is a placeholder for what JS will generate #}
+                            {#
+                            <div class="hint-item mb-2 p-3 bg-gray-700 rounded-md">
+                                <p class="text-gray-300">Hint content goes here.</p>
+                            </div>
+                            <div class="hint-item mb-2 p-3 bg-gray-700 rounded-md flex justify-between items-center">
+                                <span class="text-gray-300">Cost: 50 pts</span>
+                                <button class="reveal-hint-btn bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1 px-3 rounded text-xs" data-hint-id="1">Reveal Hint</button>
+                            </div>
+                            #}
+                        </div>
+                    </div>
+
                     <form method="POST" action="" class="space-y-2 mt-4" id="modalFlagForm">
                         {{ flag_form.hidden_tag() }}
                         <div>
@@ -59,9 +77,6 @@
                     </form>
                 </div>
                 <div id="solversContent" class="hidden">
-                    <button class="text-gray-500 hover:bg-gray-400" id="backToChallenge">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    </button>
                     <h3 class="text-2xl leading-6 font-medium text-gray-100 mt-4">Solvers (<span id="solverCount">0</span>)</h3>
                     <ul id="solversList" class="list-disc list-inside text-gray-300 mt-4">
                         <!-- Solvers will be dynamically added here -->
