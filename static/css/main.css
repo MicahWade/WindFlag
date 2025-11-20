@@ -1,39 +1,15 @@
-body {
-    font-family: 'Raleway', sans-serif;
-}
-/* Basic Modal Overlay */
-#challengeModal {
-    z-index: 1000; /* Ensure modal is on top */
-    /* Temporary diagnostic style */
-    background-color: rgba(0, 0, 0, 0.75) !important; /* Even darker black, 75% opacity */
-}
-/* Completed Challenge Styling */
-.completed-challenge {
-    background-color: #1a202c; /* Darker background for completed challenges */
-    border: 1px solid #2d3748; /* Darker border */
-    color: #a0aec0; /* Lighter text color */
-}
-.completed-challenge:hover {
-    background-color: #2d3748; /* Slightly darker on hover */
-}
-/* Hover effect for analytics cards */
-.hover-expand-card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+.points-over-time-chart {
+    height: 500px;
 }
 
-.hover-expand-card:hover {
-    transform: scale(1.04);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Larger shadow */
-    z-index: 10; /* Bring hovered card to front */
+.fails-vs-succeeds-chart {
+    max-height: 300px;
 }
 
-/* Hover effect for profile chart cards */
-.chart-hover-scale {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+.categories-per-score-chart {
+    max-height: 300px;
 }
 
-.chart-hover-scale:hover {
-    transform: scale(1.04);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Larger shadow */
-    z-index: 10; /* Bring hovered card to front */
+.challenges-complete-chart {
+    max-height: 300px;
 }
