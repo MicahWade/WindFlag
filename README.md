@@ -12,7 +12,7 @@ WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwin
 *   **Analytics Dashboard**: Visual analytics for category points, user points, challenges solved over time, fails vs. succeeds, and a user-challenge matrix.
 *   **Super Admin Role**: Granular permissions for super administrators, including managing other admin accounts.
 *   **Award System**: Admins can grant awards to users with customizable categories and points.
-*   **YAML Challenge Import**: Easily import challenges from a structured YAML file.
+*   **YAML Challenge Import/Export**: Easily import and export challenges, including associated hints, from a structured YAML file.
 *   **Responsive Design**: Built with Tailwind CSS for a modern and responsive user interface.
 
 ## How to Run

@@ -18,6 +18,11 @@ The YAML file should contain a top-level key `challenges`, which is a list of ch
     *   `N_OF_M`: A specific number (`multi_flag_threshold`) of flags must be submitted.
 *   **`multi_flag_threshold`** (integer, optional): Required if `multi_flag_type` is `N_OF_M`. Specifies the number of flags (N) required to solve the challenge.
 *   **`flags`** (list of strings, required): A list of all correct flag strings for the challenge.
+*   **`hint_cost`** (integer, optional): The default points deducted from a user's score when they reveal a hint for this challenge. This applies if individual hints don't specify their own cost. Defaults to `0`.
+*   **`hints`** (list of objects, optional): A list of hint objects for the challenge. Each hint object must have:
+    *   **`title`** (string, required): The title of the hint, visible before revelation.
+    *   **`content`** (string, required): The actual hint text, revealed upon purchase.
+    *   **`cost`** (integer, optional): The specific cost of this hint. If not provided, the `challenge.hint_cost` will be used. Defaults to `0`.
 
 ### Example YAML
 
@@ -26,11 +31,18 @@ challenges:
   - name: "Warmup Challenge"
     description: "This is a simple warmup challenge. Find the flag!"
     points: 50
+    hint_cost: 10 # Default hint cost for this challenge
     category: "General Skills"
     case_sensitive: true
     multi_flag_type: SINGLE
     flags:
       - "flag{welcome_to_windflag}"
+    hints:
+      - title: "First Clue"
+        content: "The flag format is flag{...}"
+        cost: 5 # Override default hint_cost for this specific hint
+      - title: "Second Clue"
+        content: "Look for a hidden message in the source code."
 
   - name: "Multi-Flag Web"
     description: "Solve multiple parts of this web challenge."
@@ -42,6 +54,11 @@ challenges:
       - "flag{part_one_solved}"
       - "flag{part_two_complete}"
       - "flag{final_piece_found}"
+    hints:
+      - title: "Web Hint 1"
+        content: "Check the network requests."
+      - title: "Web Hint 2"
+        content: "There's a hidden endpoint."
 
   - name: "N-of-M Crypto"
     description: "You need to find 2 out of 3 flags to solve this crypto puzzle."
@@ -53,6 +70,10 @@ challenges:
       - "flag{crypto_key_a}"
       - "flag{crypto_key_b}"
       - "flag{crypto_key_c}"
+    hints:
+      - title: "Crypto Hint"
+        content: "The algorithm is AES-256."
+        cost: 25
 ```
 
 ## How to Import Challenges

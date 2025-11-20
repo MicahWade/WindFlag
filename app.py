@@ -614,15 +614,24 @@ def export_data_to_yaml(output_file_path, data_type='all'):
             challenges_data = []
             for challenge in challenges:
                 flags_data = [flag.flag_content for flag in challenge.flags]
+                hints_data = []
+                for hint in challenge.hints:
+                    hints_data.append({
+                        'title': hint.title,
+                        'content': hint.content,
+                        'cost': hint.cost
+                    })
                 challenges_data.append({
                     'name': challenge.name,
                     'description': challenge.description,
                     'points': challenge.points,
+                    'hint_cost': challenge.hint_cost, # New: Export hint_cost for the challenge
                     'category': challenge.category.name,
                     'case_sensitive': challenge.case_sensitive,
                     'multi_flag_type': challenge.multi_flag_type,
                     'multi_flag_threshold': challenge.multi_flag_threshold,
-                    'flags': flags_data
+                    'flags': flags_data,
+                    'hints': hints_data # New: Export hints
                 })
             exported_data['challenges'] = challenges_data
         
@@ -722,7 +731,7 @@ def import_users_from_json(json_file_path):
 
 def import_challenges_from_yaml(yaml_file_path):
     with create_app().app_context():
-        from scripts.models import Category, Challenge, ChallengeFlag
+        from scripts.models import Category, Challenge, ChallengeFlag, Hint # Import Hint
         try:
             with open(yaml_file_path, 'r') as f:
                 data = yaml.safe_load(f)
@@ -764,7 +773,8 @@ def import_challenges_from_yaml(yaml_file_path):
                 case_sensitive=challenge_data.get('case_sensitive', True),
                 category_id=category.id,
                 multi_flag_type=challenge_data.get('multi_flag_type', 'SINGLE'),
-                multi_flag_threshold=challenge_data.get('multi_flag_threshold')
+                multi_flag_threshold=challenge_data.get('multi_flag_threshold'),
+                hint_cost=challenge_data.get('hint_cost', 0) # New: Import hint_cost for the challenge
             )
             db.session.add(challenge)
             db.session.commit() # Commit to get challenge ID
@@ -776,6 +786,17 @@ def import_challenges_from_yaml(yaml_file_path):
             for flag_content in flags:
                 challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
                 db.session.add(challenge_flag)
+            
+            # Add hints
+            hints = challenge_data.get('hints', [])
+            for hint_data in hints:
+                hint_title = hint_data.get('title', 'Hint')
+                hint_content = hint_data.get('content')
+                hint_cost = hint_data.get('cost', 0)
+                if hint_content:
+                    hint = Hint(challenge_id=challenge.id, title=hint_title, content=hint_content, cost=hint_cost)
+                    db.session.add(hint)
+
             db.session.commit()
             print(f"Challenge '{challenge_name}' imported successfully.")
         print("Challenge import process completed.")
