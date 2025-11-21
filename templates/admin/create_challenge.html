@@ -48,19 +48,6 @@
 
                 <fieldset class="border-t border-gray-700 pt-4 mt-4">
                     <legend class="text-xl font-bold text-gray-100 mb-4">Point Decay Settings</legend>
-                    <div class="mb-4" id="minimum_points_field">
-                        {{ form.minimum_points.label(class="block text-gray-300 text-sm font-bold mb-2") }}
-                        {% if form.minimum_points.errors %}
-                            {{ form.minimum_points(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                            <p class="text-red-400 text-xs italic">
-                                {% for error in form.minimum_points.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </p>
-                        {% else %}
-                            {{ form.minimum_points(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                        {% endif %}
-                    </div>
                     <div class="mb-4">
                         {{ form.point_decay_type.label(class="block text-gray-300 text-sm font-bold mb-2") }}
                         {% if form.point_decay_type.errors %}
@@ -72,6 +59,19 @@
                             </p>
                         {% else %}
                             {{ form.point_decay_type(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="point_decay_type") }}
+                        {% endif %}
+                    </div>
+                    <div class="mb-4" id="minimum_points_field">
+                        {{ form.minimum_points.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {% if form.minimum_points.errors %}
+                            {{ form.minimum_points(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.minimum_points.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% else %}
+                            {{ form.minimum_points(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
                         {% endif %}
                     </div>
                     <div id="formula_display" class="text-gray-400 text-sm mb-4"></div>
@@ -105,7 +105,176 @@
                     </div>
                 </fieldset>
 
+                <fieldset class="border-t border-gray-700 pt-4 mt-4">
+                    <legend class="text-xl font-bold text-gray-100 mb-4">General Prerequisites</legend>
+                    <div class="mb-4" id="prerequisite_challenge_ids_input_field">
+                        <label class="block text-gray-300 text-sm font-bold mb-2">Prerequisite Challenge</label>
+                        <div class="prerequisite-challenges-container border border-gray-600 rounded p-2 max-h-60 overflow-y-auto bg-gray-700">
+                            {% for group_label, group_choices in form.prerequisite_challenge_ids_input.choices %}
+                                <div class="category-group mb-2">
+                                    <h4 class="text-gray-200 font-semibold text-sm mb-1">{{ group_label }}</h4>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 ml-2">
+                                        {% for choice_id, choice_name in group_choices %}
+                                            <label class="inline-flex items-center text-gray-300 text-sm">
+                                                <input type="checkbox" name="prerequisite_challenge_ids_checkbox" value="{{ choice_id }}" class="form-checkbox h-4 w-4 text-blue-600 rounded focus:ring-blue-500 mr-1" {% if choice_id in (form.prerequisite_challenge_ids_input.data or []) %}checked{% endif %}>
+                                                {{ choice_name }}
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {# Hidden input to store selected IDs for form submission #}
+                        <input type="hidden" id="prerequisite_challenge_ids_hidden" name="{{ form.prerequisite_challenge_ids_input.name }}" value="{{ form.prerequisite_challenge_ids_input.data | tojson | safe }}">
+                        {% if form.prerequisite_challenge_ids_input.errors %}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.prerequisite_challenge_ids_input.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+                </fieldset>
 
+                <fieldset class="border-t border-gray-700 pt-4 mt-4">
+                    <legend class="text-xl font-bold text-gray-100 mb-4">Challenge Unlocking Settings</legend>
+                    <div class="mb-4">
+                        {{ form.unlock_type.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {% if form.unlock_type.errors %}
+                            {{ form.unlock_type(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="unlock_type_select") }}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.unlock_type.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% else %}
+                            {{ form.unlock_type(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="unlock_type_select") }}
+                        {% endif %}
+                    </div>
+                    <div class="mb-4" id="prerequisite_percentage_value_field">
+                        {{ form.prerequisite_percentage_value.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {% if form.prerequisite_percentage_value.errors %}
+                            {{ form.prerequisite_percentage_value(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.prerequisite_percentage_value.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% else %}
+                            {{ form.prerequisite_percentage_value(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                        {% endif %}
+                    </div>
+                    <div class="mb-4" id="prerequisite_count_value_field">
+                        {{ form.prerequisite_count_value.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {% if form.prerequisite_count_value.errors %}
+                            {{ form.prerequisite_count_value(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.prerequisite_count_value.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% else %}
+                            {{ form.prerequisite_count_value(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                        {% endif %}
+                    </div>
+                    <div class="mb-4" id="prerequisite_count_category_ids_input_field">
+                        {{ form.prerequisite_count_category_ids_input.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        <div class="prerequisite-categories-container border border-gray-600 rounded p-2 max-h-60 overflow-y-auto bg-gray-700">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 ml-2">
+                                {% for choice_id, choice_name in form.prerequisite_count_category_ids_input.choices %}
+                                    <label class="inline-flex items-center text-gray-300 text-sm">
+                                        <input type="checkbox" name="prerequisite_count_category_ids_checkbox" value="{{ choice_id }}" class="form-checkbox h-4 w-4 text-blue-600 rounded focus:ring-blue-500 mr-1" {% if choice_id in (form.prerequisite_count_category_ids_input.data or []) %}checked{% endif %}>
+                                        {{ choice_name }}
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {# Hidden input to store selected IDs for form submission #}
+                        <input type="hidden" id="prerequisite_count_category_ids_hidden" name="{{ form.prerequisite_count_category_ids_input.name }}" value="{{ form.prerequisite_count_category_ids_input.data | tojson | safe }}">
+                        {% if form.prerequisite_count_category_ids_input.errors %}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.prerequisite_count_category_ids_input.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+                    <div class="mb-4" id="unlock_date_time_field">
+                        <label class="block text-gray-300 text-sm font-bold mb-2">Unlock Date and Time</label>
+                        {% if form.unlock_date_time.errors %}
+                            {{ form.unlock_date_time(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", type="date") }}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.unlock_date_time.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% else %}
+                            {{ form.unlock_date_time(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", type="date") }}
+                        {% endif %}
+                    </div>
+                    <div class="mb-4" id="timezone_field" style="display: none;">
+                        <div class="flex items-center">
+                            {{ form.timezone.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                            <div class="tooltip ml-2">
+                                <i class="fas fa-question-circle" id="timezone_tooltip_icon"></i>
+                                <span class="tooltiptext">The timezone for the Unlock Date and Time. Dates will be converted to UTC for storage.</span>
+                            </div>
+                        </div>
+                        {% if form.timezone.errors %}
+                            {{ form.timezone(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.timezone.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% else %}
+                            {{ form.timezone(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                        {% endif %}
+                    </div>
+                </fieldset>
+
+                <fieldset class="border-t border-gray-700 pt-4 mt-4">
+                    <legend class="text-xl font-bold text-gray-100 mb-4">Dynamic Point Adjustment on Unlock</legend>
+                    <div class="mb-4">
+                        {{ form.unlock_point_reduction_type.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {% if form.unlock_point_reduction_type.errors %}
+                            {{ form.unlock_point_reduction_type(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="unlock_point_reduction_type_select") }}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.unlock_point_reduction_type.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% else %}
+                            {{ form.unlock_point_reduction_type(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="unlock_point_reduction_type_select") }}
+                        {% endif %}
+                    </div>
+                    <div class="mb-4" id="unlock_point_reduction_value_field">
+                        {{ form.unlock_point_reduction_value.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {% if form.unlock_point_reduction_value.errors %}
+                            {{ form.unlock_point_reduction_value(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.unlock_point_reduction_value.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% else %}
+                            {{ form.unlock_point_reduction_value(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                        {% endif %}
+                    </div>
+                    <div class="mb-4" id="unlock_point_reduction_target_date_field">
+                        {{ form.unlock_point_reduction_target_date.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {% if form.unlock_point_reduction_target_date.errors %}
+                            {{ form.unlock_point_reduction_target_date(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", type="date") }}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.unlock_point_reduction_target_date.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% else %}
+                            {{ form.unlock_point_reduction_target_date(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", type="date") }}
+                        {% endif %}
+                    </div>
+                </fieldset>
 
                 <div class="mb-4">
                     {{ form.multi_flag_type.label(class="block text-gray-300 text-sm font-bold mb-2") }}
@@ -194,6 +363,10 @@
         </form>
     </div>
 
+    <script>
+        const isCurrentUserSuperAdmin = {{ is_current_user_super_admin | tojson }};
+        const usersSuperAdminStatus = {{ users_super_admin_status | tojson }};
+        const currentLoggedInUserId = {{ current_user_id | tojson }};
+    </script>
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/challenge_form.js') }}"></script>
 {% endblock content %}

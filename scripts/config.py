@@ -19,6 +19,7 @@ class Config:
     REQUIRE_EMAIL = os.environ.get('REQUIRE_EMAIL', 'True').lower() == 'true'
     BASIC_INDEX_PAGE = os.environ.get('BASIC_INDEX_PAGE', 'False').lower() == 'true'
     DISABLE_SIGNUP = os.environ.get('DISABLE_SIGNUP', 'False').lower() == 'true'
+    TIMEZONE = os.environ.get('TIMEZONE', 'UTC') # New: Timezone setting
 
 class TestConfig(Config):
     """

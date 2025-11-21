@@ -9,6 +9,9 @@ from scripts.models import Category, Challenge, Submission, User, Setting, Chall
 from scripts.forms import CategoryForm, ChallengeForm, AdminSettingsForm, AwardCategoryForm, InlineGiveAwardForm
 from functools import wraps
 from sqlalchemy import func
+from sqlalchemy.orm import joinedload # Import joinedload for eager loading
+import pytz # New: For timezone handling
+from datetime import datetime, UTC # New: For datetime and UTC timezone
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -149,6 +152,35 @@ def manage_challenges():
     challenges = Challenge.query.all()
     return render_template('admin/manage_challenges.html', title='Manage Challenges', challenges=challenges)
 
+def _get_prerequisite_challenge_choices():
+    """
+    Prepares choices for the prerequisite_challenge_ids_input SelectMultipleField,
+    grouped by category.
+    """
+    categories = Category.query.options(joinedload(Category.challenges)).order_by(Category.name).all()
+    choices = []
+    for category in categories:
+        category_challenges = []
+        for challenge in category.challenges:
+            category_challenges.append((challenge.id, challenge.name)) # Removed (ID: {challenge.id})
+        if category_challenges:
+            choices.append((category.name, category_challenges))
+    return choices
+
+def _get_category_choices():
+    """
+    Prepares choices for a SelectMultipleField with categories.
+    """
+    categories = Category.query.order_by(Category.name).all()
+    choices = [(c.id, c.name) for c in categories]
+    return choices
+
+def _get_timezone_choices():
+    """
+    Returns a list of common timezone choices for a SelectField.
+    """
+    return [(tz, tz) for tz in pytz.common_timezones]
+
 @admin_bp.route('/challenge/new', methods=['GET', 'POST'])
 @admin_required
 def new_challenge():
@@ -159,6 +191,10 @@ def new_challenge():
     """
     form = ChallengeForm()
     form.category.choices.extend([(c.id, c.name) for c in Category.query.all()])
+    form.prerequisite_challenge_ids_input.choices = _get_prerequisite_challenge_choices()
+    form.prerequisite_count_category_ids_input.choices = _get_category_choices()
+    form.timezone.choices = _get_timezone_choices() # Set timezone choices
+
     if form.validate_on_submit():
         category_id = None
         if form.new_category_name.data:
@@ -169,6 +205,22 @@ def new_challenge():
         else:
             category_id = form.category.data
 
+        # Handle timezone conversion for unlock_date_time and unlock_point_reduction_target_date
+        local_timezone_name = form.timezone.data # Use selected timezone from form
+        local_tz = pytz.timezone(local_timezone_name)
+
+        unlock_date_time_utc = None
+        if form.unlock_date_time.data:
+            # Assume form data is in local timezone, localize it, then convert to UTC
+            # For DateField, we need to add a default time (e.g., midnight) before localizing
+            localized_dt = local_tz.localize(datetime.combine(form.unlock_date_time.data, datetime.min.time()))
+            unlock_date_time_utc = localized_dt.astimezone(UTC)
+
+        unlock_point_reduction_target_date_utc = None
+        if form.unlock_point_reduction_target_date.data:
+            localized_dt = local_tz.localize(datetime.combine(form.unlock_point_reduction_target_date.data, datetime.min.time()))
+            unlock_point_reduction_target_date_utc = localized_dt.astimezone(UTC)
+
         challenge = Challenge(name=form.name.data, description=form.description.data,
                               points=form.points.data,
                               minimum_points=form.minimum_points.data,
@@ -178,7 +230,16 @@ def new_challenge():
                               case_sensitive=form.case_sensitive.data,
                               category_id=category_id,
                               multi_flag_type=form.multi_flag_type.data,
-                              multi_flag_threshold=form.multi_flag_threshold.data if form.multi_flag_type.data == 'N_OF_M' else None)
+                              multi_flag_threshold=form.multi_flag_threshold.data if form.multi_flag_type.data == 'N_OF_M' else None,
+                              unlock_type=form.unlock_type.data,
+                              prerequisite_percentage_value=form.prerequisite_percentage_value.data,
+                              prerequisite_count_value=form.prerequisite_count_value.data,
+                              prerequisite_count_category_ids=form.prerequisite_count_category_ids_input.data,
+                              prerequisite_challenge_ids=form.prerequisite_challenge_ids_input.data,
+                              unlock_date_time=unlock_date_time_utc,
+                              unlock_point_reduction_type=form.unlock_point_reduction_type.data,
+                              unlock_point_reduction_value=form.unlock_point_reduction_value.data,
+                              unlock_point_reduction_target_date=unlock_point_reduction_target_date_utc)
         db.session.add(challenge)
         db.session.commit() # Commit to get challenge.id
 
@@ -191,7 +252,10 @@ def new_challenge():
 
         flash('Challenge has been created!', 'success')
         return redirect(url_for('admin.manage_challenges'))
-    return render_template('admin/create_challenge.html', title='New Challenge', form=form)
+    return render_template('admin/create_challenge.html', title='New Challenge', form=form,
+                           is_current_user_super_admin=bool(current_user.is_super_admin),
+                           users_super_admin_status={}, # Not directly used here, but admin.js expects it
+                           current_user_id=current_user.id)
 
 @admin_bp.route('/challenge/<int:challenge_id>/update', methods=['GET', 'POST'])
 @admin_required
@@ -206,6 +270,10 @@ def update_challenge(challenge_id):
     challenge = Challenge.query.get_or_404(challenge_id)
     form = ChallengeForm()
     form.category.choices.extend([(c.id, c.name) for c in Category.query.all()])
+    form.prerequisite_challenge_ids_input.choices = _get_prerequisite_challenge_choices()
+    form.prerequisite_count_category_ids_input.choices = _get_category_choices()
+    form.timezone.choices = _get_timezone_choices() # Set timezone choices
+
     if form.validate_on_submit():
         category_id = None
         if form.new_category_name.data:
@@ -215,6 +283,22 @@ def update_challenge(challenge_id):
             category_id = new_category.id
         else:
             category_id = form.category.data
+
+        # Handle timezone conversion for unlock_date_time and unlock_point_reduction_target_date
+        local_timezone_name = form.timezone.data # Use selected timezone from form
+        local_tz = pytz.timezone(local_timezone_name)
+
+        unlock_date_time_utc = None
+        if form.unlock_date_time.data:
+            # Assume form data is in local timezone, localize it, then convert to UTC
+            # For DateField, we need to add a default time (e.g., midnight) before localizing
+            localized_dt = local_tz.localize(datetime.combine(form.unlock_date_time.data, datetime.min.time()))
+            unlock_date_time_utc = localized_dt.astimezone(UTC)
+
+        unlock_point_reduction_target_date_utc = None
+        if form.unlock_point_reduction_target_date.data:
+            localized_dt = local_tz.localize(datetime.combine(form.unlock_point_reduction_target_date.data, datetime.min.time()))
+            unlock_point_reduction_target_date_utc = localized_dt.astimezone(UTC)
 
         challenge.name = form.name.data
         challenge.description = form.description.data
@@ -227,6 +311,16 @@ def update_challenge(challenge_id):
         challenge.category_id = category_id
         challenge.multi_flag_type = form.multi_flag_type.data
         challenge.multi_flag_threshold = form.multi_flag_threshold.data if form.multi_flag_type.data == 'N_OF_M' else None
+        
+        challenge.unlock_type = form.unlock_type.data
+        challenge.prerequisite_percentage_value = form.prerequisite_percentage_value.data
+        challenge.prerequisite_count_value = form.prerequisite_count_value.data
+        challenge.prerequisite_count_category_ids = form.prerequisite_count_category_ids_input.data
+        challenge.prerequisite_challenge_ids = form.prerequisite_challenge_ids_input.data
+        challenge.unlock_date_time = unlock_date_time_utc
+        challenge.unlock_point_reduction_type = form.unlock_point_reduction_type.data
+        challenge.unlock_point_reduction_value = form.unlock_point_reduction_value.data
+        challenge.unlock_point_reduction_target_date = unlock_point_reduction_target_date_utc
         
         # Delete existing flags and add new ones
         ChallengeFlag.query.filter_by(challenge_id=challenge.id).delete()
@@ -252,7 +346,32 @@ def update_challenge(challenge_id):
         form.multi_flag_threshold.data = challenge.multi_flag_threshold
         form.flags_input.data = "\n".join([f.flag_content for f in challenge.flags])
 
-    return render_template('admin/create_challenge.html', title='Update Challenge', form=form)
+        form.unlock_type.data = challenge.unlock_type
+        form.prerequisite_percentage_value.data = challenge.prerequisite_percentage_value
+        form.prerequisite_count_value.data = challenge.prerequisite_count_value
+        form.prerequisite_count_category_ids_input.data = challenge.prerequisite_count_category_ids
+        form.prerequisite_challenge_ids_input.data = challenge.prerequisite_challenge_ids
+
+        # Convert UTC datetimes from DB to local timezone for display
+        # Use the default timezone for display if not explicitly set in the form
+        form.timezone.data = current_app.config['TIMEZONE'] # Set default timezone for display
+        local_tz = pytz.timezone(form.timezone.data)
+        
+        if challenge.unlock_date_time:
+            # For DateField, we only care about the date part
+            form.unlock_date_time.data = challenge.unlock_date_time.astimezone(local_tz).date()
+        else:
+            form.unlock_date_time.data = None
+
+        if challenge.unlock_point_reduction_target_date:
+            form.unlock_point_reduction_target_date.data = challenge.unlock_point_reduction_target_date.astimezone(local_tz).date()
+        else:
+            form.unlock_point_reduction_target_date.data = None
+
+    return render_template('admin/create_challenge.html', title='Update Challenge', form=form,
+                           is_current_user_super_admin=bool(current_user.is_super_admin),
+                           users_super_admin_status={}, # Not directly used here, but admin.js expects it
+                           current_user_id=current_user.id)
 
 @admin_bp.route('/challenge/<int:challenge_id>/delete', methods=['POST'])
 @admin_required
@@ -288,8 +407,8 @@ def manage_users():
     Requires admin privileges.
     """
     users = User.query.order_by(User.id.asc()).all()
-    users_super_admin_status = {user.id: user.is_super_admin for user in users}
-    return render_template('admin/manage_users.html', title='Manage Users', users=users, is_current_user_super_admin=current_user.is_super_admin, users_super_admin_status=users_super_admin_status)
+    users_super_admin_status = {user.id: bool(user.is_super_admin) for user in users} # Ensure boolean
+    return render_template('admin/manage_users.html', title='Manage Users', users=users, is_current_user_super_admin=bool(current_user.is_super_admin), users_super_admin_status=users_super_admin_status)
 
 @admin_bp.route('/user/<int:user_id>/toggle_hidden', methods=['POST'])
 @admin_required
@@ -583,8 +702,15 @@ def analytics():
     from scripts.chart_data_utils import get_global_score_history_data
     global_chart_data = get_global_score_history_data()
 
-    global_stats_over_time = global_chart_data['global_stats_over_time']
-    user_scores_over_time = global_chart_data['user_scores_over_time']
+    if global_chart_data:
+        global_stats_over_time = global_chart_data.get('global_stats_over_time', [])
+        user_scores_over_time = global_chart_data.get('user_scores_over_time', {})
+    else:
+        global_stats_over_time = []
+        user_scores_over_time = {}
+
+    cumulative_points_dates = [item['x'] for item in global_stats_over_time]
+    cumulative_points_values = [item['avg'] for item in global_stats_over_time]
 
     # Data for Fails vs Succeeds
     total_successful_flag_attempts, total_failed_flag_attempts = _get_fails_vs_succeeds_data()

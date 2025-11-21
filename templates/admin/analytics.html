@@ -71,6 +71,20 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+    const flaskCategoryLabels = {{ category_labels | tojson }};
+    const flaskCategoryValues = {{ category_values | tojson }};
+    const flaskUserLabels = {{ user_labels | tojson }};
+    const flaskUserValues = {{ user_values | tojson }};
+    const flaskSolvedDates = {{ solved_dates | tojson }};
+    const flaskSolvedCounts = {{ solved_counts | tojson }};
+    const flaskFailsSucceedsLabels = {{ fails_succeeds_labels | tojson }};
+    const flaskFailsSucceedsValues = {{ fails_succeeds_values | tojson }};
+    const flaskChallengeSolveLabels = {{ challenge_solve_labels | tojson }};
+    const flaskChallengeSolveValues = {{ challenge_solve_values | tojson }};
+    const flaskGlobalStatsOverTime = {{ global_stats_over_time | default([]) | tojson }};
+    const flaskUserScoresOverTime = {{ user_scores_over_time | default({}) | tojson }};
+</script>
 <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 <script src="{{ url_for('static', filename='js/admin_analytics.js') }}"></script>
 {% endblock %}

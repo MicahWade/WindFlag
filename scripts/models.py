@@ -65,6 +65,8 @@ class Category(db.Model):
 # Define Multi-Flag Types
 MULTI_FLAG_TYPES = ('SINGLE', 'ANY', 'ALL', 'N_OF_M')
 POINT_DECAY_TYPES = ('STATIC', 'LINEAR', 'LOGARITHMIC')
+UNLOCK_TYPES = ('NONE', 'PREREQUISITE_PERCENTAGE', 'PREREQUISITE_COUNT', 'TIMED', 'COMBINED')
+UNLOCK_POINT_REDUCTION_TYPES = ('NONE', 'FIXED', 'PERCENTAGE', 'TIME_DECAY_TO_ZERO')
 
 class Challenge(db.Model):
     """
@@ -81,6 +83,18 @@ class Challenge(db.Model):
         submissions (relationship): One-to-many relationship with Submission.
         multi_flag_type (str): Type of multi-flag challenge ('SINGLE', 'ANY', 'ALL', 'N_OF_M').
         multi_flag_threshold (int): For 'N_OF_M' type, the number of flags required.
+        point_decay_type (str): Type of point decay ('STATIC', 'LINEAR', 'LOGARITHMIC').
+        point_decay_rate (int): Rate of point decay.
+        proactive_decay (bool): True if points decay proactively.
+        minimum_points (int): Minimum points a challenge can decay to.
+        unlock_type (str): Type of unlocking mechanism ('NONE', 'PREREQUISITE_PERCENTAGE', 'PREREQUISITE_COUNT', 'PREREQUISITE_CHALLENGES', 'TIMED', 'COMBINED').
+        prerequisite_percentage_value (int): Percentage of challenges to complete for unlocking.
+        prerequisite_count_value (int): Number of challenges to complete for unlocking.
+        prerequisite_challenge_ids (list): List of specific challenge IDs that must be completed for unlocking.
+        unlock_date_time (datetime): Specific date and time for timed unlocking.
+        unlock_point_reduction_type (str): Type of point reduction upon unlocking ('NONE', 'FIXED', 'PERCENTAGE', 'TIME_DECAY_TO_ZERO').
+        unlock_point_reduction_value (int): Value for fixed or percentage point reduction.
+        unlock_point_reduction_target_date (datetime): Target date for time-decay to zero point reduction.
         flags (relationship): One-to-many relationship with ChallengeFlag.
     """
     id = db.Column(db.Integer, primary_key=True)
@@ -98,7 +112,210 @@ class Challenge(db.Model):
     proactive_decay = db.Column(db.Boolean, nullable=False, default=False)
     minimum_points = db.Column(db.Integer, nullable=False, default=1)
     
+    # New fields for challenge unlocking and dynamic point adjustment
+    unlock_type = db.Column(db.String(50), nullable=False, default='NONE')
+    prerequisite_percentage_value = db.Column(db.Integer, nullable=True)
+    prerequisite_count_value = db.Column(db.Integer, nullable=True)
+    prerequisite_count_category_ids = db.Column(db.JSON, nullable=True) # New: Stores a list of category IDs for prerequisite count
+    prerequisite_challenge_ids = db.Column(db.JSON, nullable=True) # Stores a list of challenge IDs
+    unlock_date_time = db.Column(db.DateTime, nullable=True)
+    
+    unlock_point_reduction_type = db.Column(db.String(50), nullable=False, default='NONE')
+    unlock_point_reduction_value = db.Column(db.Integer, nullable=True)
+    unlock_point_reduction_target_date = db.Column(db.DateTime, nullable=True)
+    
     flags = db.relationship('ChallengeFlag', backref='challenge', lazy=True, cascade="all, delete-orphan")
+
+    @property
+    def total_challenges(self):
+        """Returns the total number of challenges in the system."""
+        return Challenge.query.count()
+
+    def get_user_completed_challenges(self, user):
+        """Returns a set of challenge IDs completed by the given user."""
+        if not user or not user.is_authenticated:
+            return set()
+        return {s.challenge_id for s in Submission.query.filter_by(user_id=user.id).all()}
+
+    def is_unlocked_for_user(self, user):
+        """
+        Determines if the challenge is unlocked for the given user based on its unlock_type.
+        """
+        if self.unlock_type == 'NONE':
+            return True
+
+        unlocked_by_prerequisites = True
+        unlocked_by_time = True
+
+        user_completed_challenge_ids = self.get_user_completed_challenges(user)
+        
+        # Universal Prerequisite: Always check specific challenge prerequisites if they are set
+        if self.prerequisite_challenge_ids:
+            required_ids = set(self.prerequisite_challenge_ids)
+            if not required_ids.issubset(user_completed_challenge_ids):
+                unlocked_by_prerequisites = False
+
+        # Only proceed with unlock_type specific checks if universal prerequisites are met
+        if unlocked_by_prerequisites:
+            all_challenges = Challenge.query.all()
+            total_challenges_count = len(all_challenges)
+            user_completed_challenges_count = len(user_completed_challenge_ids)
+
+            # Check unlock_type specific conditions
+            if self.unlock_type == 'PREREQUISITE_PERCENTAGE':
+                if total_challenges_count > 0:
+                    completed_percentage = (user_completed_challenges_count / total_challenges_count) * 100
+                    if completed_percentage < (self.prerequisite_percentage_value or 0):
+                        unlocked_by_prerequisites = False
+                else: # No challenges in system, so percentage cannot be met
+                    unlocked_by_prerequisites = False
+            elif self.unlock_type == 'PREREQUISITE_COUNT':
+                if self.prerequisite_count_category_ids:
+                    # Filter completed challenges by specified categories
+                    from scripts.models import Category # Import here to avoid circular dependency
+                    target_category_ids = set(self.prerequisite_count_category_ids)
+                    
+                    # Get challenges that belong to the target categories
+                    challenges_in_target_categories = Challenge.query.filter(Challenge.category_id.in_(list(target_category_ids))).all()
+                    challenges_in_target_categories_ids = {c.id for c in challenges_in_target_categories}
+
+                    # Count user's completed challenges that are also in the target categories
+                    user_completed_in_target_categories_count = len(user_completed_challenge_ids.intersection(challenges_in_target_categories_ids))
+
+                    if user_completed_in_target_categories_count < (self.prerequisite_count_value or 0):
+                        unlocked_by_prerequisites = False
+                else:
+                    # If no specific categories are selected, use the total count of completed challenges
+                    if user_completed_challenges_count < (self.prerequisite_count_value or 0):
+                        unlocked_by_prerequisites = False
+            elif self.unlock_type == 'PREREQUISITE_CHALLENGES':
+                # This is now handled as a universal prerequisite above, so this block is effectively a no-op
+                pass
+            elif self.unlock_type == 'COMBINED':
+                # For combined, check all relevant prerequisite types if they are set
+                if self.prerequisite_percentage_value:
+                    if total_challenges_count > 0:
+                        completed_percentage = (user_completed_challenges_count / total_challenges_count) * 100
+                        if completed_percentage < self.prerequisite_percentage_value:
+                            unlocked_by_prerequisites = False
+                    else:
+                        unlocked_by_prerequisites = False
+                
+                if unlocked_by_prerequisites and self.prerequisite_count_value:
+                    if self.prerequisite_count_category_ids:
+                        from scripts.models import Category # Import here to avoid circular dependency
+                        target_category_ids = set(self.prerequisite_count_category_ids)
+                        challenges_in_target_categories = Challenge.query.filter(Challenge.category_id.in_(list(target_category_ids))).all()
+                        challenges_in_target_categories_ids = {c.id for c in challenges_in_target_categories}
+                        user_completed_in_target_categories_count = len(user_completed_challenge_ids.intersection(challenges_in_target_categories_ids))
+                        if user_completed_in_target_categories_count < (self.prerequisite_count_value or 0):
+                            unlocked_by_prerequisites = False
+                    else:
+                        if user_completed_challenges_count < (self.prerequisite_count_value or 0):
+                            unlocked_by_prerequisites = False
+                # Specific challenge prerequisites are handled universally at the top
+
+        # Check time-based conditions
+        if self.unlock_type in ['TIMED', 'COMBINED']:
+            if self.unlock_date_time and datetime.now(UTC) < self.unlock_date_time:
+                unlocked_by_time = False
+
+        if self.unlock_type == 'COMBINED':
+            return unlocked_by_prerequisites and unlocked_by_time
+        elif self.unlock_type == 'TIMED':
+            return unlocked_by_time
+        else: # PREREQUISITE_PERCENTAGE, PREREQUISITE_COUNT, PREREQUISITE_CHALLENGES (now handled universally)
+            return unlocked_by_prerequisites
+
+    @property
+    def calculated_points(self):
+        """
+        Calculates the current points for the challenge, considering decay and unlock point reduction.
+        """
+        current_points = self.points
+        now = datetime.now(UTC)
+
+        # Apply existing point decay logic first
+        if self.point_decay_type != 'STATIC' and self.point_decay_rate is not None:
+            # Assuming 'submissions' relationship is ordered by timestamp for the first solve
+            first_solve_time = None
+            if self.proactive_decay:
+                # Proactive decay starts from challenge creation or a set start time
+                # For simplicity, let's assume it starts from now if no specific start time is set
+                # or from the first submission if not proactive.
+                # This part might need a dedicated 'decay_start_time' field in Challenge model
+                # For now, let's assume proactive decay starts immediately.
+                first_solve_time = now # Or a specific challenge creation time if available
+            else:
+                first_submission = Submission.query.filter_by(challenge_id=self.id).order_by(Submission.timestamp.asc()).first()
+                if first_submission:
+                    first_solve_time = first_submission.timestamp
+
+            if first_solve_time:
+                time_since_first_solve = (now - first_solve_time).total_seconds() / 3600 # in hours
+
+                if self.point_decay_type == 'LINEAR':
+                    decay_amount = (self.point_decay_rate / 100) * time_since_first_solve
+                    current_points = max(self.minimum_points, self.points - int(decay_amount))
+                elif self.point_decay_type == 'LOGARITHMIC':
+                    # Logarithmic decay: points = initial_points / (1 + rate * log(time))
+                    # This is a simplified version, actual log decay might be more complex
+                    if time_since_first_solve > 0:
+                        decay_factor = 1 + (self.point_decay_rate / 100) * (time_since_first_solve ** 0.5) # Using sqrt for smoother log-like decay
+                        current_points = max(self.minimum_points, int(self.points / decay_factor))
+        
+        # Apply unlock point reduction if applicable and challenge is considered "unlocked"
+        # For point reduction purposes, we consider it unlocked if it has been solved at least once
+        # or if it's generally unlocked by time/prerequisites for any user.
+        # This logic needs to be carefully considered: should point reduction apply only after a user solves it,
+        # or once it becomes generally available? The prompt implies "upon unlocking" which suggests general availability.
+        # Let's assume point reduction applies if the challenge is generally available (i.e., unlock_date_time has passed
+        # or prerequisites are met by *some* user, or if it's solved by *any* user).
+        # For simplicity, let's assume point reduction applies if the challenge has been solved by at least one user.
+        # A more robust solution might involve checking if the challenge is "globally" unlocked (e.g., timed unlock passed)
+        # or if it's unlocked for the *current* user viewing it.
+        # Given the prompt: "If a challenge has prerequisites and/or time-based unlocking, its points can dynamically adjust."
+        # This implies the adjustment happens once the conditions are met, not necessarily tied to a specific user's solve.
+        # Let's make a simplifying assumption: point reduction applies if the challenge's unlock_date_time has passed
+        # OR if it has been solved by at least one user (implying it was unlocked for that user).
+        
+        # For the purpose of `calculated_points`, we need a global "unlocked" state, not user-specific.
+        # The most straightforward global unlock condition is `unlock_date_time` if set.
+        # If `unlock_date_time` is in the past, or if `unlock_type` is NONE, we consider it "globally" unlocked.
+        # Prerequisite-based unlocks are user-specific, so they don't fit well into a global `calculated_points` property.
+        # Let's refine: point reduction applies if the challenge is generally available (e.g., timed unlock passed)
+        # OR if it has been solved by at least one user (meaning it was unlocked for them).
+        
+        # Let's simplify: point reduction applies if the challenge has been solved by at least one user.
+        # This means we need to check if there are any submissions for this challenge.
+        has_been_solved = Submission.query.filter_by(challenge_id=self.id).first() is not None
+        
+        # If unlock_date_time is set and in the past, it's also considered "unlocked" for point reduction purposes.
+        is_timed_unlocked = self.unlock_date_time and now >= self.unlock_date_time
+
+        if self.unlock_point_reduction_type != 'NONE' and (has_been_solved or is_timed_unlocked):
+            if self.unlock_point_reduction_type == 'FIXED':
+                current_points = max(self.minimum_points, current_points - (self.unlock_point_reduction_value or 0))
+            elif self.unlock_point_reduction_type == 'PERCENTAGE':
+                reduction_factor = (self.unlock_point_reduction_value or 0) / 100.0
+                current_points = max(self.minimum_points, int(current_points * (1 - reduction_factor)))
+            elif self.unlock_point_reduction_type == 'TIME_DECAY_TO_ZERO':
+                if self.unlock_point_reduction_target_date and now < self.unlock_point_reduction_target_date:
+                    time_to_target = (self.unlock_point_reduction_target_date - now).total_seconds()
+                    total_decay_time = (self.unlock_point_reduction_target_date - (self.unlock_date_time or now)).total_seconds()
+                    
+                    if total_decay_time > 0:
+                        decay_progress = 1 - (time_to_target / total_decay_time)
+                        # Decay from initial points (before any other decay) down to minimum_points
+                        # The initial points for this decay should be `self.points`
+                        decayed_value = self.points - (self.points - self.minimum_points) * decay_progress
+                        current_points = max(self.minimum_points, int(decayed_value))
+                    else: # Target date is same as or before unlock date/now, so immediately minimum points
+                        current_points = self.minimum_points
+                elif self.unlock_point_reduction_target_date and now >= self.unlock_point_reduction_target_date:
+                    current_points = self.minimum_points # Reached or passed target date, points are at minimum
+
+        return current_points
 
     def __repr__(self):
         return f"Challenge('{self.name}', '{self.points}', Type: '{self.multi_flag_type}')"

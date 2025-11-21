@@ -8,8 +8,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentUserId = null;
 
     // Pass current user's super admin status from Flask
-    const isCurrentUserSuperAdmin = {{ is_current_user_super_admin | tojson }};
-    const usersSuperAdminStatus = {{ users_super_admin_status | tojson }}; // New: Map of user_id to is_super_admin
+    // These variables are now defined globally in the HTML template
+    // const isCurrentUserSuperAdmin = {{ is_current_user_super_admin | tojson }};
+    // const usersSuperAdminStatus = {{ users_super_admin_status | tojson }};
+    // const currentLoggedInUserId = {{ current_user.id | tojson }};
 
     userRows.forEach(row => {
         row.addEventListener('click', function(event) {
@@ -29,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleAdminButton.textContent = isAdmin ? 'Revoke Admin' : 'Make Admin';
 
             // Admin status toggle logic
-            if (currentUserId == {{ current_user.id | tojson }}) { // Cannot change own admin status
+            if (currentUserId == currentLoggedInUserId) { // Cannot change own admin status
                 toggleAdminButton.disabled = true;
                 toggleAdminButton.classList.add('opacity-50', 'cursor-not-allowed');
             } else if (!isCurrentUserSuperAdmin) { // Only super admins can toggle admin status

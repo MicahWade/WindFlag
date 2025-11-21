@@ -56,14 +56,21 @@ document.addEventListener('DOMContentLoaded', function() {
     challengeCards.forEach(card => {
         const completionPercentage = parseInt(card.dataset.completionPercentage);
         const isCompleted = card.dataset.completed === 'true';
+        const isLocked = card.classList.contains('locked-challenge'); // Check if the card is locked
 
-        // Apply initial background color based on completion percentage
-        if (!isCompleted) {
+        // Apply initial background color based on completion percentage for unlocked challenges
+        if (!isCompleted && !isLocked) {
             card.classList.remove('bg-gray-800'); // Remove default background
             card.classList.add(getColorForPercentage(completionPercentage));
         }
 
         card.addEventListener('click', function() {
+            if (isLocked) {
+                // If the challenge is locked, do not open the modal.
+                // The unlock information is already displayed on the card itself.
+                return; 
+            }
+
             currentChallengeId = this.dataset.id;
             
             // Fetch challenge details including hints

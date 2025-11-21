@@ -1,13 +1,10 @@
-"""
-This module defines the WTForms for the WindFlag CTF platform.
-It includes forms for user registration, login, flag submission,
-category and challenge management, admin settings, and award management.
-"""
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, IntegerField, SelectField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, IntegerField, SelectField, SelectMultipleField, HiddenField
+from wtforms.fields.datetime import DateTimeField, DateField # Import DateField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
-from scripts.models import User, Category, MULTI_FLAG_TYPES, POINT_DECAY_TYPES
+from scripts.models import User, Category, MULTI_FLAG_TYPES, POINT_DECAY_TYPES, UNLOCK_TYPES, UNLOCK_POINT_REDUCTION_TYPES
 from flask import current_app
+import json
 
 class RegistrationForm(FlaskForm):
     """
@@ -112,13 +109,16 @@ class CategoryForm(FlaskForm):
         Raises:
             ValidationError: If the category name already exists.
         """
+        # Import here to avoid circular dependency
+        from scripts.models import Category
+        category = Category.query.filter_by(name=name.data).first()
         if category:
             raise ValidationError('That category name is taken. Please choose a different one.')
 
 class ChallengeForm(FlaskForm):
     """
     Form for creating and updating challenges. Includes fields for multi-flag challenges
-    and dynamic category selection.
+    and dynamic category selection, as well as challenge unlocking and point adjustment.
     """
     name = StringField('Challenge Name',
                        validators=[DataRequired(), Length(min=2, max=100)])
@@ -149,12 +149,41 @@ class ChallengeForm(FlaskForm):
     case_sensitive = BooleanField('Flags are Case-Sensitive', default=True)
     category = SelectField('Category', coerce=int, choices=[(0, '--- Create New Category ---')])
     new_category_name = StringField('New Category Name', validators=[Length(max=50)])
+
+    # New fields for challenge unlocking
+    unlock_type = SelectField('Unlock Type',
+                              choices=[(t, t.replace('_', ' ').title()) for t in UNLOCK_TYPES],
+                              validators=[DataRequired()],
+                              default='NONE')
+    prerequisite_percentage_value = IntegerField('Prerequisite Percentage Value',
+                                                 validators=[NumberRange(min=0, max=100)],
+                                                 render_kw={"placeholder": "e.g., 50 for 50% of challenges"})
+    prerequisite_count_value = IntegerField('Prerequisite Count Value',
+                                            validators=[NumberRange(min=0)],
+                                            render_kw={"placeholder": "e.g., 5 for 5 challenges"})
+    prerequisite_count_category_ids_input = HiddenField('Prerequisite Count Categories') # Changed to HiddenField
+    prerequisite_challenge_ids_input = HiddenField('Prerequisite Challenge IDs') # Changed to HiddenField
+    timezone = SelectField('Timezone', choices=[], default='Australia/Sydney') # New timezone field
+    unlock_date_time = DateField('Unlock Date', format='%Y-%m-%d',
+                                     render_kw={"placeholder": "YYYY-MM-DD"})
+
+    # New fields for dynamic point adjustment on unlock
+    unlock_point_reduction_type = SelectField('Unlock Point Reduction Type',
+                                              choices=[(t, t.replace('_', ' ').title()) for t in UNLOCK_POINT_REDUCTION_TYPES],
+                                              validators=[DataRequired()],
+                                              default='NONE')
+    unlock_point_reduction_value = IntegerField('Unlock Point Reduction Value',
+                                                validators=[NumberRange(min=0)],
+                                                render_kw={"placeholder": "e.g., 10 for fixed, 20 for 20%"})
+    unlock_point_reduction_target_date = DateField('Unlock Point Reduction Target Date', format='%Y-%m-%d',
+                                                       render_kw={"placeholder": "YYYY-MM-DD"})
+
     submit = SubmitField('Submit Challenge')
 
     def validate(self, extra_validators=None):
         """
         Performs custom validation for the ChallengeForm, including category selection,
-        multi-flag type, threshold, and flag count.
+        multi-flag type, threshold, flag count, and new unlock/point reduction fields.
 
         Args:
             extra_validators: Optional extra validators to run.
@@ -190,6 +219,49 @@ class ChallengeForm(FlaskForm):
                 self.flags_input.errors.append('SINGLE type challenges must have exactly one flag.')
                 return False
         
+        # Validate unlock fields
+        if self.unlock_type.data in ['PREREQUISITE_PERCENTAGE', 'COMBINED']:
+            if self.prerequisite_percentage_value.data is None or self.prerequisite_percentage_value.data < 0:
+                self.prerequisite_percentage_value.errors.append('Prerequisite percentage value is required for this unlock type.')
+                return False
+        
+        if self.unlock_type.data in ['PREREQUISITE_COUNT', 'COMBINED']:
+            if self.prerequisite_count_value.data is None or self.prerequisite_count_value.data < 0:
+                self.prerequisite_count_value.errors.append('Prerequisite count value is required for this unlock type.')
+                return False
+            
+            try:
+                # The data from the hidden field will be a JSON string
+                prerequisite_category_ids = json.loads(self.prerequisite_count_category_ids_input.data or '[]')
+                # If prerequisite_count_value is set, and categories are selected, ensure categories are valid.
+                # If no categories are selected, it implies count applies to all challenges.
+                if prerequisite_category_ids and not self.prerequisite_count_value.data:
+                    self.prerequisite_count_value.errors.append('Prerequisite count value must be set if categories are selected for count.')
+                    return False
+            except json.JSONDecodeError:
+                self.prerequisite_count_category_ids_input.errors.append('Invalid format for prerequisite count category IDs.')
+                return False
+
+        if self.unlock_type.data in ['TIMED', 'COMBINED']:
+            if not self.unlock_date_time.data:
+                self.unlock_date_time.errors.append('Unlock date and time is required for this unlock type.')
+                return False
+        
+        # Validate unlock point reduction fields
+        if self.unlock_point_reduction_type.data in ['FIXED', 'PERCENTAGE']:
+            if self.unlock_point_reduction_value.data is None or self.unlock_point_reduction_value.data < 0:
+                self.unlock_point_reduction_value.errors.append('Unlock point reduction value is required for this reduction type.')
+                return False
+        
+        if self.unlock_point_reduction_type.data == 'TIME_DECAY_TO_ZERO':
+            if not self.unlock_point_reduction_target_date.data:
+                self.unlock_point_reduction_target_date.errors.append('Unlock point reduction target date is required for time decay to zero.')
+                return False
+            # Ensure target date is after unlock date time if both are set
+            if self.unlock_date_time.data and self.unlock_point_reduction_target_date.data <= self.unlock_date_time.data:
+                self.unlock_point_reduction_target_date.errors.append('Target date must be after the unlock date and time.')
+                return False
+
         return True
 
 class AdminSettingsForm(FlaskForm):
@@ -245,5 +317,3 @@ class InlineGiveAwardForm(FlaskForm):
     points = IntegerField('Points to Award',
                           validators=[DataRequired(), NumberRange(min=1)])
     submit = SubmitField('Give Award')
-
-
