@@ -123,6 +123,7 @@ class Challenge(db.Model):
     unlock_point_reduction_type = db.Column(db.String(50), nullable=False, default='NONE')
     unlock_point_reduction_value = db.Column(db.Integer, nullable=True)
     unlock_point_reduction_target_date = db.Column(db.DateTime, nullable=True)
+    is_hidden = db.Column(db.Boolean, nullable=False, default=False) # New: Field to hide challenge from non-admins
     
     flags = db.relationship('ChallengeFlag', backref='challenge', lazy=True, cascade="all, delete-orphan")
 
@@ -141,6 +142,10 @@ class Challenge(db.Model):
         """
         Determines if the challenge is unlocked for the given user based on its unlock_type.
         """
+        # If the challenge is explicitly hidden, it's not unlocked for regular users
+        if self.is_hidden and not (user and user.is_admin):
+            return False
+
         if self.unlock_type == 'NONE':
             return True
 
@@ -227,6 +232,39 @@ class Challenge(db.Model):
         else: # PREREQUISITE_PERCENTAGE, PREREQUISITE_COUNT, PREREQUISITE_CHALLENGES (now handled universally)
             return unlocked_by_prerequisites
 
+    def get_unlocked_percentage_for_eligible_users(self):
+        """
+        Calculates the percentage of eligible users (non-admin, non-hidden)
+        for whom this challenge is currently unlocked.
+        """
+        # Import User model here to avoid circular dependency at module level
+        from scripts.models import User 
+
+        eligible_users = User.query.filter_by(is_admin=False, hidden=False).all()
+        if not eligible_users:
+            return 0.0
+
+        unlocked_count = 0
+        for user in eligible_users:
+            # Temporarily override is_hidden check for this calculation
+            # We want to know if it's unlocked *if it weren't explicitly hidden*
+            # This is a bit tricky. The `is_unlocked_for_user` method already
+            # checks `is_hidden`. If `is_hidden` is True, it will return False.
+            # For this specific calculation, we want to know if the *prerequisites*
+            # are met, regardless of the `is_hidden` flag itself.
+            # A simpler approach is to check the unlock conditions directly,
+            # or to pass a flag to `is_unlocked_for_user`.
+            
+            # Let's refine: `is_unlocked_for_user` should be used as is,
+            # because if a challenge is `is_hidden=True`, it's not "unlocked"
+            # for any regular user, and thus shouldn't count towards this percentage.
+            # The request implies "non which is over 50% of users can see it",
+            # which means if it's hidden, no one can see it, so it's 0%.
+            if self.is_unlocked_for_user(user):
+                unlocked_count += 1
+        
+        return (unlocked_count / len(eligible_users)) * 100 if eligible_users else 0.0
+
     @property
     def calculated_points(self):
         """
@@ -250,6 +288,9 @@ class Challenge(db.Model):
                 first_submission = Submission.query.filter_by(challenge_id=self.id).order_by(Submission.timestamp.asc()).first()
                 if first_submission:
                     first_solve_time = first_submission.timestamp
+                    # Ensure first_solve_time is UTC-aware if it's not already
+                    if first_solve_time.tzinfo is None:
+                        first_solve_time = first_solve_time.replace(tzinfo=UTC)
 
             if first_solve_time:
                 time_since_first_solve = (now - first_solve_time).total_seconds() / 3600 # in hours

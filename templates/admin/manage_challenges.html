@@ -22,7 +22,10 @@
                         Unlock Type
                     </th>
                     <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
-                        Point Reduction
+                        Visibility Status
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                        Unlock %
                     </th>
                     <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                         Actions
@@ -30,27 +33,47 @@
                 </tr>
             </thead>
             <tbody>
-                {% for challenge in challenges %}
-                    <tr>
-                        <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
+                {% for data in challenges_data %}
+                    {% set challenge = data.challenge %}
+                    {% set row_class = '' %}
+                    {% if data.is_hidden %}
+                        {% set row_class = 'bg-red-900/50' %} {# Hidden for all users #}
+                    {% elif data.is_locked_by_prerequisites %}
+                        {% set row_class = 'bg-yellow-900/50' %} {# Hidden but can be accessed #}
+                    {% elif data.is_rarely_unlocked %}
+                        {% set row_class = 'bg-blue-900/50' %} {# Rarely unlocked #}
+                    {% endif %}
+                    <tr class="{{ row_class }}">
+                        <td class="px-5 py-5 border-b border-gray-700 text-sm">
                             <p class="text-gray-200 whitespace-no-wrap">{{ challenge.id }}</p>
                         </td>
-                        <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
+                        <td class="px-5 py-5 border-b border-gray-700 text-sm">
                             <p class="text-gray-200 whitespace-no-wrap">{{ challenge.name }}</p>
                         </td>
-                        <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
+                        <td class="px-5 py-5 border-b border-gray-700 text-sm">
                             <p class="text-gray-200 whitespace-no-wrap">{{ challenge.category.name }}</p>
                         </td>
-                        <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
+                        <td class="px-5 py-5 border-b border-gray-700 text-sm">
                             <p class="text-gray-200 whitespace-no-wrap">{{ challenge.points }}</p>
                         </td>
-                        <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
+                        <td class="px-5 py-5 border-b border-gray-700 text-sm">
                             <p class="text-gray-200 whitespace-no-wrap">{{ challenge.unlock_type }}</p>
                         </td>
-                        <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
-                            <p class="text-gray-200 whitespace-no-wrap">{{ challenge.unlock_point_reduction_type }}</p>
+                        <td class="px-5 py-5 border-b border-gray-700 text-sm">
+                            {% if data.is_hidden %}
+                                <span class="text-red-400">Hidden (All Users)</span>
+                            {% elif data.is_locked_by_prerequisites %}
+                                <span class="text-yellow-400">Locked (Prereqs)</span>
+                            {% elif data.is_rarely_unlocked %}
+                                <span class="text-blue-400">Rarely Unlocked</span>
+                            {% else %}
+                                <span class="text-green-400">Visible</span>
+                            {% endif %}
                         </td>
-                        <td class="px-5 py-5 border-b border-gray-700 bg-gray-800 text-sm">
+                        <td class="px-5 py-5 border-b border-gray-700 text-sm">
+                            <p class="text-gray-200 whitespace-no-wrap">{{ "%.2f" | format(data.unlocked_percentage) }}%</p>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-700 text-sm">
                             <a href="{{ url_for('admin.update_challenge', challenge_id=challenge.id) }}" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1 px-2 rounded text-xs shadow-md">Edit</a>
                             <form action="{{ url_for('admin.delete_challenge', challenge_id=challenge.id) }}" method="POST" class="inline-block">
                                 <button type="submit" class="bg-red-600 hover:bg-red-500 text-white font-bold py-1 px-2 rounded text-xs shadow-md" onclick="return confirm('Are you sure you want to delete this challenge?');">Delete</button>

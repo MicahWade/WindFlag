@@ -5,7 +5,7 @@ from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationE
 from scripts.models import User, Category, MULTI_FLAG_TYPES, POINT_DECAY_TYPES, UNLOCK_TYPES, UNLOCK_POINT_REDUCTION_TYPES
 from flask import current_app
 import json
-import pytz # New: Import pytz
+import pytz # Re-add pytz import
 
 def _get_timezone_choices():
     """
@@ -184,6 +184,7 @@ class ChallengeForm(FlaskForm):
                                                 render_kw={"placeholder": "e.g., 10 for fixed, 20 for 20%"})
     unlock_point_reduction_target_date = DateField('Unlock Point Reduction Target Date', format='%Y-%m-%d',
                                                        render_kw={"placeholder": "YYYY-MM-DD"})
+    is_hidden = BooleanField('Hide Challenge from Users', default=False) # New: Field to hide challenge
 
     submit = SubmitField('Submit Challenge')
 

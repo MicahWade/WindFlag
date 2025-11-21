@@ -148,11 +148,34 @@ def delete_category(category_id):
 @admin_required
 def manage_challenges():
     """
-    Displays a list of all challenges for management.
+    Displays a list of all challenges for management, including their visibility states.
     Requires admin privileges.
     """
-    challenges = Challenge.query.all()
-    return render_template('admin/manage_challenges.html', title='Manage Challenges', challenges=challenges)
+    all_challenges = Challenge.query.all()
+    challenges_data = []
+    for challenge in all_challenges:
+        # For admin view, we want to know the *potential* unlock status
+        # `is_unlocked_for_user` already handles `is_hidden` for non-admins.
+        # Here, we want to know if it's locked by prerequisites *for a generic user*
+        # or for the admin themselves to see the state.
+        # Let's check for the current admin user.
+        is_unlocked_for_admin = challenge.is_unlocked_for_user(current_user)
+        
+        # Determine if it's "locked by prerequisites" (i.e., not unlocked for admin)
+        is_locked_by_prerequisites = not is_unlocked_for_admin
+
+        # Calculate "rarely unlocked" status
+        unlocked_percentage = challenge.get_unlocked_percentage_for_eligible_users()
+        is_rarely_unlocked = unlocked_percentage < 50.0 # Threshold for "rarely unlocked"
+
+        challenges_data.append({
+            'challenge': challenge,
+            'is_hidden': challenge.is_hidden,
+            'is_locked_by_prerequisites': is_locked_by_prerequisites,
+            'is_rarely_unlocked': is_rarely_unlocked,
+            'unlocked_percentage': unlocked_percentage # For display if needed
+        })
+    return render_template('admin/manage_challenges.html', title='Manage Challenges', challenges_data=challenges_data)
 
 def _get_prerequisite_challenge_choices():
     """
@@ -241,7 +264,8 @@ def new_challenge():
                               unlock_date_time=unlock_date_time_utc,
                               unlock_point_reduction_type=form.unlock_point_reduction_type.data,
                               unlock_point_reduction_value=form.unlock_point_reduction_value.data,
-                              unlock_point_reduction_target_date=unlock_point_reduction_target_date_utc)
+                              unlock_point_reduction_target_date=unlock_point_reduction_target_date_utc,
+                              is_hidden=form.is_hidden.data)
         db.session.add(challenge)
         db.session.commit() # Commit to get challenge.id
 
@@ -323,6 +347,7 @@ def update_challenge(challenge_id):
         challenge.unlock_point_reduction_type = form.unlock_point_reduction_type.data
         challenge.unlock_point_reduction_value = form.unlock_point_reduction_value.data
         challenge.unlock_point_reduction_target_date = unlock_point_reduction_target_date_utc
+        challenge.is_hidden = form.is_hidden.data
         
         # Delete existing flags and add new ones
         ChallengeFlag.query.filter_by(challenge_id=challenge.id).delete()
@@ -353,6 +378,7 @@ def update_challenge(challenge_id):
         form.prerequisite_count_value.data = challenge.prerequisite_count_value
         form.prerequisite_count_category_ids_input.data = challenge.prerequisite_count_category_ids
         form.prerequisite_challenge_ids_input.data = challenge.prerequisite_challenge_ids
+        form.is_hidden.data = challenge.is_hidden
 
         # Convert UTC datetimes from DB to local timezone for display
         # Use the default timezone for display if not explicitly set in the form

@@ -317,6 +317,18 @@
                         {{ form.flags_input(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
                     {% endif %}
                 </div>
+                {# New field for is_hidden #}
+                <div class="mb-4 flex items-center">
+                    {{ form.is_hidden(class="mr-2 leading-tight") }}
+                    {{ form.is_hidden.label(class="text-gray-300 text-sm font-bold") }}
+                    {% if form.is_hidden.errors %}
+                        <p class="text-red-400 text-xs italic ml-2">
+                            {% for error in form.is_hidden.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
                 {# End new fields #}
 
                 <div class="mb-4 flex items-center">
