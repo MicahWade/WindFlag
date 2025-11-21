@@ -148,6 +148,23 @@ def seed_database():
     db.session.add(rarely_unlocked_challenge)
     challenges.append(rarely_unlocked_challenge) # Add to the list of all challenges
 
+    # Add a challenge specifically for the Blue Stripe (Rarely Unlocked)
+    blue_stripe_prereq = Challenge(name="Blue Stripe Prerequisite", description="Solve this for the blue stripe challenge.",
+                                   points=20, case_sensitive=True, category_id=categories[1].id,
+                                   multi_flag_type='SINGLE')
+    db.session.add(blue_stripe_prereq)
+    db.session.commit() # Commit to get its ID
+
+    blue_stripe_challenge = Challenge(name="Blue Stripe Challenge",
+                                      description="This challenge should have a blue stripe (Rarely Unlocked).",
+                                      points=100, case_sensitive=True, category_id=categories[1].id,
+                                      multi_flag_type='SINGLE',
+                                      unlock_type='PREREQUISITE_COUNT',
+                                      prerequisite_count_value=1,
+                                      prerequisite_challenge_ids=[blue_stripe_prereq.id])
+    db.session.add(blue_stripe_challenge)
+    challenges.append(blue_stripe_challenge) # Add to the list of all challenges
+
     db.session.commit() # Commit all challenges to get their IDs and ensure prereq_for_rarely_unlocked has an ID
 
     # --- After challenges are committed, link prerequisites and ensure specific submissions ---
@@ -156,7 +173,7 @@ def seed_database():
     
     challenge_flags = []
     # Include the new prerequisite and rarely unlocked challenges in flag generation
-    all_challenges_for_flags = [prereq_for_rarely_unlocked, rarely_unlocked_challenge] + challenges 
+    all_challenges_for_flags = [prereq_for_rarely_unlocked, rarely_unlocked_challenge, blue_stripe_prereq, blue_stripe_challenge] + challenges 
     for challenge in all_challenges_for_flags: 
         num_flags_to_create = 1 
         if challenge.multi_flag_type == 'ANY' or challenge.multi_flag_type == 'ALL':
@@ -207,19 +224,39 @@ def seed_database():
         flag_submissions_to_add.append(FlagSubmission(user_id=user1_obj.id, challenge_id=prereq_for_rarely_unlocked.id, challenge_flag_id=flag.id, timestamp=submission_time_user1))
         flag_attempts_to_add.append(FlagAttempt(user_id=user1_obj.id, challenge_id=prereq_for_rarely_unlocked.id, submitted_flag=flag.flag_content, is_correct=True, timestamp=submission_time_user1))
 
+    # User 2 and User 3 will solve the prerequisite for the "Blue Stripe Challenge"
+    user2_obj = users[1]
+    user3_obj = users[2]
+
+    user2_obj.score += blue_stripe_prereq.points
+    submission_time_user2 = start_date + timedelta(hours=random.randint(1, 24))
+    submissions_to_add.append(Submission(user_id=user2_obj.id, challenge_id=blue_stripe_prereq.id, timestamp=submission_time_user2, score_at_submission=user2_obj.score))
+    blue_stripe_prereq_flags = ChallengeFlag.query.filter_by(challenge_id=blue_stripe_prereq.id).all()
+    for flag in blue_stripe_prereq_flags:
+        flag_submissions_to_add.append(FlagSubmission(user_id=user2_obj.id, challenge_id=blue_stripe_prereq.id, challenge_flag_id=flag.id, timestamp=submission_time_user2))
+        flag_attempts_to_add.append(FlagAttempt(user_id=user2_obj.id, challenge_id=blue_stripe_prereq.id, submitted_flag=flag.flag_content, is_correct=True, timestamp=submission_time_user2))
+
+    user3_obj.score += blue_stripe_prereq.points
+    submission_time_user3 = start_date + timedelta(hours=random.randint(1, 24))
+    submissions_to_add.append(Submission(user_id=user3_obj.id, challenge_id=blue_stripe_prereq.id, timestamp=submission_time_user3, score_at_submission=user3_obj.score))
+    for flag in blue_stripe_prereq_flags:
+        flag_submissions_to_add.append(FlagSubmission(user_id=user3_obj.id, challenge_id=blue_stripe_prereq.id, challenge_flag_id=flag.id, timestamp=submission_time_user3))
+        flag_attempts_to_add.append(FlagAttempt(user_id=user3_obj.id, challenge_id=blue_stripe_prereq.id, submitted_flag=flag.flag_content, is_correct=True, timestamp=submission_time_user3))
+
+
     # All other users will have random submissions, but *not* the prerequisite for rarely unlocked,
     # and *not* Challenge 2 (Locked by Prereq - Cat Count) for categories[0].id
     # Ensure they solve some general challenges so their percentage for Challenge 3 can be met.
     
     # Store challenge IDs to control which ones get solved
-    challenge_ids_to_avoid_for_most_users = {prereq_for_rarely_unlocked.id, Challenge.query.filter_by(name="Locked by Prereq (Cat Count)").first().id}
+    challenge_ids_to_avoid_for_most_users = {prereq_for_rarely_unlocked.id, blue_stripe_prereq.id, Challenge.query.filter_by(name="Locked by Prereq (Cat Count)").first().id}
     
     # For Challenge 3, ensure some users meet the 10% percentage
     solved_percentage_target_challenges_users = users[1:5] # Users 2, 3, 4, 5
     num_other_challenges = len(all_challenges_for_flags) - len(challenge_ids_to_avoid_for_most_users)
     
     for user in users:
-        if user.id == user1_obj.id: # Skip user1, already handled specific submission
+        if user.id == user1_obj.id or user.id == user2_obj.id or user.id == user3_obj.id: # Skip users with specific submissions
             continue
 
         user_current_score = user.score # Start with existing score if any

@@ -22,3 +22,31 @@
 .completed-challenge:hover {
     background-color: #065F46; /* Darker green on hover (green-800) */
 }
+
+/* Admin Stripes for Challenge Cards */
+.admin-stripe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 0.25rem 0.5rem; /* py-1 px-2 */
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 700; /* font-bold */
+    text-align: center;
+    color: white;
+    border-top-left-radius: 0.5rem; /* rounded-lg top-left */
+    border-top-right-radius: 0.5rem; /* rounded-lg top-right */
+    z-index: 10; /* Ensure it's above other content */
+}
+
+.admin-stripe-hidden-from-all {
+    background-color: #DC2626; /* Tailwind red-600 */
+}
+
+.admin-stripe-locked-some-users {
+    background-color: #F59E0B; /* Tailwind yellow-500 */
+}
+
+.admin-stripe-rarely-unlocked {
+    background-color: #3B82F6; /* Tailwind blue-600 */
+}

@@ -34,7 +34,7 @@
                         {% elif challenge.total_flags > 0 %}
                             {% set completion_percentage = (challenge.submitted_flags_count / challenge.total_flags * 100) | round(0, 'floor') %}
                         {% endif %}
-                        <div class="bg-gray-800 p-6 rounded-lg shadow-lg challenge-card cursor-pointer transform hover:scale-105 transition duration-300 ease-in-out {% if challenge.is_completed %}completed-challenge{% endif %}"
+                        <div class="bg-gray-800 p-6 rounded-lg shadow-lg challenge-card cursor-pointer transform hover:scale-105 transition duration-300 ease-in-out {% if challenge.is_completed %}completed-challenge{% endif %} relative" {# Added relative class #}
                              data-id="{{ challenge.id }}"
                              data-name="{{ challenge.name }}"
                              data-description="{{ challenge.description }}"
@@ -44,6 +44,18 @@
                              data-submitted-flags-count="{{ challenge.submitted_flags_count }}"
                              data-total-flags="{{ challenge.total_flags }}"
                              data-completion-percentage="{{ completion_percentage }}"> {# New data attribute #}
+                            
+                            {# Admin Stripes #}
+                            {% if current_user.is_admin %}
+                                {% if challenge.admin_is_hidden_from_all %}
+                                    <div class="admin-stripe admin-stripe-hidden-from-all">Hidden (All Users)</div>
+                                {% elif challenge.admin_is_rarely_unlocked %}
+                                    <div class="admin-stripe admin-stripe-rarely-unlocked">Rarely Unlocked</div>
+                                {% elif challenge.admin_is_locked_for_some_users %}
+                                    <div class="admin-stripe admin-stripe-locked-some-users">Locked (Some Users)</div>
+                                {% endif %}
+                            {% endif %}
+
                             <h5 class="text-xl font-bold text-gray-100 mb-2">{{ challenge.name }}</h5>
                             <p class="text-gray-300">{{ challenge.display_points }} pts</p>
                             {# Removed: Flag progress display on card #}
@@ -57,7 +69,7 @@
     {% endfor %}
 
     <!-- Challenge Modal -->
-    <div id="challengeModal" class="fixed inset-0 overflow-y-auto h-full w-full opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="challengeModal" class="fixed inset-0 overflow-y-auto h-full w-full opacity-0 pointer-events-none transition-opacity duration-300 z-50">
         <div class="relative top-20 mx-auto p-5 border border-gray-700 w-96 shadow-lg rounded-md bg-gray-800 transform -translate-y-full transition-transform duration-300 ease-out">
             <div class="flex justify-between items-center pb-3">
                 <h3 class="text-2xl leading-6 font-medium text-gray-100" id="modalChallengeName"></h3>

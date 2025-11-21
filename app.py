@@ -262,62 +262,62 @@ def create_app(config_class=Config):
         for category in categories_with_challenges:
             display_challenges = []
             for challenge in category.challenges:
-                is_unlocked = challenge.is_unlocked_for_user(current_user)
-                
                 # For regular users, if a challenge is not unlocked, it should not be displayed at all.
                 # This covers both explicitly hidden challenges and challenges locked by prerequisites.
-                if not current_user.is_admin and not is_unlocked:
+                if not current_user.is_admin and not challenge.is_unlocked_for_user(current_user):
                     continue # Skip this challenge entirely for regular users if not unlocked
 
-                if is_unlocked:
-                    challenge.is_completed = challenge.id in completed_challenge_ids
-                    # Use the calculated_points property from the model
-                    challenge.display_points = challenge.calculated_points
-                    
-                    # Count how many flags the user has submitted for this specific challenge
-                    challenge.submitted_flags_count = FlagSubmission.query.filter_by(
-                        user_id=current_user.id,
-                        challenge_id=challenge.id
-                    ).count()
-                    
-                    # Determine total flags for the challenge
-                    challenge.total_flags = len(challenge.flags)
+                # If we reach here, it means:
+                # 1. It's an admin user (who sees everything as unlocked for management)
+                # 2. It's a regular user AND the challenge is unlocked for them.
+                
+                challenge.is_completed = challenge.id in completed_challenge_ids
+                # Use the calculated_points property from the model
+                challenge.display_points = challenge.calculated_points
+                
+                # Count how many flags the user has submitted for this specific challenge
+                challenge.submitted_flags_count = FlagSubmission.query.filter_by(
+                    user_id=current_user.id,
+                    challenge_id=challenge.id
+                ).count()
+                
+                # Determine total flags for the challenge
+                challenge.total_flags = len(challenge.flags)
 
-                    # Add hint information
-                    for hint in challenge.hints:
-                        hint.is_revealed = hint.id in revealed_hint_ids
+                # Add hint information
+                for hint in challenge.hints:
+                    hint.is_revealed = hint.id in revealed_hint_ids
+                
+                # Calculate admin-specific visibility flags if current_user is admin
+                if current_user.is_admin:
+                    unlocked_percentage = challenge.get_unlocked_percentage_for_eligible_users()
+
+                    # Red Stripe: Hidden from ALL regular users (either explicitly or no one met prereqs)
+                    admin_is_hidden_from_all = challenge.is_hidden or \
+                                               (challenge.unlock_type != 'NONE' and unlocked_percentage == 0)
                     
-                    display_challenges.append(challenge)
-                else: # This else block will only be reached by admins for challenges they haven't unlocked
-                    # Challenge is locked by prerequisites, create a representation for display
-                    unlock_info = {
-                        'type': challenge.unlock_type,
-                        'prerequisite_percentage_value': challenge.prerequisite_percentage_value,
-                        'prerequisite_count_value': challenge.prerequisite_count_value,
-                        'prerequisite_challenge_ids': challenge.prerequisite_challenge_ids,
-                        'unlock_date_time': challenge.unlock_date_time.isoformat() if challenge.unlock_date_time else None,
-                        'is_unlocked': False # Explicitly mark as locked
-                    }
-                    # Create a dummy object or dictionary to pass to the template
-                    locked_challenge_display = {
-                        'id': challenge.id,
-                        'name': challenge.name,
-                        'category': category.name,
-                        'description': 'This challenge is locked. Meet the prerequisites to view its details.',
-                        'display_points': '???', # Points are hidden when locked
-                        'is_completed': False,
-                        'is_locked': True,
-                        'unlock_info': unlock_info
-                    }
-                    display_challenges.append(locked_challenge_display)
+                    # Blue Stripe: Rarely Unlocked (less than 50% of eligible users, but not 0%)
+                    admin_is_rarely_unlocked = unlocked_percentage < 50.0 and unlocked_percentage > 0
+
+                    # Yellow Stripe: Locked for some, visible to others (prereqs met by some, but not all)
+                    # This condition should be true if it's not hidden from all, has unlock conditions, and is partially unlocked.
+                    admin_is_locked_for_some_users = not challenge.is_hidden and \
+                                                     challenge.unlock_type != 'NONE' and \
+                                                     unlocked_percentage > 0 and unlocked_percentage < 100
+
+                    challenge.admin_is_hidden_from_all = admin_is_hidden_from_all
+                    challenge.admin_is_locked_for_some_users = admin_is_locked_for_some_users
+                    challenge.admin_is_rarely_unlocked = admin_is_rarely_unlocked
+                    challenge.admin_unlocked_percentage = unlocked_percentage # Still useful for display if needed
+                
+                display_challenges.append(challenge)
             
-            # Only add categories that have challenges (unlocked or locked) to display
+            # Only add categories that have challenges (unlocked) to display
             if display_challenges:
                 display_categories.append({
                     'name': category.name,
                     'challenges': display_challenges
                 })
-
         return render_template('challenges.html', title='Challenges', categories=display_categories, flag_form=flag_form, current_user_score=current_user.score)
 
     # The calculate_points function is now integrated into the Challenge model as a property.
