@@ -1,30 +1,46 @@
+
+"""
+Main application file for the WindFlag CTF platform.
+
+This file initializes the Flask application, configures extensions, defines
+routes for user authentication, profile management, challenge interaction,
+and scoreboard display. It also includes utility functions for data export/import
+and admin user creation.
+"""
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
 from scripts.config import Config
-from scripts.forms import RegistrationForm, LoginForm, FlagSubmissionForm, InlineGiveAwardForm # Import forms
-from datetime import datetime, UTC, timedelta # Import datetime, UTC, and timedelta
-from sqlalchemy import func # Import func for aggregation
-from sqlalchemy.orm import joinedload # Import joinedload for eager loading
-from scripts.extensions import db, login_manager, bcrypt, get_setting # Import extensions and get_setting
-from scripts.admin_routes import admin_bp # Import admin blueprint
-import sys # Import sys
-import argparse # Import argparse
-import threading # Import threading
-import os # Import os
-import json # Import json
-import yaml # Import yaml
-import os # Import os
-import numpy as np # Import numpy for statistics
-
-import os # Import os
-from dotenv import load_dotenv # Import load_dotenv
+from scripts.forms import RegistrationForm, LoginForm, FlagSubmissionForm, InlineGiveAwardForm
+from datetime import datetime, UTC, timedelta
+from sqlalchemy import func
+from sqlalchemy.orm import joinedload
+from scripts.extensions import db, login_manager, bcrypt, get_setting
+from scripts.admin_routes import admin_bp
+from scripts.chart_data_utils import get_profile_points_over_time_data, get_profile_fails_vs_succeeds_data, get_profile_categories_per_score_data, get_profile_challenges_complete_data, get_global_score_history_data
+import sys
+import argparse
+import threading
+import os
+import json
+import yaml
+from dotenv import load_dotenv
 
 def create_app(config_class=Config):
+    """
+    Initializes and configures the Flask application.
+
+    Args:
+        config_class: The configuration class to use for the Flask app.
+                      Defaults to `Config`.
+
+    Returns:
+        A Flask application instance.
+    """
     app = Flask(__name__)
     # Load environment variables from .env file in the project root
     load_dotenv(os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), '.env'))
     app.config.from_object(config_class)
-    app.config['APP_NAME'] = os.getenv('APP_NAME', 'WindFlag') # Add this line
+    app.config['APP_NAME'] = os.getenv('APP_NAME', 'WindFlag')
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.unauthorized_handler(lambda: redirect(url_for('home')))
@@ -36,17 +52,33 @@ def create_app(config_class=Config):
 
     @app.context_processor
     def inject_global_config():
+        """
+        Injects global configuration variables into the Jinja2 template context.
+
+        Returns:
+            A dictionary containing global configuration variables.
+        """
         return dict(disable_signup=app.config['DISABLE_SIGNUP'])
 
     @app.route('/')
     @app.route('/home')
     def home():
+        """
+        Renders the home page. Redirects authenticated users to their profile.
+        """
         if current_user.is_authenticated:
             return redirect(url_for('profile'))
         return render_template("index.html")
 
     @app.route('/register', methods=['GET', 'POST'])
     def register():
+        """
+        Handles user registration.
+
+        If registration is disabled or the user is already authenticated,
+        it redirects to the home page. Validates form data, checks join codes
+        if required, hashes the password, and creates a new user.
+        """
         if app.config['DISABLE_SIGNUP']:
             flash('User registration is currently disabled.', 'info')
             return redirect(url_for('home'))
@@ -76,6 +108,12 @@ def create_app(config_class=Config):
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
+        """
+        Handles user login.
+
+        If the user is already authenticated, it redirects to the home page.
+        Validates form data, checks credentials, and logs the user in.
+        """
         if current_user.is_authenticated:
             return redirect(url_for('home'))
         form = LoginForm()
@@ -91,17 +129,30 @@ def create_app(config_class=Config):
 
     @app.route('/logout')
     def logout():
+        """
+        Logs out the current user and redirects to the home page.
+        """
         logout_user()
         return redirect(url_for('home'))
 
     @app.route('/profile')
     @login_required
     def profile():
+        """
+        Redirects to the user's own profile page.
+        Requires the user to be logged in.
+        """
         return user_profile(current_user.username) # Call the user_profile function with current_user's username
 
     @app.route('/profile/<username>')
     @login_required
     def user_profile(username):
+        """
+        Displays the profile page for a specific user.
+
+        Args:
+            username (str): The username of the user whose profile is to be displayed.
+        """
         # Start building the query for target_user
         user_query = User.query.filter_by(username=username)
 
@@ -147,152 +198,30 @@ def create_app(config_class=Config):
 
         # --- Chart Data Generation ---
         profile_charts_data = {}
-        profile_stats_data = {} # New dictionary for statistics
+        profile_stats_data = {}
 
-        # 1. Points Over Time Chart
-        if get_setting('PROFILE_POINTS_OVER_TIME_CHART_ENABLED', 'True').lower() == 'true':
-            points_over_time_data = []
-            cumulative_score = 0
-            all_scores = [] # To calculate stats
-            
-            # Get all submissions for the target user, ordered by timestamp, with challenge and category
-            submissions_for_chart = Submission.query.filter_by(user_id=target_user.id)\
-                                                    .options(joinedload(Submission.challenge_rel).joinedload(Challenge.category))\
-                                                    .order_by(Submission.timestamp.asc())\
-                                                    .all()
-            
-            if submissions_for_chart:
-                # Add an initial 0 score point slightly before the first submission
-                initial_timestamp = submissions_for_chart[0].timestamp - timedelta(microseconds=1)
-                points_over_time_data.append({'x': initial_timestamp.isoformat(), 'y': 0, 'category': 'Start'})
-
-                for submission in submissions_for_chart:
-                    cumulative_score += submission.challenge_rel.points
-                    all_scores.append(cumulative_score)
-                    points_over_time_data.append({
-                        'x': submission.timestamp.isoformat(),
-                        'y': cumulative_score,
-                        'category': submission.challenge_rel.category.name if submission.challenge_rel.category else 'Uncategorized'
-                    })
-            else:
-                # If no submissions, just a single 0 score point at current time
-                points_over_time_data.append({'x': datetime.now(UTC).isoformat(), 'y': 0, 'category': 'Start'})
-            
-            profile_charts_data['points_over_time'] = points_over_time_data
-
-            # Get global score history data
-            from scripts.chart_data_utils import get_global_score_history_data
-            global_chart_data = get_global_score_history_data()
-            
-            profile_charts_data['global_stats_over_time'] = global_chart_data['global_stats_over_time']
-            
-            # Extract target user's score history from the global data
-            target_user_history = global_chart_data['user_scores_over_time'].get(target_user.username, [])
-            # Ensure the target user's history starts with 0 if it's empty or doesn't start at 0
-            if not target_user_history or target_user_history[0]['y'] != 0:
-                target_user_history.insert(0, {'x': datetime.min.replace(tzinfo=UTC).isoformat(), 'y': 0})
-            profile_charts_data['target_user_score_history'] = target_user_history
-
-            # Calculate statistics if there are scores
-            if all_scores:
-                import numpy as np
-                
-                # Calculate overall statistics from all eligible users
-                all_eligible_users_submissions = Submission.query.join(User)\
-                                                                 .filter(User.hidden == False)\
-                                                                 .options(joinedload(Submission.challenge_rel))\
-                                                                 .order_by(Submission.timestamp.asc())\
-                                                                 .all()
-                
-                # Calculate overall statistics from all eligible users
-                # Get all non-hidden users who have at least one submission
-                eligible_users = User.query.filter(User.hidden == False)\
-                                           .join(Submission, User.id == Submission.user_id)\
-                                           .group_by(User.id)\
-                                           .having(func.count(Submission.id) > 0)\
-                                           .all()
-                
-                overall_scores_list = []
-                for user in eligible_users:
-                    if user.score > 0: # Ensure only users with positive scores are considered
-                        overall_scores_list.append(user.score)
-
-                if overall_scores_list:
-                    overall_scores_np = np.array(overall_scores_list)
-                    profile_stats_data['max_score'] = float(np.max(overall_scores_np))
-                    profile_stats_data['min_score'] = float(np.min(overall_scores_np))
-                    profile_stats_data['average_score'] = float(np.mean(overall_scores_np))
-                    profile_stats_data['std_dev'] = float(np.std(overall_scores_np))
-                    
-                    q1, q3 = np.percentile(overall_scores_np, [25, 75])
-                    profile_stats_data['iqr'] = float(q3 - q1)
-                else:
-                    profile_stats_data['max_score'] = 0.0
-                    profile_stats_data['min_score'] = 0.0
-                    profile_stats_data['average_score'] = 0.0
-                    profile_stats_data['std_dev'] = 0.0
-                    profile_stats_data['iqr'] = 0.0
-
-            else:
-                profile_stats_data['max_score'] = 0.0
-                profile_stats_data['min_score'] = 0.0
-                profile_stats_data['average_score'] = 0.0
-                profile_stats_data['std_dev'] = 0.0
-                profile_stats_data['iqr'] = 0.0
-                profile_charts_data['moving_average'] = []
-                profile_charts_data['plus_one_std_dev'] = []
-                profile_charts_data['minus_one_std_dev'] = []
-                profile_charts_data['moving_max'] = []
-                profile_charts_data['moving_min'] = []
-                profile_charts_data['moving_q1'] = []
-                profile_charts_data['moving_q3'] = []
+        # 1. Points Over Time Chart and overall statistics
+        points_charts, points_stats = get_profile_points_over_time_data(
+            target_user, db.session, get_setting,
+            Submission, Challenge, Category, User, UTC, timedelta, np
+        )
+        profile_charts_data.update(points_charts)
+        profile_stats_data.update(points_stats)
 
         # 2. Fails vs. Succeeds Chart
-        if get_setting('PROFILE_FAILS_VS_SUCCEEDS_CHART_ENABLED', 'True').lower() == 'true':
-            successful_attempts = FlagAttempt.query.filter_by(user_id=target_user.id, is_correct=True).count()
-            failed_attempts = FlagAttempt.query.filter_by(user_id=target_user.id, is_correct=False).count()
-            profile_charts_data['fails_vs_succeeds'] = {
-                'labels': ['Succeeds', 'Fails'],
-                'values': [successful_attempts, failed_attempts]
-            }
+        profile_charts_data.update(get_profile_fails_vs_succeeds_data(
+            target_user, FlagAttempt, get_setting
+        ))
 
         # 3. Categories per Score Chart
-        if get_setting('PROFILE_CATEGORIES_PER_SCORE_CHART_ENABLED', 'True').lower() == 'true':
-            category_scores = db.session.query(
-                Category.name,
-                func.sum(Challenge.points)
-            ).join(Challenge, Category.id == Challenge.category_id)\
-             .join(Submission, Challenge.id == Submission.challenge_id)\
-             .filter(Submission.user_id == target_user.id)\
-             .group_by(Category.name)\
-             .all()
-            
-            category_labels = [cs[0] for cs in category_scores]
-            category_values = [cs[1] for cs in category_scores]
-            profile_charts_data['categories_per_score'] = {
-                'labels': category_labels,
-                'values': category_values
-            }
+        profile_charts_data.update(get_profile_categories_per_score_data(
+            target_user, db.session, Category, Challenge, Submission, func, get_setting
+        ))
 
-        # 4. Challenges Complete Chart (Cumulative count of solved challenges over time)
-        if get_setting('PROFILE_CHALLENGES_COMPLETE_CHART_ENABLED', 'True').lower() == 'true':
-            challenges_complete_data = []
-            cumulative_count = 0
-            submissions_for_count_chart = Submission.query.filter_by(user_id=target_user.id).order_by(Submission.timestamp.asc()).all()
-
-            if submissions_for_count_chart:
-                # Add an initial 0 count point slightly before the first submission
-                initial_timestamp = submissions_for_count_chart[0].timestamp - timedelta(microseconds=1)
-                challenges_complete_data.append({'x': initial_timestamp.isoformat(), 'y': 0})
-
-                for submission in submissions_for_count_chart:
-                    cumulative_count += 1
-                    challenges_complete_data.append({'x': submission.timestamp.isoformat(), 'y': cumulative_count})
-            else:
-                # If no submissions, just a single 0 count point at current time
-                challenges_complete_data.append({'x': datetime.now(UTC).isoformat(), 'y': 0})
-            
-            profile_charts_data['challenges_complete'] = challenges_complete_data
+        # 4. Challenges Complete Chart
+        profile_charts_data.update(get_profile_challenges_complete_data(
+            target_user, Submission, UTC, timedelta, get_setting
+        ))
 
 
         return render_template('profile.html', title=f"{target_user.username}'s Profile",
@@ -304,6 +233,10 @@ def create_app(config_class=Config):
     @app.route('/challenges')
     @login_required
     def challenges():
+        """
+        Displays the challenges page, listing all categories and challenges.
+        Requires the user to be logged in.
+        """
         flag_form = FlagSubmissionForm()
         # Eager load hints for each challenge
         categories = Category.query.options(
@@ -345,6 +278,12 @@ def create_app(config_class=Config):
     @app.route('/submit_flag/<int:challenge_id>', methods=['POST'])
     @login_required
     def submit_flag(challenge_id):
+        """
+        Handles the submission of a flag for a given challenge.
+
+        Args:
+            challenge_id (int): The ID of the challenge to submit a flag for.
+        """
         form = FlagSubmissionForm()
         if form.validate_on_submit():
             challenge = Challenge.query.options(joinedload(Challenge.flags)).get_or_404(challenge_id)
@@ -443,6 +382,12 @@ def create_app(config_class=Config):
     @app.route('/reveal_hint/<int:hint_id>', methods=['POST'])
     @login_required
     def reveal_hint(hint_id):
+        """
+        Handles the revelation of a hint for a given hint ID.
+
+        Args:
+            hint_id (int): The ID of the hint to reveal.
+        """
         hint = Hint.query.get_or_404(hint_id)
         
         # Check if user has already revealed this hint
@@ -466,6 +411,10 @@ def create_app(config_class=Config):
     @app.route('/api/scoreboard_data')
     @login_required
     def scoreboard_data():
+        """
+        Provides JSON data for the scoreboard, including ranked players and historical scores.
+        Requires the user to be logged in.
+        """
         try:
             top_x = int(get_setting('TOP_X_SCOREBOARD', '10'))
 
@@ -532,6 +481,12 @@ def create_app(config_class=Config):
     @app.route('/api/challenge/<int:challenge_id>/solvers')
     @login_required
     def get_challenge_solvers(challenge_id):
+        """
+        Returns a JSON list of usernames who have solved a specific challenge.
+
+        Args:
+            challenge_id (int): The ID of the challenge.
+        """
         challenge = Challenge.query.get_or_404(challenge_id)
         submissions = Submission.query.filter_by(challenge_id=challenge.id).all()
         solvers = [submission.solver.username for submission in submissions]
@@ -540,6 +495,12 @@ def create_app(config_class=Config):
     @app.route('/api/challenge_details/<int:challenge_id>')
     @login_required
     def get_challenge_details(challenge_id):
+        """
+        Returns detailed information about a specific challenge, including hints and completion status.
+
+        Args:
+            challenge_id (int): The ID of the challenge.
+        """
         challenge = Challenge.query.options(joinedload(Challenge.hints)).get_or_404(challenge_id)
         
         # Get all hints revealed by the current user for this challenge
@@ -576,11 +537,25 @@ def create_app(config_class=Config):
     @app.route('/scoreboard')
     @login_required
     def scoreboard():
+        """
+        Renders the scoreboard page.
+        Requires the user to be logged in.
+        """
         return render_template('scoreboard.html', title='Scoreboard')
 
     return app
 
 def export_data_to_yaml(output_file_path, data_type='all'):
+    """
+    Exports specified data types (users, categories, challenges, submissions, flag_attempts, awards)
+    from the database to a YAML file.
+
+    Args:
+        output_file_path (str): The path to the output YAML file.
+        data_type (str, optional): The type of data to export. Can be 'all', 'users',
+                                   'categories', 'challenges', 'submissions', 'flag_attempts',
+                                   or 'awards'. Defaults to 'all'.
+    """
     with create_app().app_context():
         from scripts.models import User, Category, Challenge, ChallengeFlag, Submission, FlagSubmission, FlagAttempt, AwardCategory, Award
         exported_data = {}
@@ -687,6 +662,12 @@ def export_data_to_yaml(output_file_path, data_type='all'):
             print(f"Error writing to file {output_file_path}: {e}")
 
 def import_users_from_json(json_file_path):
+    """
+    Imports user data from a JSON file into the database.
+
+    Args:
+        json_file_path (str): The path to the JSON file containing user data.
+    """
     with create_app().app_context():
         from scripts.models import User
         try:
@@ -730,6 +711,12 @@ def import_users_from_json(json_file_path):
         print("User import process completed.")
 
 def import_challenges_from_yaml(yaml_file_path):
+    """
+    Imports challenge data from a YAML file into the database.
+
+    Args:
+        yaml_file_path (str): The path to the YAML file containing challenge data.
+    """
     with create_app().app_context():
         from scripts.models import Category, Challenge, ChallengeFlag, Hint # Import Hint
         try:
@@ -802,6 +789,13 @@ def import_challenges_from_yaml(yaml_file_path):
         print("Challenge import process completed.")
 
 def create_admin(username, password):
+    """
+    Creates a new super admin user.
+
+    Args:
+        username (str): The username for the new admin.
+        password (str): The password for the new admin.
+    """
     with create_app().app_context():
         from scripts.models import User
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')

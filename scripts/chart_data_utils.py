@@ -2,8 +2,9 @@ from datetime import datetime, timedelta, UTC
 from collections import defaultdict
 import numpy as np
 from sqlalchemy.orm import joinedload
-from scripts.extensions import db
-from scripts.models import User, Submission, Challenge, Award
+from sqlalchemy import func
+from scripts.extensions import db, get_setting
+from scripts.models import User, Submission, Challenge, Award, FlagAttempt, Category, UserHint, Hint
 
 def get_global_score_history_data():
     """
@@ -182,3 +183,201 @@ def get_global_score_history_data():
         'global_stats_over_time': global_stats_over_time,
         'user_scores_over_time': final_user_scores_history
     }
+
+def get_profile_points_over_time_data(target_user, db_session, get_setting_func, Submission_model, Challenge_model, Category_model, User_model, UTC_tz, timedelta_obj, np_lib):
+    """
+    Generates data for the 'Points Over Time Chart' and associated statistics for a given user.
+
+    Args:
+        target_user (User): The user object for whom to generate the data.
+        db_session: The SQLAlchemy session object.
+        get_setting_func (function): Function to retrieve application settings.
+        Submission_model: The Submission model.
+        Challenge_model: The Challenge model.
+        Category_model: The Category model.
+        User_model: The User model.
+        UTC_tz: The UTC timezone object.
+        timedelta_obj: The timedelta object.
+        np_lib: The numpy library.
+
+    Returns:
+        tuple: A tuple containing:
+            - dict: profile_charts_data for points over time and global stats.
+            - dict: profile_stats_data for overall score statistics.
+    """
+    profile_charts_data = {}
+    profile_stats_data = {}
+
+    if get_setting_func('PROFILE_POINTS_OVER_TIME_CHART_ENABLED', 'True').lower() == 'true':
+        points_over_time_data = []
+        cumulative_score = 0
+        all_scores = []
+        
+        submissions_for_chart = db_session.query(Submission_model).filter_by(user_id=target_user.id)\
+                                                .options(joinedload(Submission_model.challenge_rel).joinedload(Challenge_model.category))\
+                                                .order_by(Submission_model.timestamp.asc())\
+                                                .all()
+        
+        if submissions_for_chart:
+            initial_timestamp = submissions_for_chart[0].timestamp - timedelta_obj(microseconds=1)
+            points_over_time_data.append({'x': initial_timestamp.isoformat(), 'y': 0, 'category': 'Start'})
+
+            for submission in submissions_for_chart:
+                cumulative_score += submission.challenge_rel.points
+                all_scores.append(cumulative_score)
+                points_over_time_data.append({
+                    'x': submission.timestamp.isoformat(),
+                    'y': cumulative_score,
+                    'category': submission.challenge_rel.category.name if submission.challenge_rel.category else 'Uncategorized'
+                })
+        else:
+            points_over_time_data.append({'x': datetime.now(UTC_tz).isoformat(), 'y': 0, 'category': 'Start'})
+        
+        profile_charts_data['points_over_time'] = points_over_time_data
+
+        global_chart_data = get_global_score_history_data()
+        
+        profile_charts_data['global_stats_over_time'] = global_chart_data['global_stats_over_time']
+        
+        target_user_history = global_chart_data['user_scores_over_time'].get(target_user.username, [])
+        if not target_user_history or target_user_history[0]['y'] != 0:
+            target_user_history.insert(0, {'x': datetime.min.replace(tzinfo=UTC_tz).isoformat(), 'y': 0})
+        profile_charts_data['target_user_score_history'] = target_user_history
+
+        if all_scores:
+            # Calculate overall statistics from all eligible users
+            eligible_users = db_session.query(User_model)\
+                                       .filter(User_model.hidden == False)\
+                                       .join(Submission_model, User_model.id == Submission_model.user_id)\
+                                       .group_by(User_model.id)\
+                                       .having(func.count(Submission_model.id) > 0)\
+                                       .all()
+            
+            overall_scores_list = []
+            for user in eligible_users:
+                if user.score > 0:
+                    overall_scores_list.append(user.score)
+
+            if overall_scores_list:
+                overall_scores_np = np_lib.array(overall_scores_list)
+                profile_stats_data['max_score'] = float(np_lib.max(overall_scores_np))
+                profile_stats_data['min_score'] = float(np_lib.min(overall_scores_np))
+                profile_stats_data['average_score'] = float(np_lib.mean(overall_scores_np))
+                profile_stats_data['std_dev'] = float(np_lib.std(overall_scores_np))
+                
+                q1, q3 = np_lib.percentile(overall_scores_np, [25, 75])
+                profile_stats_data['iqr'] = float(q3 - q1)
+            else:
+                profile_stats_data['max_score'] = 0.0
+                profile_stats_data['min_score'] = 0.0
+                profile_stats_data['average_score'] = 0.0
+                profile_stats_data['std_dev'] = 0.0
+                profile_stats_data['iqr'] = 0.0
+        else:
+            profile_stats_data['max_score'] = 0.0
+            profile_stats_data['min_score'] = 0.0
+            profile_stats_data['average_score'] = 0.0
+            profile_stats_data['std_dev'] = 0.0
+            profile_stats_data['iqr'] = 0.0
+        
+        # Initialize these even if no scores, to prevent KeyError in template
+        profile_charts_data['moving_average'] = []
+        profile_charts_data['plus_one_std_dev'] = []
+        profile_charts_data['minus_one_std_dev'] = []
+        profile_charts_data['moving_max'] = []
+        profile_charts_data['moving_min'] = []
+        profile_charts_data['moving_q1'] = []
+        profile_charts_data['moving_q3'] = []
+
+    return profile_charts_data, profile_stats_data
+
+def get_profile_fails_vs_succeeds_data(target_user, FlagAttempt_model, get_setting_func):
+    """
+    Generates data for the 'Fails vs. Succeeds Chart' for a given user.
+
+    Args:
+        target_user (User): The user object for whom to generate the data.
+        FlagAttempt_model: The FlagAttempt model.
+        get_setting_func (function): Function to retrieve application settings.
+
+    Returns:
+        dict: profile_charts_data containing fails vs. succeeds data.
+    """
+    profile_charts_data = {}
+    if get_setting_func('PROFILE_FAILS_VS_SUCCEEDS_CHART_ENABLED', 'True').lower() == 'true':
+        successful_attempts = FlagAttempt_model.query.filter_by(user_id=target_user.id, is_correct=True).count()
+        failed_attempts = FlagAttempt_model.query.filter_by(user_id=target_user.id, is_correct=False).count()
+        profile_charts_data['fails_vs_succeeds'] = {
+            'labels': ['Succeeds', 'Fails'],
+            'values': [successful_attempts, failed_attempts]
+        }
+    return profile_charts_data
+
+def get_profile_categories_per_score_data(target_user, db_session, Category_model, Challenge_model, Submission_model, func_obj, get_setting_func):
+    """
+    Generates data for the 'Categories per Score Chart' for a given user.
+
+    Args:
+        target_user (User): The user object for whom to generate the data.
+        db_session: The SQLAlchemy session object.
+        Category_model: The Category model.
+        Challenge_model: The Challenge model.
+        Submission_model: The Submission model.
+        func_obj: The SQLAlchemy func object.
+        get_setting_func (function): Function to retrieve application settings.
+
+    Returns:
+        dict: profile_charts_data containing categories per score data.
+    """
+    profile_charts_data = {}
+    if get_setting_func('PROFILE_CATEGORIES_PER_SCORE_CHART_ENABLED', 'True').lower() == 'true':
+        category_scores = db_session.query(
+            Category_model.name,
+            func_obj.sum(Challenge_model.points)
+        ).join(Challenge_model, Category_model.id == Challenge_model.category_id)\
+         .join(Submission_model, Challenge_model.id == Submission_model.challenge_id)\
+         .filter(Submission_model.user_id == target_user.id)\
+         .group_by(Category_model.name)\
+         .all()
+        
+        category_labels = [cs[0] for cs in category_scores]
+        category_values = [cs[1] for cs in category_scores]
+        profile_charts_data['categories_per_score'] = {
+            'labels': category_labels,
+            'values': category_values
+        }
+    return profile_charts_data
+
+def get_profile_challenges_complete_data(target_user, Submission_model, UTC_tz, timedelta_obj, get_setting_func):
+    """
+    Generates data for the 'Challenges Complete Chart' (cumulative count of solved challenges over time)
+    for a given user.
+
+    Args:
+        target_user (User): The user object for whom to generate the data.
+        Submission_model: The Submission model.
+        UTC_tz: The UTC timezone object.
+        timedelta_obj: The timedelta object.
+        get_setting_func (function): Function to retrieve application settings.
+
+    Returns:
+        dict: profile_charts_data containing challenges complete data.
+    """
+    profile_charts_data = {}
+    if get_setting_func('PROFILE_CHALLENGES_COMPLETE_CHART_ENABLED', 'True').lower() == 'true':
+        challenges_complete_data = []
+        cumulative_count = 0
+        submissions_for_count_chart = Submission_model.query.filter_by(user_id=target_user.id).order_by(Submission_model.timestamp.asc()).all()
+
+        if submissions_for_count_chart:
+            initial_timestamp = submissions_for_count_chart[0].timestamp - timedelta_obj(microseconds=1)
+            challenges_complete_data.append({'x': initial_timestamp.isoformat(), 'y': 0})
+
+            for submission in submissions_for_count_chart:
+                cumulative_count += 1
+                challenges_complete_data.append({'x': submission.timestamp.isoformat(), 'y': cumulative_count})
+        else:
+            challenges_complete_data.append({'x': datetime.now(UTC_tz).isoformat(), 'y': 0})
+        
+        profile_charts_data['challenges_complete'] = challenges_complete_data
+    return profile_charts_data

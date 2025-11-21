@@ -1,22 +1,31 @@
+"""
+This module provides functions to seed the database with initial data
+for testing and development purposes.
+"""
 from scripts.extensions import db, bcrypt
 from scripts.models import User, Category, Challenge, Submission, Setting, ChallengeFlag, FlagSubmission, AwardCategory, Award, MULTI_FLAG_TYPES, FlagAttempt, Hint, UserHint
 from datetime import datetime, UTC, timedelta
 import random
 
 def seed_database():
+    """
+    Seeds the database with a set of initial users, categories, challenges,
+    flags, hints, submissions, and settings for testing and demonstration.
+    Existing data for these models will be cleared before seeding.
+    """
     # Clear existing data
-    db.session.query(FlagAttempt).delete() # New: Clear FlagAttempt
-    db.session.query(FlagSubmission).delete() # New: Clear FlagSubmission
+    db.session.query(FlagAttempt).delete()
+    db.session.query(FlagSubmission).delete()
     db.session.query(Submission).delete()
-    db.session.query(ChallengeFlag).delete() # New: Clear ChallengeFlag
+    db.session.query(ChallengeFlag).delete()
     db.session.query(Challenge).delete()
     db.session.query(Category).delete()
     db.session.query(User).delete()
     db.session.query(Setting).delete()
-    db.session.query(Award).delete() # New: Clear Award
-    db.session.query(AwardCategory).delete() # New: Clear AwardCategory
-    db.session.query(UserHint).delete() # New: Clear UserHint
-    db.session.query(Hint).delete() # New: Clear Hint
+    db.session.query(Award).delete()
+    db.session.query(AwardCategory).delete()
+    db.session.query(UserHint).delete()
+    db.session.query(Hint).delete()
     db.session.commit()
 
     # Create default Award Categories
@@ -32,11 +41,11 @@ def seed_database():
     admin1 = User(username="admin1", email="admin1@example.com", password_hash=admin_password, is_admin=True, hidden=True, score=0)
     admin2 = User(username="admin2", email="admin2@example.com", password_hash=admin_password, is_admin=True, hidden=True, score=0)
     
-    # New: Create 'test' admin user
+    test_admin_password = bcrypt.generate_password_hash("test").decode('utf-8')
     test_admin_password = bcrypt.generate_password_hash("test").decode('utf-8')
     test_admin = User(username="test", email="test@example.com", password_hash=test_admin_password, is_admin=True, is_super_admin=True, hidden=True, score=0)
 
-    db.session.add_all([admin1, admin2, test_admin]) # Add test_admin
+    db.session.add_all([admin1, admin2, test_admin])
     db.session.commit()
 
     # Create 24 Users
@@ -103,9 +112,9 @@ def seed_database():
         for i in range(num_hints):
             # Hint cost can be a percentage of challenge points, e.g., 10-30%
             hint_cost = int(challenge.points * random.uniform(0.1, 0.3))
-            hint_title = f"Hint {i+1} for {challenge.name}" # New: Generate a title
+            hint_title = f"Hint {i+1} for {challenge.name}"
             hint_content = f"This is hint {i+1} for Challenge {challenge.name}. It costs {hint_cost} points."
-            hint = Hint(challenge_id=challenge.id, title=hint_title, content=hint_content, cost=hint_cost) # New: Pass title
+            hint = Hint(challenge_id=challenge.id, title=hint_title, content=hint_content, cost=hint_cost)
             hints_to_add.append(hint)
     db.session.add_all(hints_to_add)
     db.session.commit()
@@ -223,7 +232,7 @@ def seed_database():
     db.session.commit()
 
     return {
-        "admin_ids": [admin1.id, admin2.id, test_admin.id], # Include test_admin.id
+        "admin_ids": [admin1.id, admin2.id, test_admin.id],
         "user_ids": [user.id for user in users],
         "category_ids": [category.id for category in categories],
         "challenge_ids": [challenge.id for challenge in challenges]

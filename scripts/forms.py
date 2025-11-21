@@ -1,10 +1,19 @@
+"""
+This module defines the WTForms for the WindFlag CTF platform.
+It includes forms for user registration, login, flag submission,
+category and challenge management, admin settings, and award management.
+"""
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, IntegerField, SelectField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
-from scripts.models import User, Category, MULTI_FLAG_TYPES # Import MULTI_FLAG_TYPES
-from flask import current_app # Import current_app
+from scripts.models import User, Category, MULTI_FLAG_TYPES
+from flask import current_app
 
 class RegistrationForm(FlaskForm):
+    """
+    Form for user registration. Dynamically sets validators for email and join code
+    based on application configuration.
+    """
     username = StringField('Username',
                            validators=[DataRequired(), Length(min=2, max=20)])
     email = StringField('Email') # Define email field, validators set dynamically
@@ -15,6 +24,13 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField('Sign Up')
 
     def __init__(self, config, *args, **kwargs):
+        """
+        Initializes the RegistrationForm and dynamically sets validators
+        for email and join_code based on the provided application configuration.
+
+        Args:
+            config (dict): The application configuration dictionary.
+        """
         super(RegistrationForm, self).__init__(*args, **kwargs)
         self.config = config
 
@@ -32,11 +48,29 @@ class RegistrationForm(FlaskForm):
         self.join_code.validators = join_code_validators
 
     def validate_username(self, username):
+        """
+        Validates that the chosen username is not already taken.
+
+        Args:
+            username (StringField): The username field from the form.
+
+        Raises:
+            ValidationError: If the username already exists.
+        """
         user = User.query.filter_by(username=username.data).first()
         if user:
             raise ValidationError('That username is taken. Please choose a different one.')
 
     def validate_email(self, email):
+        """
+        Validates that the chosen email is not already taken, if email is required by config.
+
+        Args:
+            email (StringField): The email field from the form.
+
+        Raises:
+            ValidationError: If the email already exists and is required.
+        """
         # Only perform email validation if email is required by the configuration
         if self.config['REQUIRE_EMAIL']:
             user = User.query.filter_by(email=email.data).first()
@@ -44,6 +78,9 @@ class RegistrationForm(FlaskForm):
                 raise ValidationError('That email is taken. Please choose a different one.')
 
 class LoginForm(FlaskForm):
+    """
+    Form for user login.
+    """
     username = StringField('Username',
                            validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
@@ -51,27 +88,42 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Login')
 
 class FlagSubmissionForm(FlaskForm):
+    """
+    Form for submitting a flag to solve a challenge.
+    """
     flag = StringField('Flag', validators=[DataRequired()])
     submit = SubmitField('Submit Flag')
 
 class CategoryForm(FlaskForm):
+    """
+    Form for creating and updating challenge categories.
+    """
     name = StringField('Category Name',
                        validators=[DataRequired(), Length(min=2, max=50)])
     submit = SubmitField('Submit Category')
 
     def validate_name(self, name):
-        category = Category.query.filter_by(name=name.data).first()
+        """
+        Validates that the chosen category name is not already taken.
+
+        Args:
+            name (StringField): The name field from the form.
+
+        Raises:
+            ValidationError: If the category name already exists.
+        """
         if category:
             raise ValidationError('That category name is taken. Please choose a different one.')
 
 class ChallengeForm(FlaskForm):
+    """
+    Form for creating and updating challenges. Includes fields for multi-flag challenges
+    and dynamic category selection.
+    """
     name = StringField('Challenge Name',
                        validators=[DataRequired(), Length(min=2, max=100)])
     description = TextAreaField('Description', validators=[DataRequired()])
     points = IntegerField('Points', validators=[DataRequired(), NumberRange(min=1)])
-    
-    # Removed 'flag' field
-    # New fields for multi-flag challenges
     multi_flag_type = SelectField('Multi-Flag Type',
                                   choices=[(t, t.replace('_', ' ').title()) for t in MULTI_FLAG_TYPES],
                                   validators=[DataRequired()],
@@ -91,6 +143,16 @@ class ChallengeForm(FlaskForm):
     submit = SubmitField('Submit Challenge')
 
     def validate(self, extra_validators=None):
+        """
+        Performs custom validation for the ChallengeForm, including category selection,
+        multi-flag type, threshold, and flag count.
+
+        Args:
+            extra_validators: Optional extra validators to run.
+
+        Returns:
+            bool: True if validation passes, False otherwise.
+        """
         if not super().validate(extra_validators=extra_validators):
             return False
         
@@ -122,6 +184,10 @@ class ChallengeForm(FlaskForm):
         return True
 
 class AdminSettingsForm(FlaskForm):
+    """
+    Form for configuring various administrative settings of the platform,
+    including scoreboard display and profile chart toggles.
+    """
     top_x_scoreboard = IntegerField('Top X Scoreboard',
                                     validators=[DataRequired(), NumberRange(min=1, max=100)],
                                     default=10)
@@ -129,8 +195,6 @@ class AdminSettingsForm(FlaskForm):
                                         choices=[('line', 'Line Graph'), ('area', 'Area Graph')],
                                         validators=[DataRequired()],
                                         default='line')
-    
-    # New fields for profile chart toggles
     profile_points_over_time_chart_enabled = BooleanField('Enable "Points Over Time" Chart on Profile', default=True)
     profile_fails_vs_succeeds_chart_enabled = BooleanField('Enable "Fails vs. Succeeds" Chart on Profile', default=True)
     profile_categories_per_score_chart_enabled = BooleanField('Enable "Categories per Score" Chart on Profile', default=True)
@@ -139,6 +203,9 @@ class AdminSettingsForm(FlaskForm):
     submit = SubmitField('Save Settings')
 
 class AwardCategoryForm(FlaskForm):
+    """
+    Form for creating and updating award categories.
+    """
     name = StringField('Category Name',
                        validators=[DataRequired(), Length(min=2, max=50)])
     default_points = IntegerField('Default Points',
@@ -147,12 +214,24 @@ class AwardCategoryForm(FlaskForm):
     submit = SubmitField('Submit Category')
 
     def validate_name(self, name):
+        """
+        Validates that the chosen award category name is not already taken.
+
+        Args:
+            name (StringField): The name field from the form.
+
+        Raises:
+            ValidationError: If the award category name already exists.
+        """
         from scripts.models import AwardCategory # Import here to avoid circular dependency
         category = AwardCategory.query.filter_by(name=name.data).first()
         if category:
             raise ValidationError('That award category name is taken. Please choose a different one.')
 
 class InlineGiveAwardForm(FlaskForm):
+    """
+    Form for giving an award to a user directly from their profile page.
+    """
     category = SelectField('Award Category', coerce=int, validators=[DataRequired()])
     points = IntegerField('Points to Award',
                           validators=[DataRequired(), NumberRange(min=1)])
