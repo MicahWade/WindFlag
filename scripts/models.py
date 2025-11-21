@@ -142,8 +142,13 @@ class Challenge(db.Model):
         """
         Determines if the challenge is unlocked for the given user based on its unlock_type.
         """
+        # Admins can always view challenges, regardless of unlock conditions.
+        # This means for an admin, the challenge is always considered "unlocked" for display/management.
+        if user and user.is_admin:
+            return True
+
         # If the challenge is explicitly hidden, it's not unlocked for regular users
-        if self.is_hidden and not (user and user.is_admin):
+        if self.is_hidden:
             return False
 
         if self.unlock_type == 'NONE':

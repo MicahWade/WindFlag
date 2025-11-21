@@ -154,15 +154,18 @@ def manage_challenges():
     all_challenges = Challenge.query.all()
     challenges_data = []
     for challenge in all_challenges:
-        # For admin view, we want to know the *potential* unlock status
-        # `is_unlocked_for_user` already handles `is_hidden` for non-admins.
-        # Here, we want to know if it's locked by prerequisites *for a generic user*
-        # or for the admin themselves to see the state.
-        # Let's check for the current admin user.
-        is_unlocked_for_admin = challenge.is_unlocked_for_user(current_user)
-        
-        # Determine if it's "locked by prerequisites" (i.e., not unlocked for admin)
-        is_locked_by_prerequisites = not is_unlocked_for_admin
+        # Determine if it's "locked by prerequisites" (i.e., not explicitly hidden, but not visible to a generic non-admin user due to unlock conditions)
+        # To check this, we need a hypothetical non-admin user who has solved no challenges.
+        # If the challenge's unlock_type is not NONE, and it's not explicitly hidden,
+        # and it would be locked for a user with no completed challenges, then it's "locked by prerequisites".
+        is_locked_by_prerequisites = False
+        if not challenge.is_hidden and challenge.unlock_type != 'NONE':
+            # Create a dummy user or simulate a user with no completed challenges
+            # This is a simplified check. A more robust solution might involve a dedicated method
+            # in the Challenge model to check unlock status for a "fresh" user.
+            # For now, if unlock_type is not NONE, and it's not hidden, we consider it locked by prereqs.
+            # This assumes that if unlock_type is not NONE, it implies some conditions need to be met.
+            is_locked_by_prerequisites = True
 
         # Calculate "rarely unlocked" status
         unlocked_percentage = challenge.get_unlocked_percentage_for_eligible_users()

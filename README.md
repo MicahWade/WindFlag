@@ -51,6 +51,9 @@ Alternatively, you can manually create a user and set the `is_admin` flag to `Tr
 
 Challenges can be imported from a YAML file using the `-yaml` or `-y` command-line argument. Users can be imported from a JSON file using `-users` or `-u`. Data can also be exported to YAML using `-export-yaml` or `-e`. For details on the YAML/JSON formats and usage for import and export, refer to [yaml.md](yaml.md).
 
+## Admin Documentation
+
+For detailed information on admin-specific features, including challenge visibility and management, refer to [admin.md](admin.md).
 
 ## Testing
 

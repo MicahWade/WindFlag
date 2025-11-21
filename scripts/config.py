@@ -28,4 +28,4 @@ class TestConfig(Config):
     """
     SQLALCHEMY_DATABASE_URI = 'sqlite:///test.db' # Dedicated database for test mode
     WTF_CSRF_ENABLED = False
-    DISABLE_SIGNUP = True # Disable signup in test mode by default
+    DISABLE_SIGNUP = False # Allow signup in test mode for demo purposes

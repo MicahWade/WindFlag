@@ -264,6 +264,11 @@ def create_app(config_class=Config):
             for challenge in category.challenges:
                 is_unlocked = challenge.is_unlocked_for_user(current_user)
                 
+                # For regular users, if a challenge is not unlocked, it should not be displayed at all.
+                # This covers both explicitly hidden challenges and challenges locked by prerequisites.
+                if not current_user.is_admin and not is_unlocked:
+                    continue # Skip this challenge entirely for regular users if not unlocked
+
                 if is_unlocked:
                     challenge.is_completed = challenge.id in completed_challenge_ids
                     # Use the calculated_points property from the model
@@ -283,8 +288,8 @@ def create_app(config_class=Config):
                         hint.is_revealed = hint.id in revealed_hint_ids
                     
                     display_challenges.append(challenge)
-                else:
-                    # Challenge is locked, create a representation for display
+                else: # This else block will only be reached by admins for challenges they haven't unlocked
+                    # Challenge is locked by prerequisites, create a representation for display
                     unlock_info = {
                         'type': challenge.unlock_type,
                         'prerequisite_percentage_value': challenge.prerequisite_percentage_value,
@@ -298,7 +303,7 @@ def create_app(config_class=Config):
                         'id': challenge.id,
                         'name': challenge.name,
                         'category': category.name,
-                        'description': 'This challenge is locked.',
+                        'description': 'This challenge is locked. Meet the prerequisites to view its details.',
                         'display_points': '???', # Points are hidden when locked
                         'is_completed': False,
                         'is_locked': True,

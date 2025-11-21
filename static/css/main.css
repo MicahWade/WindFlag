@@ -13,3 +13,12 @@
 .challenges-complete-chart {
     height: 200px;
 }
+
+/* Styling for completed challenges */
+.completed-challenge {
+    background-color: #047857; /* Tailwind green-700 */
+}
+
+.completed-challenge:hover {
+    background-color: #065F46; /* Darker green on hover (green-800) */
+}

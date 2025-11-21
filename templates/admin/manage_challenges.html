@@ -39,7 +39,7 @@
                     {% if data.is_hidden %}
                         {% set row_class = 'bg-red-900/50' %} {# Hidden for all users #}
                     {% elif data.is_locked_by_prerequisites %}
-                        {% set row_class = 'bg-yellow-900/50' %} {# Hidden but can be accessed #}
+                        {% set row_class = 'bg-red-900/50' %} {# Hidden due to unmet prerequisites #}
                     {% elif data.is_rarely_unlocked %}
                         {% set row_class = 'bg-blue-900/50' %} {# Rarely unlocked #}
                     {% endif %}
@@ -63,7 +63,7 @@
                             {% if data.is_hidden %}
                                 <span class="text-red-400">Hidden (All Users)</span>
                             {% elif data.is_locked_by_prerequisites %}
-                                <span class="text-yellow-400">Locked (Prereqs)</span>
+                                <span class="text-red-400">Hidden (Prereqs)</span>
                             {% elif data.is_rarely_unlocked %}
                                 <span class="text-blue-400">Rarely Unlocked</span>
                             {% else %}
