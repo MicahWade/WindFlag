@@ -8,6 +8,7 @@ WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwin
 *   **Challenge Management**: Create, update, and delete challenges with various flag types (single, any, all, N of M).
 *   **Category Management**: Organize challenges into categories.
 *   **Scoreboard**: Dynamic scoreboard with user rankings and points.
+*   **Configurable Point Decay**: Set challenges to have static, linear, or logarithmic point decay, with configurable minimum points and proactive decay options.
 *   **Admin Panel**: Comprehensive administration interface for managing users, challenges, categories, and settings.
 *   **Analytics Dashboard**: Visual analytics for category points, user points, challenges solved over time, fails vs. succeeds, and a user-challenge matrix.
 *   **Super Admin Role**: Granular permissions for super administrators, including managing other admin accounts.

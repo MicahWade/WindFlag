@@ -1,10 +1,36 @@
 from datetime import datetime, timedelta, UTC
 from collections import defaultdict
-import numpy as np
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func
 from scripts.extensions import db, get_setting
 from scripts.models import User, Submission, Challenge, Award, FlagAttempt, Category, UserHint, Hint
+import math
+
+def _calculate_stats(data):
+    if not data:
+        return {'mean': 0, 'std': 0, 'min': 0, 'max': 0, 'q1': 0, 'q3': 0}
+    
+    n = len(data)
+    mean = sum(data) / n
+    variance = sum((x - mean) ** 2 for x in data) / n
+    std_dev = math.sqrt(variance)
+    
+    sorted_data = sorted(data)
+    
+    q1_index = (n - 1) * 0.25
+    q3_index = (n - 1) * 0.75
+    
+    q1 = sorted_data[int(q1_index)]
+    q3 = sorted_data[int(q3_index)]
+    
+    return {
+        'mean': mean,
+        'std': std_dev,
+        'min': min(data),
+        'max': max(data),
+        'q1': q1,
+        'q3': q3
+    }
 
 def get_global_score_history_data():
     """
@@ -136,22 +162,15 @@ def get_global_score_history_data():
                     eligible_scores.append(snapshot_scores[user.id])
             
             if eligible_scores:
-                scores_np = np.array(eligible_scores)
-                q1, q3 = np.percentile(scores_np, [25, 75])
-                avg = float(np.mean(scores_np))
-                std_dev = float(np.std(scores_np))
-                
-                # Apply floor for -1 Std Dev
-                minus_one_std_dev_val = max(-1.0, avg - std_dev)
-
+                stats = _calculate_stats(eligible_scores)
                 global_stats_over_time.append({
                     'x': datetime.combine(current_day, datetime.min.time(), tzinfo=UTC).isoformat(),
-                    'min': float(np.min(scores_np)),
-                    'max': float(np.max(scores_np)),
-                    'avg': avg,
-                    'std_dev': std_dev,
-                    'q1': float(q1),
-                    'q3': float(q3)
+                    'min': stats['min'],
+                    'max': stats['max'],
+                    'avg': stats['mean'],
+                    'std_dev': stats['std'],
+                    'q1': stats['q1'],
+                    'q3': stats['q3']
                 })
             else:
                 # If no eligible scores after filtering, append zeros
@@ -184,7 +203,7 @@ def get_global_score_history_data():
         'user_scores_over_time': final_user_scores_history
     }
 
-def get_profile_points_over_time_data(target_user, db_session, get_setting_func, Submission_model, Challenge_model, Category_model, User_model, UTC_tz, timedelta_obj, np_lib):
+def get_profile_points_over_time_data(target_user, db_session, get_setting_func, Submission_model, Challenge_model, Category_model, User_model, UTC_tz, timedelta_obj):
     """
     Generates data for the 'Points Over Time Chart' and associated statistics for a given user.
 
@@ -198,7 +217,6 @@ def get_profile_points_over_time_data(target_user, db_session, get_setting_func,
         User_model: The User model.
         UTC_tz: The UTC timezone object.
         timedelta_obj: The timedelta object.
-        np_lib: The numpy library.
 
     Returns:
         tuple: A tuple containing:
@@ -259,14 +277,12 @@ def get_profile_points_over_time_data(target_user, db_session, get_setting_func,
                     overall_scores_list.append(user.score)
 
             if overall_scores_list:
-                overall_scores_np = np_lib.array(overall_scores_list)
-                profile_stats_data['max_score'] = float(np_lib.max(overall_scores_np))
-                profile_stats_data['min_score'] = float(np_lib.min(overall_scores_np))
-                profile_stats_data['average_score'] = float(np_lib.mean(overall_scores_np))
-                profile_stats_data['std_dev'] = float(np_lib.std(overall_scores_np))
-                
-                q1, q3 = np_lib.percentile(overall_scores_np, [25, 75])
-                profile_stats_data['iqr'] = float(q3 - q1)
+                stats = _calculate_stats(overall_scores_list)
+                profile_stats_data['max_score'] = stats['max']
+                profile_stats_data['min_score'] = stats['min']
+                profile_stats_data['average_score'] = stats['mean']
+                profile_stats_data['std_dev'] = stats['std']
+                profile_stats_data['iqr'] = stats['q3'] - stats['q1']
             else:
                 profile_stats_data['max_score'] = 0.0
                 profile_stats_data['min_score'] = 0.0

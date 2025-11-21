@@ -6,7 +6,7 @@ category and challenge management, admin settings, and award management.
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, IntegerField, SelectField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
-from scripts.models import User, Category, MULTI_FLAG_TYPES
+from scripts.models import User, Category, MULTI_FLAG_TYPES, POINT_DECAY_TYPES
 from flask import current_app
 
 class RegistrationForm(FlaskForm):
@@ -124,6 +124,15 @@ class ChallengeForm(FlaskForm):
                        validators=[DataRequired(), Length(min=2, max=100)])
     description = TextAreaField('Description', validators=[DataRequired()])
     points = IntegerField('Points', validators=[DataRequired(), NumberRange(min=1)])
+    minimum_points = IntegerField('Minimum Points', validators=[DataRequired(), NumberRange(min=1)], default=1)
+    point_decay_type = SelectField('Point Decay Type',
+                                   choices=[(t, t.replace('_', ' ').title()) for t in POINT_DECAY_TYPES],
+                                   validators=[DataRequired()],
+                                   default='STATIC')
+    point_decay_rate = IntegerField('Point Decay Rate',
+                                    validators=[NumberRange(min=0)],
+                                    default=0)
+    proactive_decay = BooleanField('Apply decay proactively', default=False)
     multi_flag_type = SelectField('Multi-Flag Type',
                                   choices=[(t, t.replace('_', ' ').title()) for t in MULTI_FLAG_TYPES],
                                   validators=[DataRequired()],

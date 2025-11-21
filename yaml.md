@@ -9,6 +9,10 @@ The YAML file should contain a top-level key `challenges`, which is a list of ch
 *   **`name`** (string, required): The unique name of the challenge.
 *   **`description`** (string, required): A detailed description of the challenge, supporting markdown.
 *   **`points`** (integer, required): The points awarded for solving the challenge.
+*   **`point_decay_type`** (string, optional): The type of point decay. Can be `STATIC`, `LINEAR`, or `LOGARITHMIC`. Defaults to `STATIC`.
+*   **`point_decay_rate`** (integer, optional): The rate of decay for `LINEAR` or `LOGARITHMIC` decay types.
+*   **`minimum_points`** (integer, optional): The minimum number of points a challenge can be worth. Defaults to `1`.
+*   **`proactive_decay`** (boolean, optional): Whether to apply decay retroactively to all users who have already solved the challenge. Defaults to `false`.
 *   **`category`** (string, optional): The name of the category the challenge belongs to. If the category does not exist, it will be created. Defaults to "Uncategorized".
 *   **`case_sensitive`** (boolean, optional): Whether the flag submission is case-sensitive. Defaults to `true`.
 *   **`multi_flag_type`** (string, optional): Defines how multiple flags are handled for the challenge.
@@ -31,6 +35,10 @@ challenges:
   - name: "Warmup Challenge"
     description: "This is a simple warmup challenge. Find the flag!"
     points: 50
+    point_decay_type: "LINEAR"
+    point_decay_rate: 5
+    minimum_points: 10
+    proactive_decay: true
     hint_cost: 10 # Default hint cost for this challenge
     category: "General Skills"
     case_sensitive: true

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     <div class="max-w-md mx-auto bg-gray-800 p-8 rounded-lg shadow-lg">
         <form method="POST" action="" class="space-y-4">
             {{ form.hidden_tag() }}
@@ -45,7 +46,67 @@
                     {% endif %}
                 </div>
 
-                {# New fields for multi-flag challenges #}
+                <fieldset class="border-t border-gray-700 pt-4 mt-4">
+                    <legend class="text-xl font-bold text-gray-100 mb-4">Point Decay Settings</legend>
+                    <div class="mb-4" id="minimum_points_field">
+                        {{ form.minimum_points.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {% if form.minimum_points.errors %}
+                            {{ form.minimum_points(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.minimum_points.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% else %}
+                            {{ form.minimum_points(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                        {% endif %}
+                    </div>
+                    <div class="mb-4">
+                        {{ form.point_decay_type.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {% if form.point_decay_type.errors %}
+                            {{ form.point_decay_type(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="point_decay_type") }}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.point_decay_type.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% else %}
+                            {{ form.point_decay_type(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="point_decay_type") }}
+                        {% endif %}
+                    </div>
+                    <div id="formula_display" class="text-gray-400 text-sm mb-4"></div>
+                    <div class="mb-4" id="point_decay_rate_field">
+                        {{ form.point_decay_rate.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {% if form.point_decay_rate.errors %}
+                            {{ form.point_decay_rate(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.point_decay_rate.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% else %}
+                            {{ form.point_decay_rate(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                        {% endif %}
+                    </div>
+                    <div class="mb-4 flex items-center" id="proactive_decay_field">
+                        {{ form.proactive_decay(class="mr-2 leading-tight") }}
+                        {{ form.proactive_decay.label(class="text-gray-300 text-sm font-bold") }}
+                        <div class="tooltip ml-2">
+                            <i class="fas fa-question-circle"></i>
+                            <span class="tooltiptext">When a new user solves the challenge, the points will be reduced for all users who have already solved it.</span>
+                        </div>
+                        {% if form.proactive_decay.errors %}
+                            <p class="text-red-400 text-xs italic ml-2">
+                                {% for error in form.proactive_decay.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+                </fieldset>
+
+
+
                 <div class="mb-4">
                     {{ form.multi_flag_type.label(class="block text-gray-300 text-sm font-bold mb-2") }}
                     {% if form.multi_flag_type.errors %}
@@ -134,4 +195,5 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/challenge_form.js') }}"></script>
 {% endblock content %}

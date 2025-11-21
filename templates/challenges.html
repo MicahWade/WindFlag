@@ -17,14 +17,14 @@
                          data-id="{{ challenge.id }}"
                          data-name="{{ challenge.name }}"
                          data-description="{{ challenge.description }}"
-                         data-points="{{ challenge.points }}"
+                         data-points="{{ challenge.calculated_points }}"
                          data-completed="{{ 'true' if challenge.is_completed else 'false' }}"
                          data-multi-flag-type="{{ challenge.multi_flag_type }}"
                          data-submitted-flags-count="{{ challenge.submitted_flags_count }}"
                          data-total-flags="{{ challenge.total_flags }}"
                          data-completion-percentage="{{ completion_percentage }}"> {# New data attribute #}
                         <h5 class="text-xl font-bold text-gray-100 mb-2">{{ challenge.name }}</h5>
-                        <p class="text-gray-300">{{ challenge.points }} pts</p>
+                        <p class="text-gray-300">{{ challenge.calculated_points }} pts</p>
                         {# Removed: Flag progress display on card #}
                     </div>
                 {% endfor %}

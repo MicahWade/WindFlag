@@ -64,6 +64,7 @@ class Category(db.Model):
 
 # Define Multi-Flag Types
 MULTI_FLAG_TYPES = ('SINGLE', 'ANY', 'ALL', 'N_OF_M')
+POINT_DECAY_TYPES = ('STATIC', 'LINEAR', 'LOGARITHMIC')
 
 class Challenge(db.Model):
     """
@@ -91,7 +92,11 @@ class Challenge(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
     submissions = db.relationship('Submission', back_populates='challenge_rel', lazy=True, primaryjoin="Challenge.id == Submission.challenge_id")
     multi_flag_type = db.Column(db.String(10), nullable=False, default='SINGLE') # e.g., 'SINGLE', 'ANY', 'ALL', 'N_OF_M'
-    multi_flag_threshold = db.Column(db.Integer, nullable=True) # For 'N_OF_M' type, stores N
+    multi_flag_threshold = db.Column(db.Integer, nullable=True) # For 'N_of_M' type, stores N
+    point_decay_type = db.Column(db.String(20), nullable=False, default='STATIC') # STATIC, LINEAR, LOGARITHMIC
+    point_decay_rate = db.Column(db.Integer, nullable=True)
+    proactive_decay = db.Column(db.Boolean, nullable=False, default=False)
+    minimum_points = db.Column(db.Integer, nullable=False, default=1)
     
     flags = db.relationship('ChallengeFlag', backref='challenge', lazy=True, cascade="all, delete-orphan")
 

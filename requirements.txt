@@ -3,5 +3,5 @@ Flask-SQLAlchemy
 Flask-Login
 Flask-WTF
 python-dotenv
-Flask-Bcrypt
-pytest
+Flask-Bcrypt==1.0.1
+pytest==8.4.2

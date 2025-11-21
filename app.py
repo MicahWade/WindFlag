@@ -25,6 +25,7 @@ import json
 import yaml
 from dotenv import load_dotenv
 
+
 def create_app(config_class=Config):
     """
     Initializes and configures the Flask application.
@@ -203,7 +204,7 @@ def create_app(config_class=Config):
         # 1. Points Over Time Chart and overall statistics
         points_charts, points_stats = get_profile_points_over_time_data(
             target_user, db.session, get_setting,
-            Submission, Challenge, Category, User, UTC, timedelta, np
+            Submission, Challenge, Category, User, UTC, timedelta
         )
         profile_charts_data.update(points_charts)
         profile_stats_data.update(points_stats)
@@ -259,6 +260,7 @@ def create_app(config_class=Config):
         for category in categories:
             for challenge in category.challenges:
                 challenge.is_completed = challenge.id in completed_challenge_ids
+                challenge.calculated_points = calculate_points(challenge)
                 
                 # Count how many flags the user has submitted for this specific challenge
                 challenge.submitted_flags_count = FlagSubmission.query.filter_by(
@@ -274,6 +276,18 @@ def create_app(config_class=Config):
                     hint.is_revealed = hint.id in revealed_hint_ids
 
         return render_template('challenges.html', title='Challenges', categories=categories, flag_form=flag_form, current_user_score=current_user.score)
+
+    def calculate_points(challenge):
+        solves = Submission.query.filter_by(challenge_id=challenge.id).count()
+        if challenge.point_decay_type == 'STATIC':
+            return challenge.points
+        elif challenge.point_decay_type == 'LINEAR':
+            return max(challenge.minimum_points, challenge.points - (solves * challenge.point_decay_rate))
+        elif challenge.point_decay_type == 'LOGARITHMIC':
+            if challenge.point_decay_rate == 0:
+                return challenge.points
+            return max(challenge.minimum_points, int((((challenge.minimum_points - challenge.points) / (challenge.point_decay_rate ** 2)) * (solves ** 2)) + challenge.points))
+        return challenge.points
 
     @app.route('/submit_flag/<int:challenge_id>', methods=['POST'])
     @login_required
@@ -362,12 +376,21 @@ def create_app(config_class=Config):
                 
                 if is_challenge_solved:
                     # 6. Mark challenge as solved in Submission table
+                    points_awarded = calculate_points(challenge)
+                    if challenge.proactive_decay:
+                        old_points = challenge.points
+                        challenge.points = points_awarded
+                        submissions = Submission.query.filter_by(challenge_id=challenge.id).all()
+                        for sub in submissions:
+                            user = User.query.get(sub.user_id)
+                            user.score -= (old_points - points_awarded)
+                    
                     new_submission = Submission(user_id=current_user.id, challenge_id=challenge.id, timestamp=datetime.now(UTC))
                     db.session.add(new_submission)
-                    current_user.score += challenge.points # Update user score
+                    current_user.score += points_awarded # Update user score
                     new_submission.score_at_submission = current_user.score # Record score at this submission
                     db.session.commit()
-                    return jsonify({'success': True, 'message': f'Correct Flag! Challenge Solved! You earned {challenge.points} points!'})
+                    return jsonify({'success': True, 'message': f'Correct Flag! Challenge Solved! You earned {points_awarded} points!'})
                 else:
                     # 7. Flag was correct, but challenge not fully solved yet
                     return jsonify({
@@ -525,7 +548,7 @@ def create_app(config_class=Config):
             'id': challenge.id,
             'name': challenge.name,
             'description': challenge.description,
-            'points': challenge.points,
+            'points': calculate_points(challenge),
             'is_completed': is_completed,
             'multi_flag_type': challenge.multi_flag_type,
             'submitted_flags_count': submitted_flags_count,

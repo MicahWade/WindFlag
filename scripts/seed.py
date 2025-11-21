@@ -74,6 +74,19 @@ def seed_database():
         num_flags_for_challenge = random.randint(1, 3) # 1 to 3 flags per challenge for seeding
         multi_flag_threshold = None
 
+        multi_flag_threshold = None
+        point_decay_type = 'FLAT'
+        point_decay_rate = 0
+        point_decay_every_solve = False
+
+        if i % 3 == 0:
+            point_decay_type = 'LINEAR'
+            point_decay_rate = 5
+            point_decay_every_solve = True
+        elif i % 3 == 1:
+            point_decay_type = 'EXPONENTIAL'
+            point_decay_rate = 1
+        
         if multi_flag_type == 'SINGLE':
             num_flags_for_challenge = 1
         elif multi_flag_type == 'N_OF_M':
@@ -81,7 +94,8 @@ def seed_database():
 
         challenge = Challenge(name=f"Challenge {i}", description=f"Description for Challenge {i}",
                               points=i * 10, case_sensitive=True, category_id=category_id,
-                              multi_flag_type=multi_flag_type, multi_flag_threshold=multi_flag_threshold)
+                              multi_flag_type=multi_flag_type, multi_flag_threshold=multi_flag_threshold,
+                              point_decay_type=point_decay_type, point_decay_rate=point_decay_rate)
         challenges.append(challenge)
         db.session.add(challenge) # Add challenge to session
 

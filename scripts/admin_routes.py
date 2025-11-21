@@ -171,6 +171,10 @@ def new_challenge():
 
         challenge = Challenge(name=form.name.data, description=form.description.data,
                               points=form.points.data,
+                              minimum_points=form.minimum_points.data,
+                              point_decay_type=form.point_decay_type.data,
+                              point_decay_rate=form.point_decay_rate.data,
+                              proactive_decay=form.proactive_decay.data,
                               case_sensitive=form.case_sensitive.data,
                               category_id=category_id,
                               multi_flag_type=form.multi_flag_type.data,
@@ -215,6 +219,10 @@ def update_challenge(challenge_id):
         challenge.name = form.name.data
         challenge.description = form.description.data
         challenge.points = form.points.data
+        challenge.minimum_points = form.minimum_points.data
+        challenge.point_decay_type = form.point_decay_type.data
+        challenge.point_decay_rate = form.point_decay_rate.data
+        challenge.proactive_decay = form.proactive_decay.data
         challenge.case_sensitive = form.case_sensitive.data
         challenge.category_id = category_id
         challenge.multi_flag_type = form.multi_flag_type.data
@@ -234,7 +242,11 @@ def update_challenge(challenge_id):
         form.name.data = challenge.name
         form.description.data = challenge.description
         form.points.data = challenge.points
-                form.case_sensitive.data = challenge.case_sensitive
+        form.minimum_points.data = challenge.minimum_points
+        form.point_decay_type.data = challenge.point_decay_type
+        form.point_decay_rate.data = challenge.point_decay_rate
+        form.proactive_decay.data = challenge.proactive_decay
+        form.case_sensitive.data = challenge.case_sensitive
         form.category.data = challenge.category_id
         form.multi_flag_type.data = challenge.multi_flag_type
         form.multi_flag_threshold.data = challenge.multi_flag_threshold
