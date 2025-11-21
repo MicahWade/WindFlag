@@ -6,7 +6,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from scripts.extensions import db, get_setting
 from scripts.models import Category, Challenge, Submission, User, Setting, ChallengeFlag, FlagSubmission, AwardCategory, Award, FlagAttempt
-from scripts.forms import CategoryForm, ChallengeForm, AdminSettingsForm, AwardCategoryForm, InlineGiveAwardForm
+from scripts.forms import CategoryForm, ChallengeForm, AdminSettingsForm, AwardCategoryForm, InlineGiveAwardForm, _get_timezone_choices
 from functools import wraps
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload # Import joinedload for eager loading
@@ -64,6 +64,7 @@ def admin_settings():
         _update_setting('PROFILE_FAILS_VS_SUCCEEDS_CHART_ENABLED', form.profile_fails_vs_succeeds_chart_enabled.data)
         _update_setting('PROFILE_CATEGORIES_PER_SCORE_CHART_ENABLED', form.profile_categories_per_score_chart_enabled.data)
         _update_setting('PROFILE_CHALLENGES_COMPLETE_CHART_ENABLED', form.profile_challenges_complete_chart_enabled.data)
+        _update_setting('TIMEZONE', form.timezone.data) # New: Save timezone setting
 
         db.session.commit()
         flash('Settings updated successfully!', 'success')
@@ -75,6 +76,7 @@ def admin_settings():
         form.profile_fails_vs_succeeds_chart_enabled.data = get_setting('PROFILE_FAILS_VS_SUCCEEDS_CHART_ENABLED', 'True').lower() == 'true'
         form.profile_categories_per_score_chart_enabled.data = get_setting('PROFILE_CATEGORIES_PER_SCORE_CHART_ENABLED', 'True').lower() == 'true'
         form.profile_challenges_complete_chart_enabled.data = get_setting('PROFILE_CHALLENGES_COMPLETE_CHART_ENABLED', 'True').lower() == 'true'
+        form.timezone.data = get_setting('TIMEZONE', 'Australia/Sydney') # New: Load timezone setting
     return render_template('admin/settings.html', title='Admin Settings', form=form)
 
 # Category CRUD

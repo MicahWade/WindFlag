@@ -5,6 +5,13 @@ from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationE
 from scripts.models import User, Category, MULTI_FLAG_TYPES, POINT_DECAY_TYPES, UNLOCK_TYPES, UNLOCK_POINT_REDUCTION_TYPES
 from flask import current_app
 import json
+import pytz # New: Import pytz
+
+def _get_timezone_choices():
+    """
+    Returns a list of common timezone choices for a SelectField.
+    """
+    return [(tz, tz) for tz in pytz.common_timezones]
 
 class RegistrationForm(FlaskForm):
     """
@@ -280,6 +287,7 @@ class AdminSettingsForm(FlaskForm):
     profile_fails_vs_succeeds_chart_enabled = BooleanField('Enable "Fails vs. Succeeds" Chart on Profile', default=True)
     profile_categories_per_score_chart_enabled = BooleanField('Enable "Categories per Score" Chart on Profile', default=True)
     profile_challenges_complete_chart_enabled = BooleanField('Enable "Challenges Complete" Chart on Profile', default=True)
+    timezone = SelectField('Default Timezone', choices=_get_timezone_choices(), validators=[DataRequired()], default='Australia/Sydney') # New: Timezone setting
 
     submit = SubmitField('Save Settings')
 
