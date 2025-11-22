@@ -5,6 +5,7 @@ This module defines the database schema for users, challenges, submissions,
 awards, and other related entities.
 """
 from datetime import datetime, UTC
+from scripts.utils import make_datetime_timezone_aware
 from .extensions import db, login_manager
 from flask_login import UserMixin
 from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM # For PostgreSQL, if needed, but using String for now
@@ -54,18 +55,127 @@ class Category(db.Model):
         id (int): Primary key.
         name (str): Unique name of the category.
         challenges (relationship): One-to-many relationship with Challenge.
+        unlock_type (str): Type of unlocking mechanism for the category.
+        prerequisite_percentage_value (int): Percentage of challenges to complete for unlocking.
+        prerequisite_count_value (int): Number of challenges to complete for unlocking.
+        prerequisite_count_category_ids (list): List of category IDs that must be completed for unlocking.
+        prerequisite_challenge_ids (list): List of specific challenge IDs that must be completed for unlocking.
+        unlock_date_time (datetime): Specific date and time for timed unlocking.
+        is_hidden (bool): True if the category should be hidden from non-admins.
     """
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
     challenges = db.relationship('Challenge', backref='category', lazy=True)
 
+    # New fields for category unlocking
+    unlock_type = db.Column(db.String(50), nullable=False, default='NONE')
+    prerequisite_percentage_value = db.Column(db.Integer, nullable=True)
+    prerequisite_count_value = db.Column(db.Integer, nullable=True)
+    prerequisite_count_category_ids = db.Column(db.JSON, nullable=True)
+    prerequisite_challenge_ids = db.Column(db.JSON, nullable=True)
+    unlock_date_time = db.Column(db.DateTime, nullable=True)
+    is_hidden = db.Column(db.Boolean, nullable=False, default=False)
+
     def __repr__(self):
         return f"Category('{self.name}')"
+
+    def is_unlocked_for_user(self, user):
+        """
+        Determines if the category is unlocked for the given user based on its unlock_type.
+        """
+        # Admins can always view categories, regardless of unlock conditions.
+        if user and user.is_admin:
+            return True
+
+        # If the category is explicitly hidden, it's not unlocked for regular users
+        if self.is_hidden:
+            return False
+
+        if self.unlock_type == 'NONE':
+            return True
+
+        unlocked_by_prerequisites = True
+        unlocked_by_time = True
+
+        # Get all challenge IDs completed by the user
+        user_completed_challenge_ids = {s.challenge_id for s in Submission.query.filter_by(user_id=user.id).all()}
+        
+        # Universal Prerequisite: Always check specific challenge prerequisites if they are set
+        if self.prerequisite_challenge_ids:
+            required_ids = set(self.prerequisite_challenge_ids)
+            if not required_ids.issubset(user_completed_challenge_ids):
+                unlocked_by_prerequisites = False
+
+        # Only proceed with unlock_type specific checks if universal prerequisites are met
+        if unlocked_by_prerequisites:
+            all_challenges = Challenge.query.all()
+            total_challenges_count = len(all_challenges)
+            user_completed_challenges_count = len(user_completed_challenge_ids)
+
+            # Check unlock_type specific conditions
+            if self.unlock_type == 'PREREQUISITE_PERCENTAGE':
+                if total_challenges_count > 0:
+                    completed_percentage = (user_completed_challenges_count / total_challenges_count) * 100
+                    if completed_percentage < (self.prerequisite_percentage_value or 0):
+                        unlocked_by_prerequisites = False
+                else: # No challenges in system, so percentage cannot be met
+                    unlocked_by_prerequisites = False
+            elif self.unlock_type == 'PREREQUISITE_COUNT':
+                if self.prerequisite_count_category_ids:
+                    # Filter completed challenges by specified categories
+                    target_category_ids = set(self.prerequisite_count_category_ids)
+                    
+                    # Get challenges that belong to the target categories
+                    challenges_in_target_categories = Challenge.query.filter(Challenge.category_id.in_(list(target_category_ids))).all()
+                    challenges_in_target_categories_ids = {c.id for c in challenges_in_target_categories}
+
+                    # Count user's completed challenges that are also in the target categories
+                    user_completed_in_target_categories_count = len(user_completed_challenge_ids.intersection(challenges_in_target_categories_ids))
+
+                    if user_completed_in_target_categories_count < (self.prerequisite_count_value or 0):
+                        unlocked_by_prerequisites = False
+                else:
+                    # If no specific categories are selected, use the total count of completed challenges
+                    if user_completed_challenges_count < (self.prerequisite_count_value or 0):
+                        unlocked_by_prerequisites = False
+            elif self.unlock_type == 'COMBINED':
+                # For combined, check all relevant prerequisite types if they are set
+                if self.prerequisite_percentage_value:
+                    if total_challenges_count > 0:
+                        completed_percentage = (user_completed_challenges_count / total_challenges_count) * 100
+                        if completed_percentage < self.prerequisite_percentage_value:
+                            unlocked_by_prerequisites = False
+                    else:
+                        unlocked_by_prerequisites = False
+                
+                if unlocked_by_prerequisites and self.prerequisite_count_value:
+                    if self.prerequisite_count_category_ids:
+                        target_category_ids = set(self.prerequisite_count_category_ids)
+                        challenges_in_target_categories = Challenge.query.filter(Challenge.category_id.in_(list(target_category_ids))).all()
+                        challenges_in_target_categories_ids = {c.id for c in challenges_in_target_categories}
+                        user_completed_in_target_categories_count = len(user_completed_challenge_ids.intersection(challenges_in_target_categories_ids))
+                        if user_completed_in_target_categories_count < (self.prerequisite_count_value or 0):
+                            unlocked_by_prerequisites = False
+                    else:
+                        if user_completed_challenges_count < (self.prerequisite_count_value or 0):
+                            unlocked_by_prerequisites = False
+
+        # Check time-based conditions
+        if self.unlock_type in ['TIMED', 'COMBINED']:
+            if self.unlock_date_time and datetime.now(UTC) < self.unlock_date_time:
+                unlocked_by_time = False
+
+        if self.unlock_type == 'COMBINED':
+            return unlocked_by_prerequisites and unlocked_by_time
+        elif self.unlock_type == 'TIMED':
+            return unlocked_by_time
+        else: # PREREQUISITE_PERCENTAGE, PREREQUISITE_COUNT, PREREQUISITE_CHALLENGES (now handled universally)
+            return unlocked_by_prerequisites
 
 # Define Multi-Flag Types
 MULTI_FLAG_TYPES = ('SINGLE', 'ANY', 'ALL', 'N_OF_M')
 POINT_DECAY_TYPES = ('STATIC', 'LINEAR', 'LOGARITHMIC')
-UNLOCK_TYPES = ('NONE', 'PREREQUISITE_PERCENTAGE', 'PREREQUISITE_COUNT', 'TIMED', 'COMBINED')
+UNLOCK_TYPES = ('NONE', 'HIDDEN', 'PREREQUISITE_PERCENTAGE', 'PREREQUISITE_COUNT', 'PREREQUISITE_CHALLENGES', 'TIMED', 'COMBINED')
 UNLOCK_POINT_REDUCTION_TYPES = ('NONE', 'FIXED', 'PERCENTAGE', 'TIME_DECAY_TO_ZERO')
 
 class Challenge(db.Model):
@@ -147,8 +257,8 @@ class Challenge(db.Model):
         if user and user.is_admin:
             return True
 
-        # If the challenge is explicitly hidden, it's not unlocked for regular users
-        if self.is_hidden:
+        # If the challenge is explicitly hidden, or its category is hidden, it's not unlocked for regular users
+        if self.is_hidden or self.category.is_hidden:
             return False
 
         if self.unlock_type == 'NONE':
@@ -227,8 +337,11 @@ class Challenge(db.Model):
 
         # Check time-based conditions
         if self.unlock_type in ['TIMED', 'COMBINED']:
-            if self.unlock_date_time and datetime.now(UTC) < self.unlock_date_time:
-                unlocked_by_time = False
+            if self.unlock_date_time:
+                aware_unlock_date_time = make_datetime_timezone_aware(self.unlock_date_time)
+                
+                if datetime.now(UTC) < aware_unlock_date_time:
+                    unlocked_by_time = False
 
         if self.unlock_type == 'COMBINED':
             return unlocked_by_prerequisites and unlocked_by_time
@@ -337,7 +450,11 @@ class Challenge(db.Model):
         has_been_solved = Submission.query.filter_by(challenge_id=self.id).first() is not None
         
         # If unlock_date_time is set and in the past, it's also considered "unlocked" for point reduction purposes.
-        is_timed_unlocked = self.unlock_date_time and now >= self.unlock_date_time
+        is_timed_unlocked = False
+        if self.unlock_date_time:
+            aware_unlock_date_time = make_datetime_timezone_aware(self.unlock_date_time)
+            if now >= aware_unlock_date_time:
+                is_timed_unlocked = True
 
         if self.unlock_point_reduction_type != 'NONE' and (has_been_solved or is_timed_unlocked):
             if self.unlock_point_reduction_type == 'FIXED':
@@ -362,6 +479,66 @@ class Challenge(db.Model):
                     current_points = self.minimum_points # Reached or passed target date, points are at minimum
 
         return current_points
+
+    @property
+    def is_red_stripe(self):
+        """
+        Red Stripe ("Locked"): Challenge or category is hidden, or timed unlock is in the future.
+        """
+        now = datetime.now(UTC)
+        # Check if the challenge itself is hidden or its category is hidden
+        if self.is_hidden or (self.category and self.category.is_hidden):
+            return True
+        # Check for timed unlock in the future
+        if self.unlock_type in ['TIMED', 'COMBINED'] and self.unlock_date_time:
+            aware_unlock_date_time = self.unlock_date_time
+            if aware_unlock_date_time.tzinfo is None:
+                aware_unlock_date_time = aware_unlock_date_time.replace(tzinfo=UTC)
+            if now < aware_unlock_date_time:
+                return True
+        return False
+
+    @property
+    def is_orange_stripe(self):
+        """
+        Orange Stripe ("Unlockable (No Solves)"): Not Red, has prerequisites, 0% unlocked, and not timed-locked.
+        """
+        if self.is_red_stripe:
+            return False
+        
+        # Has prerequisites (excluding 'NONE' and 'TIMED' as they are handled by red stripe or not prerequisites)
+        has_prerequisites = self.unlock_type in ['PREREQUISITE_PERCENTAGE', 'PREREQUISITE_COUNT', 'PREREQUISITE_CHALLENGES', 'COMBINED']
+        
+        # Not timed-locked (already covered by not being red stripe, but explicit for clarity)
+        not_timed_locked = not (self.unlock_type in ['TIMED', 'COMBINED'] and self.unlock_date_time and datetime.now(UTC) < self.unlock_date_time)
+
+        # 0% unlocked for eligible users
+        unlocked_percentage = self.get_unlocked_percentage_for_eligible_users()
+        zero_percent_unlocked = (unlocked_percentage == 0.0)
+
+        return has_prerequisites and zero_percent_unlocked and not_timed_locked
+
+    @property
+    def is_yellow_stripe(self):
+        """
+        Yellow Stripe ("Unlocked (0-50%)"): Not Red, not Orange, >0% and <=50% unlocked.
+        """
+        if self.is_red_stripe or self.is_orange_stripe:
+            return False
+        
+        unlocked_percentage = self.get_unlocked_percentage_for_eligible_users()
+        return 0 < unlocked_percentage <= 50
+
+    @property
+    def is_blue_stripe(self):
+        """
+        Blue Stripe ("Rarely Unlocked (50-90%)"): Not Red, not Orange, not Yellow, >50% and <=90% unlocked.
+        """
+        if self.is_red_stripe or self.is_orange_stripe or self.is_yellow_stripe:
+            return False
+        
+        unlocked_percentage = self.get_unlocked_percentage_for_eligible_users()
+        return 50 < unlocked_percentage <= 90
 
     def __repr__(self):
         return f"Challenge('{self.name}', '{self.points}', Type: '{self.multi_flag_type}')"

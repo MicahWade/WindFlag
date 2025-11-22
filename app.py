@@ -241,7 +241,7 @@ def create_app(config_class=Config):
         flag_form = FlagSubmissionForm()
         
         # Eager load hints for each challenge
-        categories_with_challenges = Category.query.options(
+        all_categories = Category.query.options(
             joinedload(Category.challenges)
             .joinedload(Challenge.flags),
             joinedload(Category.challenges)
@@ -257,9 +257,31 @@ def create_app(config_class=Config):
         # Get all hints revealed by the current user
         revealed_hint_ids = {uh.hint_id for uh in UserHint.query.filter_by(user_id=current_user.id).all()}
 
-        # Prepare challenges for display, considering unlock status
+        # Prepare categories and challenges for display, considering unlock status
         display_categories = []
-        for category in categories_with_challenges:
+        for category in all_categories:
+            category_is_unlocked = category.is_unlocked_for_user(current_user)
+            
+            # If category is not unlocked for a regular user, prepare a locked placeholder
+            if not current_user.is_admin and not category_is_unlocked:
+                # Create unlock_info for the locked category
+                unlock_info = {
+                    'type': category.unlock_type,
+                    'prerequisite_percentage_value': category.prerequisite_percentage_value,
+                    'prerequisite_count_value': category.prerequisite_count_value,
+                    'prerequisite_count_category_ids': category.prerequisite_count_category_ids,
+                    'prerequisite_challenge_ids': category.prerequisite_challenge_ids,
+                    'unlock_date_time': category.unlock_date_time
+                }
+                display_categories.append({
+                    'name': category.name,
+                    'is_unlocked': False,
+                    'unlock_info': unlock_info,
+                    'challenges': [] # No challenges to display for a locked category
+                })
+                continue # Skip to the next category
+
+            # If category is unlocked (or current_user is admin), process its challenges
             display_challenges = []
             for challenge in category.challenges:
                 # For regular users, if a challenge is not unlocked, it should not be displayed at all.
@@ -288,34 +310,17 @@ def create_app(config_class=Config):
                 for hint in challenge.hints:
                     hint.is_revealed = hint.id in revealed_hint_ids
                 
-                # Calculate admin-specific visibility flags if current_user is admin
-                if current_user.is_admin:
-                    unlocked_percentage = challenge.get_unlocked_percentage_for_eligible_users()
 
-                    # Red Stripe: Hidden from ALL regular users (either explicitly or no one met prereqs)
-                    admin_is_hidden_from_all = challenge.is_hidden or \
-                                               (challenge.unlock_type != 'NONE' and unlocked_percentage == 0)
-                    
-                    # Blue Stripe: Rarely Unlocked (less than 50% of eligible users, but not 0%)
-                    admin_is_rarely_unlocked = unlocked_percentage < 50.0 and unlocked_percentage > 0
-
-                    # Yellow Stripe: Locked for some, visible to others (prereqs met by some, but not all)
-                    # This condition should be true if it's not hidden from all, has unlock conditions, and is partially unlocked.
-                    admin_is_locked_for_some_users = not challenge.is_hidden and \
-                                                     challenge.unlock_type != 'NONE' and \
-                                                     unlocked_percentage > 0 and unlocked_percentage < 100
-
-                    challenge.admin_is_hidden_from_all = admin_is_hidden_from_all
-                    challenge.admin_is_locked_for_some_users = admin_is_locked_for_some_users
-                    challenge.admin_is_rarely_unlocked = admin_is_rarely_unlocked
-                    challenge.admin_unlocked_percentage = unlocked_percentage # Still useful for display if needed
                 
                 display_challenges.append(challenge)
             
-            # Only add categories that have challenges (unlocked) to display
-            if display_challenges:
+            # Only add categories that are unlocked (or admin) and have challenges (if not admin, challenges are filtered)
+            # If admin, we want to show the category even if it has no challenges, or if its challenges are all hidden.
+            # For regular users, if after filtering, there are no challenges, don't show the category.
+            if current_user.is_admin or display_challenges:
                 display_categories.append({
                     'name': category.name,
+                    'is_unlocked': True, # For admin, it's always considered unlocked for display
                     'challenges': display_challenges
                 })
         return render_template('challenges.html', title='Challenges', categories=display_categories, flag_form=flag_form, current_user_score=current_user.score)

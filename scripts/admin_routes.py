@@ -12,6 +12,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import joinedload # Import joinedload for eager loading
 import pytz # New: For timezone handling
 from datetime import datetime, UTC # New: For datetime and UTC timezone
+from scripts.utils import make_datetime_timezone_aware
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -98,8 +99,27 @@ def new_category():
     Requires admin privileges.
     """
     form = CategoryForm()
+    form.prerequisite_challenge_ids_input.choices = _get_prerequisite_challenge_choices()
+    form.prerequisite_count_category_ids_input.choices = _get_category_multi_select_choices()
+    form.timezone.choices = _get_timezone_choices()
+
     if form.validate_on_submit():
-        category = Category(name=form.name.data)
+        local_timezone_name = form.timezone.data
+        local_tz = pytz.timezone(local_timezone_name)
+
+        unlock_date_time_utc = None
+        if form.unlock_date_time.data:
+            localized_dt = local_tz.localize(datetime.combine(form.unlock_date_time.data, datetime.min.time()))
+            unlock_date_time_utc = localized_dt.astimezone(UTC)
+
+        category = Category(name=form.name.data,
+                            unlock_type=form.unlock_type.data,
+                            prerequisite_percentage_value=form.prerequisite_percentage_value.data,
+                            prerequisite_count_value=form.prerequisite_count_value.data,
+                            prerequisite_count_category_ids=form.prerequisite_count_category_ids_input.data,
+                            prerequisite_challenge_ids=form.prerequisite_challenge_ids_input.data,
+                            unlock_date_time=unlock_date_time_utc,
+                            is_hidden=form.is_hidden.data)
         db.session.add(category)
         db.session.commit()
         flash('Category has been created!', 'success')
@@ -117,14 +137,52 @@ def update_category(category_id):
     Requires admin privileges.
     """
     category = Category.query.get_or_404(category_id)
-    form = CategoryForm()
+    form = CategoryForm(obj=category) # Populate form with existing category data
+    form.category_id.data = category.id # Set hidden field for validation
+    form.prerequisite_challenge_ids_input.choices = _get_prerequisite_challenge_choices()
+    form.prerequisite_count_category_ids_input.choices = _get_category_multi_select_choices()
+    form.timezone.choices = _get_timezone_choices()
+
     if form.validate_on_submit():
+        local_timezone_name = form.timezone.data
+        local_tz = pytz.timezone(local_timezone_name)
+
+        unlock_date_time_utc = None
+        if form.unlock_date_time.data:
+            localized_dt = local_tz.localize(datetime.combine(form.unlock_date_time.data, datetime.min.time()))
+            unlock_date_time_utc = localized_dt.astimezone(UTC)
+
         category.name = form.name.data
+        category.unlock_type = form.unlock_type.data
+        category.prerequisite_percentage_value = form.prerequisite_percentage_value.data
+        category.prerequisite_count_value = form.prerequisite_count_value.data
+        category.prerequisite_count_category_ids = form.prerequisite_count_category_ids_input.data
+        category.prerequisite_challenge_ids = form.prerequisite_challenge_ids_input.data
+        category.unlock_date_time = unlock_date_time_utc
+        category.is_hidden = form.is_hidden.data
+        
         db.session.commit()
         flash('Category has been updated!', 'success')
         return redirect(url_for('admin.manage_categories'))
     elif request.method == 'GET':
+        # Load data from category object into form fields for GET request
         form.name.data = category.name
+        form.unlock_type.data = category.unlock_type
+        form.prerequisite_percentage_value.data = category.prerequisite_percentage_value
+        form.prerequisite_count_value.data = category.prerequisite_count_value
+        # Deserialize JSON fields from DB before assigning to form data
+        form.prerequisite_count_category_ids_input.data = category.prerequisite_count_category_ids if category.prerequisite_count_category_ids else []
+        form.prerequisite_challenge_ids_input.data = category.prerequisite_challenge_ids if category.prerequisite_challenge_ids else []
+        form.is_hidden.data = category.is_hidden
+
+        form.timezone.data = current_app.config['TIMEZONE']
+        local_tz = pytz.timezone(form.timezone.data)
+        
+        if category.unlock_date_time:
+            form.unlock_date_time.data = category.unlock_date_time.astimezone(local_tz).date()
+        else:
+            form.unlock_date_time.data = None
+
     return render_template('admin/create_category.html', title='Update Category', form=form)
 
 @admin_bp.route('/category/<int:category_id>/delete', methods=['POST'])
@@ -151,34 +209,77 @@ def manage_challenges():
     Displays a list of all challenges for management, including their visibility states.
     Requires admin privileges.
     """
-    all_challenges = Challenge.query.all()
+    # Eager load category to avoid N+1 queries when checking category.is_hidden
+    all_challenges = Challenge.query.options(joinedload(Challenge.category)).all()
     challenges_data = []
-    for challenge in all_challenges:
-        # Determine if it's "locked by prerequisites" (i.e., not explicitly hidden, but not visible to a generic non-admin user due to unlock conditions)
-        # To check this, we need a hypothetical non-admin user who has solved no challenges.
-        # If the challenge's unlock_type is not NONE, and it's not explicitly hidden,
-        # and it would be locked for a user with no completed challenges, then it's "locked by prerequisites".
-        is_locked_by_prerequisites = False
-        if not challenge.is_hidden and challenge.unlock_type != 'NONE':
-            # Create a dummy user or simulate a user with no completed challenges
-            # This is a simplified check. A more robust solution might involve a dedicated method
-            # in the Challenge model to check unlock status for a "fresh" user.
-            # For now, if unlock_type is not NONE, and it's not hidden, we consider it locked by prereqs.
-            # This assumes that if unlock_type is not NONE, it implies some conditions need to be met.
-            is_locked_by_prerequisites = True
 
-        # Calculate "rarely unlocked" status
+    # Create a dummy user for checking unlock status for non-admins
+    # This user has no submissions, so any challenge with prerequisites will be locked for them.
+    # We don't add this user to the DB, just use it for the `is_unlocked_for_user` method.
+    from scripts.models import User # Import here to avoid circular dependency
+    dummy_user = User(username="dummy_user", is_admin=False, hidden=False, score=0)
+
+    for challenge in all_challenges:
         unlocked_percentage = challenge.get_unlocked_percentage_for_eligible_users()
-        is_rarely_unlocked = unlocked_percentage < 50.0 # Threshold for "rarely unlocked"
+        now = datetime.now(UTC)
+
+        # --- Determine Red Stripe (Hidden / Timed) ---
+        is_red_stripe = False
+        if challenge.is_hidden or challenge.category.is_hidden:
+            is_red_stripe = True # Explicitly hidden or category hidden
+        elif challenge.unlock_type == 'TIMED' and challenge.unlock_date_time:
+            aware_unlock_date_time = make_datetime_timezone_aware(challenge.unlock_date_time)
+            if now < aware_unlock_date_time:
+                is_red_stripe = True # Timed unlock in the future
+
+        # --- Determine Orange Stripe (Unlockable (No Solves)) ---
+        is_orange_stripe = False
+        if not is_red_stripe and \
+           challenge.unlock_type != 'NONE' and \
+           (challenge.unlock_type != 'TIMED' or (challenge.unlock_date_time and now >= challenge.unlock_date_time)) and \
+           unlocked_percentage == 0:
+            is_orange_stripe = True
+
+        # --- Determine Yellow Stripe (Unlocked (0-50%)) ---
+        is_yellow_stripe = False
+        if not is_red_stripe and \
+           not is_orange_stripe and \
+           unlocked_percentage > 0 and unlocked_percentage <= 50.0:
+            is_yellow_stripe = True
+
+        # --- Determine Blue Stripe (Rarely Unlocked (50-90%)) ---
+        is_blue_stripe = False
+        if not is_red_stripe and \
+           not is_orange_stripe and \
+           not is_yellow_stripe and \
+           unlocked_percentage > 50.0 and unlocked_percentage <= 90.0:
+            is_blue_stripe = True
 
         challenges_data.append({
             'challenge': challenge,
-            'is_hidden': challenge.is_hidden,
-            'is_locked_by_prerequisites': is_locked_by_prerequisites,
-            'is_rarely_unlocked': is_rarely_unlocked,
+            'is_red_stripe': is_red_stripe,
+            'is_yellow_stripe': is_yellow_stripe,
+            'is_orange_stripe': is_orange_stripe,
+            'is_blue_stripe': is_blue_stripe,
             'unlocked_percentage': unlocked_percentage # For display if needed
         })
     return render_template('admin/manage_challenges.html', title='Manage Challenges', challenges_data=challenges_data)
+
+def _get_category_select_choices():
+    """
+    Prepares choices for a SelectField with categories (e.g., for ChallengeForm.category).
+    """
+    categories = Category.query.order_by(Category.name).all()
+    choices = [(c.id, c.name) for c in categories]
+    return choices
+
+def _get_category_multi_select_choices():
+    """
+    Prepares choices for a SelectMultipleField with categories (e.g., for CategoryForm.prerequisite_count_category_ids_input).
+    """
+    categories = Category.query.order_by(Category.name).all()
+    choices = [(c.id, c.name) for c in categories]
+    return choices
 
 def _get_prerequisite_challenge_choices():
     """
@@ -190,17 +291,9 @@ def _get_prerequisite_challenge_choices():
     for category in categories:
         category_challenges = []
         for challenge in category.challenges:
-            category_challenges.append((challenge.id, challenge.name)) # Removed (ID: {challenge.id})
+            category_challenges.append((challenge.id, challenge.name))
         if category_challenges:
             choices.append((category.name, category_challenges))
-    return choices
-
-def _get_category_choices():
-    """
-    Prepares choices for a SelectMultipleField with categories.
-    """
-    categories = Category.query.order_by(Category.name).all()
-    choices = [(c.id, c.name) for c in categories]
     return choices
 
 def _get_timezone_choices():
@@ -218,9 +311,9 @@ def new_challenge():
     Requires admin privileges.
     """
     form = ChallengeForm()
-    form.category.choices.extend([(c.id, c.name) for c in Category.query.all()])
+    form.category.choices.extend(_get_category_select_choices())
     form.prerequisite_challenge_ids_input.choices = _get_prerequisite_challenge_choices()
-    form.prerequisite_count_category_ids_input.choices = _get_category_choices()
+    form.prerequisite_count_category_ids_input.choices = _get_category_multi_select_choices()
     form.timezone.choices = _get_timezone_choices() # Set timezone choices
 
     if form.validate_on_submit():
@@ -298,9 +391,9 @@ def update_challenge(challenge_id):
     """
     challenge = Challenge.query.get_or_404(challenge_id)
     form = ChallengeForm()
-    form.category.choices.extend([(c.id, c.name) for c in Category.query.all()])
+    form.category.choices.extend(_get_category_select_choices())
     form.prerequisite_challenge_ids_input.choices = _get_prerequisite_challenge_choices()
-    form.prerequisite_count_category_ids_input.choices = _get_category_choices()
+    form.prerequisite_count_category_ids_input.choices = _get_category_multi_select_choices()
     form.timezone.choices = _get_timezone_choices() # Set timezone choices
 
     if form.validate_on_submit():
