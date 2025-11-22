@@ -2,6 +2,51 @@
 
 This document describes the YAML format for defining challenges and how to import them into the WindFlag CTF platform.
 
+## Category YAML File Format
+
+The YAML file can optionally contain a top-level key `categories`, which is a list of category objects. If a category is not defined here but is referenced by a challenge, it will be created with default `NONE` unlock type.
+
+Each category object can have the following keys:
+
+*   **`name`** (string, required): The unique name of the category.
+*   **`description`** (string, optional): A description of the category. (Note: This field is not directly stored in the `Category` model but can be useful for documentation within the YAML).
+*   **`unlock_type`** (string, optional): The type of unlocking mechanism for the category. Defaults to `NONE`.
+    *   `NONE`: Category is always unlocked.
+    *   `PREREQUISITE_PERCENTAGE`: Unlocked after a percentage of all challenges are solved.
+    *   `PREREQUISITE_COUNT`: Unlocked after a specific number of challenges are solved.
+    *   `PREREQUISITE_CHALLENGES`: Unlocked after specific challenges are solved.
+    *   `TIMED`: Unlocked at a specific date and time.
+    *   `COMBINED`: A combination of prerequisite and timed unlocking.
+*   **`prerequisite_percentage_value`** (integer, optional): Required if `unlock_type` is `PREREQUISITE_PERCENTAGE` or `COMBINED`. The percentage of all challenges that must be solved.
+*   **`prerequisite_count_value`** (integer, optional): Required if `unlock_type` is `PREREEREQUISITE_COUNT` or `COMBINED`. The number of challenges that must be solved.
+*   **`prerequisite_count_category_names`** (list of strings, optional): Used with `PREREQUISITE_COUNT` or `COMBINED`. A list of category names. If provided, `prerequisite_count_value` applies only to challenges within these categories.
+*   **`prerequisite_challenge_names`** (list of strings, optional): Used with `PREREQUISITE_CHALLENGES` or `COMBINED`. A list of challenge names that must be solved.
+*   **`unlock_date_time`** (string, optional): Required if `unlock_type` is `TIMED` or `COMBINED`. The UTC datetime string (e.g., "YYYY-MM-DDTHH:MM:SSZ") when the category unlocks.
+*   **`is_hidden`** (boolean, optional): If `true`, the category will be hidden from non-admin users until unlocked. Defaults to `false`.
+
+### Example Category YAML
+
+```yaml
+categories:
+  - name: "Warmup"
+    description: "Easy challenges to get started."
+    unlock_type: "NONE"
+  - name: "Intermediate"
+    description: "More challenging problems."
+    unlock_type: "PREREQUISITE_COUNT"
+    prerequisite_count_value: 5 # Requires 5 challenges from any category to be solved
+  - name: "Advanced"
+    description: "Difficult challenges for experienced players."
+    unlock_type: "PREREQUISITE_CHALLENGES"
+    prerequisite_challenge_names:
+      - "Challenge 3" # Requires "Challenge 3" to be solved
+  - name: "Secret Category"
+    description: "A category that unlocks at a specific time."
+    unlock_type: "TIMED"
+    unlock_date_time: "2025-12-25T00:00:00Z"
+    is_hidden: true
+```
+
 ## YAML File Format
 
 The YAML file should contain a top-level key `challenges`, which is a list of challenge objects. Each challenge object must have the following keys:
@@ -23,6 +68,7 @@ The YAML file should contain a top-level key `challenges`, which is a list of ch
 *   **`multi_flag_threshold`** (integer, optional): Required if `multi_flag_type` is `N_OF_M`. Specifies the number of flags (N) required to solve the challenge.
 *   **`flags`** (list of strings, required): A list of all correct flag strings for the challenge.
 *   **`hint_cost`** (integer, optional): The default points deducted from a user's score when they reveal a hint for this challenge. This applies if individual hints don't specify their own cost. Defaults to `0`.
+*   **`prerequisites`** (list of strings, optional): A list of challenge names that must be solved before this challenge becomes unlocked. If specified, `unlock_type` for this challenge will be set to `CHALLENGE_SOLVED`.
 *   **`hints`** (list of objects, optional): A list of hint objects for the challenge. Each hint object must have:
     *   **`title`** (string, required): The title of the hint, visible before revelation.
     *   **`content`** (string, required): The actual hint text, revealed upon purchase.
@@ -86,7 +132,7 @@ challenges:
 
 ## How to Import Challenges
 
-To import challenges from a YAML file, use the `-yaml` or `-y` command-line argument when running `app.py`, followed by the path to your YAML file:
+To import categories and challenges from a YAML file, use the `-yaml` or `-y` command-line argument when running `app.py`, followed by the path to your YAML file. Categories will be imported first, followed by challenges.
 
 ```bash
 python app.py -yaml path/to/your/challenges.yaml

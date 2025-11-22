@@ -796,6 +796,103 @@ def import_users_from_json(json_file_path):
             print(f"User '{username}' imported successfully.")
         print("User import process completed.")
 
+def import_categories_from_yaml(yaml_file_path):
+    """
+    Imports category data from a YAML file into the database.
+
+    Args:
+        yaml_file_path (str): The path to the YAML file containing category data.
+    """
+    with create_app().app_context():
+        from scripts.models import Category, Challenge
+        try:
+            with open(yaml_file_path, 'r') as f:
+                data = yaml.safe_load(f)
+        except FileNotFoundError:
+            print(f"Error: YAML file not found at {yaml_file_path}")
+            return
+        except yaml.YAMLError as e:
+            print(f"Error parsing YAML file: {e}")
+            return
+
+        if 'categories' not in data:
+            print("Error: YAML file must contain a 'categories' key.")
+            return
+
+        # Pass 1: Create all categories with basic properties
+        categories_to_process_prerequisites = []
+
+        for category_data in data['categories']:
+            category_name = category_data.get('name')
+            if not category_name:
+                print(f"Skipping category: 'name' is required. Data: {category_data}")
+                continue
+
+            existing_category = Category.query.filter_by(name=category_name).first()
+            if existing_category:
+                print(f"Warning: Category '{category_name}' already exists. Skipping import.")
+                continue
+
+            category = Category(
+                name=category_name,
+                unlock_type=category_data.get('unlock_type', 'NONE'),
+                prerequisite_percentage_value=category_data.get('prerequisite_percentage_value'),
+                prerequisite_count_value=category_data.get('prerequisite_count_value'),
+                unlock_date_time=category_data.get('unlock_date_time'),
+                is_hidden=category_data.get('is_hidden', False),
+                # Prerequisite IDs will be set in Pass 2
+                prerequisite_challenge_ids=[],
+                prerequisite_count_category_ids=[]
+            )
+            db.session.add(category)
+            db.session.flush() # Use flush to get category ID
+
+            categories_to_process_prerequisites.append({
+                'category_obj': category,
+                'original_data': category_data
+            })
+            print(f"Category '{category_name}' (Pass 1) imported successfully.")
+        
+        db.session.commit() # Commit all categories created in Pass 1
+
+        # Pass 2: Process prerequisites for categories
+        for item in categories_to_process_prerequisites:
+            category_obj = item['category_obj']
+            original_data = item['original_data']
+
+            # Handle prerequisite_challenge_names
+            prerequisite_challenge_names = original_data.get('prerequisite_challenge_names', [])
+            if prerequisite_challenge_names:
+                prerequisite_challenge_ids = []
+                for pre_name in prerequisite_challenge_names:
+                    pre_challenge = Challenge.query.filter_by(name=pre_name).first()
+                    if pre_challenge:
+                        prerequisite_challenge_ids.append(pre_challenge.id)
+                    else:
+                        print(f"Warning: Prerequisite challenge '{pre_name}' for category '{category_obj.name}' not found. Skipping this prerequisite.")
+                if prerequisite_challenge_ids:
+                    category_obj.prerequisite_challenge_ids = prerequisite_challenge_ids
+            
+            # Handle prerequisite_count_category_names
+            prerequisite_count_category_names = original_data.get('prerequisite_count_category_names', [])
+            if prerequisite_count_category_names:
+                prerequisite_count_category_ids = []
+                for pre_name in prerequisite_count_category_names:
+                    pre_category = Category.query.filter_by(name=pre_name).first()
+                    if pre_category:
+                        prerequisite_count_category_ids.append(pre_category.id)
+                    else:
+                        print(f"Warning: Prerequisite category '{pre_name}' for category '{category_obj.name}' not found. Skipping this prerequisite.")
+                if prerequisite_count_category_ids:
+                    category_obj.prerequisite_count_category_ids = prerequisite_count_category_ids
+            
+            if prerequisite_challenge_names or prerequisite_count_category_names:
+                db.session.add(category_obj)
+                db.session.commit()
+                print(f"Category '{category_obj.name}' (Pass 2) prerequisites linked successfully.")
+        
+        print("Category import process completed.")
+
 def import_challenges_from_yaml(yaml_file_path):
     """
     Imports challenge data from a YAML file into the database.
@@ -818,6 +915,10 @@ def import_challenges_from_yaml(yaml_file_path):
         if 'challenges' not in data:
             print("Error: YAML file must contain a 'challenges' key.")
             return
+
+        # Pass 1: Create all challenges and their basic properties, flags, and hints.
+        # Store challenge_data temporarily to process prerequisites in Pass 2.
+        challenges_to_process_prerequisites = []
 
         for challenge_data in data['challenges']:
             # Get or create category
@@ -847,10 +948,13 @@ def import_challenges_from_yaml(yaml_file_path):
                 category_id=category.id,
                 multi_flag_type=challenge_data.get('multi_flag_type', 'SINGLE'),
                 multi_flag_threshold=challenge_data.get('multi_flag_threshold'),
-                hint_cost=challenge_data.get('hint_cost', 0) # New: Import hint_cost for the challenge
+                hint_cost=challenge_data.get('hint_cost', 0),
+                # Prerequisites will be set in Pass 2
+                unlock_type='ALWAYS_UNLOCKED', # Default, will be updated if prerequisites exist
+                prerequisite_challenge_ids=[]
             )
             db.session.add(challenge)
-            db.session.commit() # Commit to get challenge ID
+            db.session.flush() # Use flush to get challenge ID before commit for flags/hints
 
             # Add flags
             flags = challenge_data.get('flags', [])
@@ -869,9 +973,38 @@ def import_challenges_from_yaml(yaml_file_path):
                 if hint_content:
                     hint = Hint(challenge_id=challenge.id, title=hint_title, content=hint_content, cost=hint_cost)
                     db.session.add(hint)
+            
+            db.session.commit() # Commit after adding challenge, flags, and hints
 
-            db.session.commit()
-            print(f"Challenge '{challenge_name}' imported successfully.")
+            # Store for Pass 2 processing
+            challenges_to_process_prerequisites.append({
+                'challenge_obj': challenge,
+                'original_data': challenge_data
+            })
+            print(f"Challenge '{challenge_name}' (Pass 1) imported successfully.")
+        
+        # Pass 2: Process prerequisites
+        for item in challenges_to_process_prerequisites:
+            challenge_obj = item['challenge_obj']
+            original_data = item['original_data']
+            
+            prerequisite_names = original_data.get('prerequisites', [])
+            if prerequisite_names:
+                prerequisite_ids = []
+                for pre_name in prerequisite_names:
+                    pre_challenge = Challenge.query.filter_by(name=pre_name).first()
+                    if pre_challenge:
+                        prerequisite_ids.append(pre_challenge.id)
+                    else:
+                        print(f"Warning: Prerequisite challenge '{pre_name}' for '{challenge_obj.name}' not found. Skipping this prerequisite.")
+                
+                if prerequisite_ids:
+                    challenge_obj.prerequisite_challenge_ids = prerequisite_ids
+                    challenge_obj.unlock_type = 'CHALLENGE_SOLVED'
+                    db.session.add(challenge_obj)
+                    db.session.commit()
+                    print(f"Challenge '{challenge_obj.name}' (Pass 2) prerequisites linked successfully.")
+        
         print("Challenge import process completed.")
 
 def create_admin(username, password):
@@ -937,6 +1070,8 @@ if __name__ == '__main__':
             else:
                 print(f"Error: User {args.admin_r} not found.")
     elif args.yaml:
+        # First import categories, then challenges
+        import_categories_from_yaml(args.yaml)
         import_challenges_from_yaml(args.yaml)
     elif args.users: # New conditional for JSON user import
         import_users_from_json(args.users)
