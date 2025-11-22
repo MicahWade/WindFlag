@@ -1,121 +1,563 @@
-from flask import jsonify, g, request
-from flask_restx import Namespace, Resource, fields, Api
+"""
+This module defines the API routes and functions for the WindFlag CTF platform.
+"""
+from flask import Blueprint, request, jsonify, g
+from flask_login import current_user
+from scripts.extensions import db
+from scripts.models import Challenge, Category, ChallengeFlag
 from scripts.utils import api_key_required
-from flask import Blueprint # Keep Blueprint for Api initialization
-from scripts.models import Challenge # Import Challenge model
+from functools import wraps
 
-# Create a Blueprint that Flask-RESTX will use
-api_bp = Blueprint('api_blueprint', __name__, url_prefix='/api/v1')
+api_bp = Blueprint('api', __name__, url_prefix='/api')
 
-authorizations = {
-    'apikey': {
-        'type': 'apiKey',
-        'in': 'header',
-        'name': 'X-API-KEY'
-    },
-    'dynamic_flag_apikey': {
-        'type': 'apiKey',
-        'in': 'header',
-        'name': 'X-Dynamic-Flag-API-KEY'
-    }
-}
-
-api_restx = Api(api_bp, doc='/doc/', authorizations=authorizations) # Initialize Api with the Blueprint and authorizations
-
-api_ns = Namespace('core', description='Core API operations')
-challenges_ns = Namespace('challenges', description='Operations related to challenges')
-
-api_restx.add_namespace(api_ns)
-api_restx.add_namespace(challenges_ns)
-
-# Define a model for user output for documentation
-user_model = api_ns.model('User', {
-    'id': fields.Integer(readOnly=True, description='The unique identifier of a user'),
-    'username': fields.String(required=True, description='The user\'s username'),
-    'email': fields.String(description='The user\'s email address'),
-    'score': fields.Integer(description='The user\'s current score'),
-    'is_admin': fields.Boolean(description='Whether the user has admin privileges'),
-    'last_seen': fields.DateTime(description='Timestamp of the user\'s last activity')
-})
-
-# Define a model for dynamic flag response
-dynamic_flag_model = challenges_ns.model('DynamicFlag', {
-    'challenge_id': fields.Integer(description='The ID of the challenge'),
-    'dynamic_flag': fields.String(description='The dynamically generated flag')
-})
-
-
-@api_ns.route('/status')
-class ApiStatus(Resource):
-    @api_ns.doc(security='apikey')
+def admin_api_required(f):
+    """
+    Decorator to ensure that only authenticated administrators can access an API route.
+    """
+    @wraps(f)
     @api_key_required
-    def get(self):
-        """
-        A simple API endpoint to check API key authentication status.
-        Requires an active API key.
-        """
-        return jsonify({
-            'message': 'API key authenticated successfully!',
-            'user': g.current_api_user.username
-        }), 200
+    def decorated_function(*args, **kwargs):
+        if not g.current_api_user.is_admin:
+            return jsonify({'message': 'Administrator access required'}), 403
+        return f(*args, **kwargs)
+    return decorated_function
 
-@api_ns.route('/users/me')
-class CurrentUser(Resource):
-    @api_ns.doc(security='apikey')
-    @api_ns.marshal_with(user_model)
-    @api_key_required
-    def get(self):
-        """
-        Returns the profile information of the authenticated user.
-        """
-        user = g.current_api_user
-        return {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'score': user.score,
-            'is_admin': user.is_admin,
-            'last_seen': user.last_seen
-        }
+@api_bp.route('/challenges', methods=['POST'])
+@admin_api_required
+def create_challenge():
+    """
+    Creates a new challenge.
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({'message': 'Request body must be JSON'}), 400
 
-@challenges_ns.route('/<int:challenge_id>/dynamic_flag')
-@challenges_ns.param('challenge_id', 'The unique identifier of the challenge')
-class DynamicFlag(Resource):
-    @challenges_ns.doc(
-        description='Retrieves a dynamic flag for a specific challenge. Requires a challenge-specific API key.',
-        security='dynamic_flag_apikey',
-        params={'X-Dynamic-Flag-API-KEY': {'description': 'Challenge-specific API Key', 'type': 'string', 'in': 'header', 'required': True}}
+    required_fields = ['name', 'description', 'points', 'category_id']
+    if not all(field in data for field in required_fields):
+        return jsonify({'message': 'Missing required fields'}), 400
+
+    challenge = Challenge(
+        name=data['name'],
+        description=data['description'],
+        points=data['points'],
+        category_id=data['category_id'],
+        case_sensitive=data.get('case_sensitive', True),
+        multi_flag_type=data.get('multi_flag_type', 'SINGLE'),
+        multi_flag_threshold=data.get('multi_flag_threshold'),
+        point_decay_type=data.get('point_decay_type', 'STATIC'),
+        point_decay_rate=data.get('point_decay_rate'),
+        proactive_decay=data.get('proactive_decay', False),
+        minimum_points=data.get('minimum_points', 1),
+        unlock_type=data.get('unlock_type', 'NONE'),
+        prerequisite_percentage_value=data.get('prerequisite_percentage_value'),
+        prerequisite_count_value=data.get('prerequisite_count_value'),
+        prerequisite_count_category_ids=data.get('prerequisite_count_category_ids'),
+        prerequisite_challenge_ids=data.get('prerequisite_challenge_ids'),
+        unlock_date_time=data.get('unlock_date_time'),
+        unlock_point_reduction_type=data.get('unlock_point_reduction_type'),
+        unlock_point_reduction_value=data.get('unlock_point_reduction_value'),
+        unlock_point_reduction_target_date=data.get('unlock_point_reduction_target_date'),
+        is_hidden=data.get('is_hidden', False),
+        has_dynamic_flag=data.get('has_dynamic_flag', False)
     )
-    @challenges_ns.marshal_with(dynamic_flag_model)
-    def get(self, challenge_id):
+    db.session.add(challenge)
+    db.session.commit()
+
+    if 'flags' in data and isinstance(data['flags'], list):
+        for flag_content in data['flags']:
+            challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
+            db.session.add(challenge_flag)
+        db.session.commit()
+
+        return jsonify({
+
+            'message': 'Challenge created successfully',
+
+            'challenge': {
+
+                'id': challenge.id,
+
+                'name': challenge.name
+
+            }
+
+        }), 201
+
+    
+
+    @api_bp.route('/challenges', methods=['GET'])
+
+    @admin_api_required
+
+    def get_challenges():
+
         """
-        Retrieves a dynamic flag for a specific challenge.
+
+        Gets a list of all challenges.
+
         """
-        challenge = Challenge.query.get(challenge_id)
-        if not challenge:
-            challenges_ns.abort(404, message=f"Challenge with ID {challenge_id} not found.")
 
-        if not challenge.has_dynamic_flag:
-            challenges_ns.abort(403, message=f"Challenge {challenge_id} does not support dynamic flags.")
+        challenges = Challenge.query.all()
 
-        # Authenticate using the challenge-specific API key
-        dynamic_flag_api_key_header = request.headers.get('X-Dynamic-Flag-API-KEY')
-        if not dynamic_flag_api_key_header:
-            challenges_ns.abort(401, message="Dynamic Flag API Key is missing.")
+        return jsonify([{'id': c.id, 'name': c.name, 'points': c.points} for c in challenges])
 
-        if not challenge.verify_dynamic_flag_api_key(dynamic_flag_api_key_header):
-            challenges_ns.abort(401, message="Invalid Dynamic Flag API Key.")
+    
 
-        # Generate and return the dynamic flag
-        # In a real scenario, you'd want to pass a user ID here if the flag is user-specific.
-        # For simplicity, we'll use a dummy user_id for now.
-        # This assumes the user requesting the flag has already solved/unlocked the challenge.
-        # A more robust solution might integrate with the user's solved challenges.
-        dynamic_flag = challenge.generate_dynamic_flag(user_id="anonymous") # Placeholder user_id
+    @api_bp.route('/challenges/<int:challenge_id>', methods=['GET'])
 
-        return {
-            'challenge_id': challenge.id,
-            'dynamic_flag': dynamic_flag
-        }
+    @admin_api_required
 
+    def get_challenge(challenge_id):
 
+        """
+
+        Gets a single challenge by its ID.
+
+        """
+
+        challenge = Challenge.query.get_or_404(challenge_id)
+
+        return jsonify({
+
+            'id': challenge.id,
+
+            'name': challenge.name,
+
+            'description': challenge.description,
+
+            'points': challenge.points,
+
+            'category_id': challenge.category_id,
+
+            'case_sensitive': challenge.case_sensitive,
+
+            'multi_flag_type': challenge.multi_flag_type,
+
+            'multi_flag_threshold': challenge.multi_flag_threshold,
+
+            'point_decay_type': challenge.point_decay_type,
+
+            'point_decay_rate': challenge.point_decay_rate,
+
+            'proactive_decay': challenge.proactive_decay,
+
+            'minimum_points': challenge.minimum_points,
+
+            'unlock_type': challenge.unlock_type,
+
+            'prerequisite_percentage_value': challenge.prerequisite_percentage_value,
+
+            'prerequisite_count_value': challenge.prerequisite_count_value,
+
+            'prerequisite_count_category_ids': challenge.prerequisite_count_category_ids,
+
+            'prerequisite_challenge_ids': challenge.prerequisite_challenge_ids,
+
+            'unlock_date_time': challenge.unlock_date_time,
+
+            'unlock_point_reduction_type': challenge.unlock_point_reduction_type,
+
+            'unlock_point_reduction_value': challenge.unlock_point_reduction_value,
+
+            'unlock_point_reduction_target_date': challenge.unlock_point_reduction_target_date,
+
+            'is_hidden': challenge.is_hidden,
+
+            'has_dynamic_flag': challenge.has_dynamic_flag,
+
+                    'flags': [{'id': f.id, 'content': f.flag_content} for f in challenge.flags]
+
+                })
+
+            
+
+            @api_bp.route('/challenges/<int:challenge_id>', methods=['PUT'])
+
+            @admin_api_required
+
+            def update_challenge_api(challenge_id):
+
+                """
+
+                Updates a challenge.
+
+                """
+
+                challenge = Challenge.query.get_or_404(challenge_id)
+
+                data = request.get_json()
+
+                if not data:
+
+                    return jsonify({'message': 'Request body must be JSON'}), 400
+
+            
+
+                for field in ['name', 'description', 'points', 'category_id', 'case_sensitive', 'multi_flag_type', 'multi_flag_threshold', 'point_decay_type', 'point_decay_rate', 'proactive_decay', 'minimum_points', 'unlock_type', 'prerequisite_percentage_value', 'prerequisite_count_value', 'prerequisite_count_category_ids', 'prerequisite_challenge_ids', 'unlock_date_time', 'unlock_point_reduction_type', 'unlock_point_reduction_value', 'unlock_point_reduction_target_date', 'is_hidden', 'has_dynamic_flag']:
+
+                    if field in data:
+
+                        setattr(challenge, field, data[field])
+
+            
+
+                if 'flags' in data and isinstance(data['flags'], list):
+
+                    ChallengeFlag.query.filter_by(challenge_id=challenge.id).delete()
+
+                    for flag_content in data['flags']:
+
+                        challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
+
+                        db.session.add(challenge_flag)
+
+            
+
+                db.session.commit()
+
+                return jsonify({'message': 'Challenge updated successfully'})
+
+            
+
+            @api_bp.route('/challenges/<int:challenge_id>', methods=['DELETE'])
+
+            @admin_api_required
+
+            def delete_challenge_api(challenge_id):
+
+                """
+
+                Deletes a challenge.
+
+                """
+
+                challenge = Challenge.query.get_or_404(challenge_id)
+
+                db.session.delete(challenge)
+
+                db.session.commit()
+
+                return jsonify({'message': 'Challenge deleted successfully'})
+
+# Category Endpoints
+@api_bp.route('/categories', methods=['GET'])
+@admin_api_required
+def get_categories():
+    """
+    Gets a list of all categories.
+    """
+    categories = Category.query.all()
+    return jsonify([{'id': c.id, 'name': c.name} for c in categories])
+
+@api_bp.route('/categories/<int:category_id>', methods=['GET'])
+@admin_api_required
+def get_category(category_id):
+    """
+    Gets a single category by its ID.
+    """
+    category = Category.query.get_or_404(category_id)
+    return jsonify({
+        'id': category.id,
+        'name': category.name
+    })
+
+@api_bp.route('/categories', methods=['POST'])
+@admin_api_required
+def create_category():
+    """
+    Creates a new category.
+    """
+    data = request.get_json()
+    if not data or 'name' not in data:
+        return jsonify({'message': 'Request body must be JSON and include a name'}), 400
+
+    category = Category(name=data['name'])
+    db.session.add(category)
+    db.session.commit()
+    return jsonify({'message': 'Category created successfully', 'category': {'id': category.id, 'name': category.name}}), 201
+
+@api_bp.route('/categories/<int:category_id>', methods=['PUT'])
+@admin_api_required
+def update_category_api(category_id):
+    """
+    Updates a category.
+    """
+    category = Category.query.get_or_404(category_id)
+    data = request.get_json()
+    if not data:
+        return jsonify({'message': 'Request body must be JSON'}), 400
+
+    if 'name' in data:
+        category.name = data['name']
+    
+    db.session.commit()
+    return jsonify({'message': 'Category updated successfully'})
+
+@api_bp.route('/categories/<int:category_id>', methods=['DELETE'])
+@admin_api_required
+def delete_category_api(category_id):
+    """
+    Deletes a category.
+    """
+    category = Category.query.get_or_404(category_id)
+    db.session.delete(category)
+    db.session.commit()
+    return jsonify({'message': 'Category deleted successfully'})
+
+# User Endpoints
+@api_bp.route('/users', methods=['GET'])
+@admin_api_required
+def get_users():
+    """
+    Gets a list of all users.
+    """
+    users = User.query.all()
+    return jsonify([{'id': u.id, 'username': u.username, 'email': u.email, 'is_admin': u.is_admin, 'is_hidden': u.hidden} for u in users])
+
+@api_bp.route('/users/<int:user_id>', methods=['GET'])
+@admin_api_required
+def get_user(user_id):
+    """
+    Gets a single user by ID.
+    """
+    user = User.query.get_or_404(user_id)
+    return jsonify({
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'is_admin': user.is_admin,
+        'is_hidden': user.hidden
+    })
+
+@api_bp.route('/users/<int:user_id>', methods=['PUT'])
+@admin_api_required
+def update_user(user_id):
+    """
+    Updates a user.
+    """
+    user = User.query.get_or_404(user_id)
+    data = request.get_json()
+    if not data:
+        return jsonify({'message': 'Request body must be JSON'}), 400
+
+    if 'is_hidden' in data:
+        user.is_hidden = data['is_hidden']
+    
+    if 'is_admin' in data:
+        user.is_admin = data['is_admin']
+
+    db.session.commit()
+    return jsonify({'message': 'User updated successfully'})
+
+# Award Category Endpoints
+@api_bp.route('/award_categories', methods=['GET'])
+@admin_api_required
+def get_award_categories():
+    """
+    Gets a list of all award categories.
+    """
+    award_categories = AwardCategory.query.all()
+    return jsonify([{'id': ac.id, 'name': ac.name, 'default_points': ac.default_points} for ac in award_categories])
+
+@api_bp.route('/award_categories/<int:category_id>', methods=['GET'])
+@admin_api_required
+def get_award_category(category_id):
+    """
+    Gets a single award category by ID.
+    """
+    award_category = AwardCategory.query.get_or_404(category_id)
+    return jsonify({
+        'id': award_category.id,
+        'name': award_category.name,
+        'default_points': award_category.default_points
+    })
+
+@api_bp.route('/award_categories', methods=['POST'])
+@admin_api_required
+def create_award_category():
+    """
+    Creates a new award category.
+    """
+    data = request.get_json()
+    if not data or 'name' not in data or 'default_points' not in data:
+        return jsonify({'message': 'Request body must be JSON and include name and default_points'}), 400
+
+    award_category = AwardCategory(name=data['name'], default_points=data['default_points'])
+    db.session.add(award_category)
+    db.session.commit()
+    return jsonify({'message': 'Award category created successfully', 'award_category': {'id': award_category.id, 'name': award_category.name, 'default_points': award_category.default_points}}), 201
+
+@api_bp.route('/award_categories/<int:category_id>', methods=['PUT'])
+@admin_api_required
+def update_award_category_api(category_id):
+    """
+    Updates an award category.
+    """
+    award_category = AwardCategory.query.get_or_404(category_id)
+    data = request.get_json()
+    if not data:
+        return jsonify({'message': 'Request body must be JSON'}), 400
+
+    if 'name' in data:
+        award_category.name = data['name']
+    if 'default_points' in data:
+        award_category.default_points = data['default_points']
+    
+    db.session.commit()
+    return jsonify({'message': 'Award category updated successfully'})
+
+@api_bp.route('/award_categories/<int:category_id>', methods=['DELETE'])
+@admin_api_required
+def delete_award_category_api(category_id):
+    """
+    Deletes an award category.
+    """
+    award_category = AwardCategory.query.get_or_404(category_id)
+    if award_category.awards:
+        return jsonify({'message': 'Cannot delete category with associated awards. Please delete awards first.'}), 400
+    db.session.delete(award_category)
+    db.session.commit()
+    return jsonify({'message': 'Award category deleted successfully'})
+
+# Award Endpoints
+@api_bp.route('/awards', methods=['POST'])
+@admin_api_required
+def give_award():
+    """
+    Gives an award to a user.
+    """
+    data = request.get_json()
+    if not data or 'user_id' not in data or 'category_id' not in data or 'points_awarded' not in data:
+        return jsonify({'message': 'Request body must be JSON and include user_id, category_id, and points_awarded'}), 400
+
+    user = User.query.get_or_404(data['user_id'])
+    award_category = AwardCategory.query.get_or_404(data['category_id'])
+
+    award = Award(
+        user_id=user.id,
+        category_id=award_category.id,
+        points_awarded=data['points_awarded'],
+        admin_id=g.current_api_user.id # Admin making the API call
+    )
+    db.session.add(award)
+    user.score += data['points_awarded']
+    db.session.commit()
+
+        return jsonify({'message': 'Award given successfully', 'award': {'id': award.id, 'user_id': award.user_id, 'category_id': award.category_id, 'points_awarded': award.points_awarded}}), 201
+    
+    # Setting Endpoints
+    @api_bp.route('/settings', methods=['GET'])
+    @admin_api_required
+    def get_settings():
+        """
+        Gets all settings.
+        """
+        settings = Setting.query.all()
+        return jsonify([{'key': s.key, 'value': s.value} for s in settings])
+    
+    @api_bp.route('/settings', methods=['PUT'])
+    @admin_api_required
+    def update_setting():
+        """
+        Updates a setting.
+        """
+        data = request.get_json()
+        if not data or 'key' not in data or 'value' not in data:
+            return jsonify({'message': 'Request body must be JSON and include key and value'}), 400
+    
+        setting = Setting.query.filter_by(key=data['key']).first()
+        if setting:
+            setting.value = data['value']
+        else:
+            setting = Setting(key=data['key'], value=data['value'])
+            db.session.add(setting)
+            db.session.commit()
+            return jsonify({'message': 'Setting updated successfully'})
+        
+        # Submission Endpoints
+        @api_bp.route('/submissions', methods=['GET'])
+        @admin_api_required
+        def get_submissions():
+            """
+            Gets all submissions.
+            """
+            submissions = Submission.query.all()
+                return jsonify([{'id': s.id, 'user_id': s.user_id, 'challenge_id': s.challenge_id, 'timestamp': s.timestamp, 'score_at_submission': s.score_at_submission} for s in submissions])
+            
+            # Analytics Endpoints
+            @api_bp.route('/analytics', methods=['GET'])
+            @admin_api_required
+            def get_analytics():
+                """
+                Gets all analytics data.
+                """
+                # Import necessary functions from admin_routes to reuse logic
+                from scripts.admin_routes import _get_challenge_points_by_category, _get_award_points_by_category, _get_challenge_points_by_user, _get_award_points_by_user, _get_challenges_solved_over_time, _get_fails_vs_succeeds_data, _get_challenge_solve_counts, _get_user_challenge_matrix_data
+                from scripts.chart_data_utils import get_global_score_history_data
+            
+                # Data for Points by Category
+                challenge_points_by_category = _get_challenge_points_by_category()
+                total_award_points = _get_award_points_by_category()
+                
+                category_data = {name: points for name, points in challenge_points_by_category}
+                if total_award_points:
+                    category_data['Awards'] = category_data.get('Awards', 0) + total_award_points
+            
+                category_labels = list(category_data.keys())
+                category_values = list(category_data.values())
+            
+                # Data for Points by User
+                challenge_points_by_user = _get_challenge_points_by_user()
+                award_points_by_user = _get_award_points_by_user()
+            
+                user_data = {username: points for username, points in challenge_points_by_user}
+                for username, points in award_points_by_user:
+                    user_data[username] = user_data.get(username, 0) + points
+                
+                user_labels = list(user_data.keys())
+                user_values = list(user_data.values())
+            
+                # Data for Challenges Solved Over Time
+                challenges_solved_over_time = _get_challenges_solved_over_time()
+                solved_dates = [str(date) for date, _ in challenges_solved_over_time]
+                solved_counts = [count for _, count in challenges_solved_over_time]
+            
+                # Data for Challenge Points Over Time Chart (Cumulative Score)
+                global_chart_data = get_global_score_history_data()
+            
+                if global_chart_data:
+                    global_stats_over_time = global_chart_data.get('global_stats_over_time', [])
+                    user_scores_over_time = global_chart_data.get('user_scores_over_time', {})
+                else:
+                    global_stats_over_time = []
+                    user_scores_over_time = {}
+            
+                cumulative_points_dates = [item['x'] for item in global_stats_over_time]
+                cumulative_points_values = [item['avg'] for item in global_stats_over_time]
+            
+                # Data for Fails vs Succeeds
+                total_successful_flag_attempts, total_failed_flag_attempts = _get_fails_vs_succeeds_data()
+                fails_succeeds_labels = ['Succeeds', 'Fails']
+                fails_succeeds_values = [total_successful_flag_attempts, total_failed_flag_attempts]
+            
+                # Data for Challenges Solved Count (for bar graph)
+                challenge_solve_counts = _get_challenge_solve_counts()
+                challenge_solve_labels = [name for name, count in challenge_solve_counts]
+                challenge_solve_values = [count for name, count in challenge_solve_counts]
+            
+                # Data for User-Challenge Matrix Table
+                all_users, all_challenges, user_challenge_status = _get_user_challenge_matrix_data()
+            
+                return jsonify({
+                    'category_data': {'labels': category_labels, 'values': category_values},
+                    'user_data': {'labels': user_labels, 'values': user_values},
+                    'challenges_solved_over_time': {'dates': solved_dates, 'counts': solved_counts},
+                    'cumulative_points_over_time': {'dates': cumulative_points_dates, 'values': cumulative_points_values},
+                    'fails_vs_succeeds': {'labels': fails_succeeds_labels, 'values': fails_succeeds_values},
+                    'challenge_solve_counts': {'labels': challenge_solve_labels, 'values': challenge_solve_values},
+                    'user_challenge_matrix': {
+                        'users': [{'id': u.id, 'username': u.username} for u in all_users],
+                        'challenges': [{'id': c.id, 'name': c.name} for c in all_challenges],
+                        'status': user_challenge_status
+                    }
+                })
