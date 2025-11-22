@@ -10,7 +10,9 @@ API access is secured using API Keys. To use the API, you must:
 
 ## Endpoints
 
-*   `/api/v1/status`: Check the API status and your authentication.
-*   `/api/v1/users/me`: Retrieve information about the authenticated user.
+For detailed information on the API endpoints, refer to the following sections:
 
-For detailed information on available endpoints, request/response schemas, and authentication, please refer to the interactive API documentation available at `/api/docs`.
+*   **[Core API Endpoints](core_api.md)**: Includes general API status and user profile information.
+*   **[Challenges API Endpoints](challenges_api.md)**: Provides access to dynamic flags for challenges.
+
+For interactive API documentation with request/response schemas, please refer to the live documentation available at `/api/docs`.

@@ -9,6 +9,8 @@ from scripts.utils import make_datetime_timezone_aware
 from .extensions import db, login_manager
 from flask_login import UserMixin
 from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM # For PostgreSQL, if needed, but using String for now
+import hashlib # Added for dynamic flag API key hashing
+import secrets # Added for generating dynamic flag API keys
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -251,6 +253,8 @@ class Challenge(db.Model):
     unlock_point_reduction_value = db.Column(db.Integer, nullable=True)
     unlock_point_reduction_target_date = db.Column(db.DateTime, nullable=True)
     is_hidden = db.Column(db.Boolean, nullable=False, default=False) # New: Field to hide challenge from non-admins
+    has_dynamic_flag = db.Column(db.Boolean, nullable=False, default=False) # Indicates if challenge has a dynamic flag
+    dynamic_flag_api_key_hash = db.Column(db.String(128), nullable=True) # Hashed API key for dynamic flag access
     
     flags = db.relationship('ChallengeFlag', backref='challenge', lazy=True, cascade="all, delete-orphan")
 
@@ -559,6 +563,28 @@ class Challenge(db.Model):
 
     def __repr__(self):
         return f"Challenge('{self.name}', '{self.points}', Type: '{self.multi_flag_type}')"
+
+    def generate_dynamic_flag(self, user_id):
+        """
+        Generates a dynamic flag for the challenge.
+        For now, it's a simple combination. This can be extended to
+        interface with external services or more complex logic.
+        """
+        # Example: flag includes challenge ID and a user-specific identifier
+        # In a real scenario, this would involve more robust, possibly time-sensitive, token generation.
+        return f"FLAG{{{self.id}-{user_id}-{secrets.token_urlsafe(8)}}}"
+
+    def verify_dynamic_flag_api_key(self, api_key_plain):
+        """
+        Verifies a plaintext API key against the stored hashed key for this challenge.
+        """
+        if not self.dynamic_flag_api_key_hash:
+            return False # No API key set for this dynamic flag challenge
+        
+        # Hash the incoming key for comparison
+        incoming_key_hash = hashlib.sha256(api_key_plain.encode('utf-8')).hexdigest()
+        return self.dynamic_flag_api_key_hash == incoming_key_hash
+
 
 class ChallengeFlag(db.Model):
     """
