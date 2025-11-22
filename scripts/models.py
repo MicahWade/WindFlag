@@ -5,7 +5,6 @@ This module defines the database schema for users, challenges, submissions,
 awards, and other related entities.
 """
 from datetime import datetime, UTC
-from scripts.utils import make_datetime_timezone_aware
 from .extensions import db, login_manager
 from flask_login import UserMixin
 from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM # For PostgreSQL, if needed, but using String for now
@@ -181,8 +180,13 @@ class Category(db.Model):
 
         # Check time-based conditions
         if self.unlock_type in ['TIMED', 'COMBINED']:
-            if self.unlock_date_time and datetime.now(UTC) < self.unlock_date_time:
-                unlocked_by_time = False
+            if self.unlock_date_time:
+                # Import here to avoid circular dependency
+                from scripts.utils import make_datetime_timezone_aware 
+                aware_unlock_date_time = make_datetime_timezone_aware(self.unlock_date_time)
+                
+                if datetime.now(UTC) < aware_unlock_date_time:
+                    unlocked_by_time = False
 
         if self.unlock_type == 'COMBINED':
             return unlocked_by_prerequisites and unlocked_by_time
@@ -192,10 +196,10 @@ class Category(db.Model):
             return unlocked_by_prerequisites
 
 # Define Multi-Flag Types
-MULTI_FLAG_TYPES = ('SINGLE', 'ANY', 'ALL', 'N_OF_M')
+DYNAMIC_FLAG_TYPE = 'DYNAMIC' # New constant for dynamic flag type
+MULTI_FLAG_TYPES = ('SINGLE', 'ANY', 'ALL', 'N_OF_M', DYNAMIC_FLAG_TYPE, 'HTTP')
 POINT_DECAY_TYPES = ('STATIC', 'LINEAR', 'LOGARITHMIC')
 UNLOCK_TYPES = ('NONE', 'HIDDEN', 'PREREQUISITE_PERCENTAGE', 'PREREQUISITE_COUNT', 'PREREQUISITE_CHALLENGES', 'TIMED', 'COMBINED')
-UNLOCK_POINT_REDUCTION_TYPES = ('NONE', 'FIXED', 'PERCENTAGE', 'TIME_DECAY_TO_ZERO')
 
 class Challenge(db.Model):
     """
@@ -221,9 +225,6 @@ class Challenge(db.Model):
         prerequisite_count_value (int): Number of challenges to complete for unlocking.
         prerequisite_challenge_ids (list): List of specific challenge IDs that must be completed for unlocking.
         unlock_date_time (datetime): Specific date and time for timed unlocking.
-        unlock_point_reduction_type (str): Type of point reduction upon unlocking ('NONE', 'FIXED', 'PERCENTAGE', 'TIME_DECAY_TO_ZERO').
-        unlock_point_reduction_value (int): Value for fixed or percentage point reduction.
-        unlock_point_reduction_target_date (datetime): Target date for time-decay to zero point reduction.
         flags (relationship): One-to-many relationship with ChallengeFlag.
     """
     id = db.Column(db.Integer, primary_key=True)
@@ -249,11 +250,7 @@ class Challenge(db.Model):
     prerequisite_challenge_ids = db.Column(db.JSON, nullable=True) # Stores a list of challenge IDs
     unlock_date_time = db.Column(db.DateTime, nullable=True)
     
-    unlock_point_reduction_type = db.Column(db.String(50), nullable=False, default='NONE')
-    unlock_point_reduction_value = db.Column(db.Integer, nullable=True)
-    unlock_point_reduction_target_date = db.Column(db.DateTime, nullable=True)
     is_hidden = db.Column(db.Boolean, nullable=False, default=False) # New: Field to hide challenge from non-admins
-    has_dynamic_flag = db.Column(db.Boolean, nullable=False, default=False) # Indicates if challenge has a dynamic flag
     dynamic_flag_api_key_hash = db.Column(db.String(128), nullable=True) # Hashed API key for dynamic flag access
     
     flags = db.relationship('ChallengeFlag', backref='challenge', lazy=True, cascade="all, delete-orphan")
@@ -359,6 +356,8 @@ class Challenge(db.Model):
         # Check time-based conditions
         if self.unlock_type in ['TIMED', 'COMBINED']:
             if self.unlock_date_time:
+                # Import here to avoid circular dependency
+                from scripts.utils import make_datetime_timezone_aware
                 aware_unlock_date_time = make_datetime_timezone_aware(self.unlock_date_time)
                 
                 if datetime.now(UTC) < aware_unlock_date_time:
@@ -407,7 +406,7 @@ class Challenge(db.Model):
     @property
     def calculated_points(self):
         """
-        Calculates the current points for the challenge, considering decay and unlock point reduction.
+        Calculates the current points for the challenge, considering decay.
         """
         current_points = self.points
         now = datetime.now(UTC)
@@ -444,61 +443,6 @@ class Challenge(db.Model):
                         decay_factor = 1 + (self.point_decay_rate / 100) * (time_since_first_solve ** 0.5) # Using sqrt for smoother log-like decay
                         current_points = max(self.minimum_points, int(self.points / decay_factor))
         
-        # Apply unlock point reduction if applicable and challenge is considered "unlocked"
-        # For point reduction purposes, we consider it unlocked if it has been solved at least once
-        # or if it's generally unlocked by time/prerequisites for any user.
-        # This logic needs to be carefully considered: should point reduction apply only after a user solves it,
-        # or once it becomes generally available? The prompt implies "upon unlocking" which suggests general availability.
-        # Let's assume point reduction applies if the challenge is generally available (i.e., unlock_date_time has passed
-        # or prerequisites are met by *some* user, or if it's solved by *any* user).
-        # For simplicity, let's assume point reduction applies if the challenge has been solved by at least one user.
-        # A more robust solution might involve checking if the challenge is "globally" unlocked (e.g., timed unlock passed)
-        # or if it's unlocked for the *current* user viewing it.
-        # Given the prompt: "If a challenge has prerequisites and/or time-based unlocking, its points can dynamically adjust."
-        # This implies the adjustment happens once the conditions are met, not necessarily tied to a specific user's solve.
-        # Let's make a simplifying assumption: point reduction applies if the challenge's unlock_date_time has passed
-        # OR if it has been solved by at least one user (implying it was unlocked for that user).
-        
-        # For the purpose of `calculated_points`, we need a global "unlocked" state, not user-specific.
-        # The most straightforward global unlock condition is `unlock_date_time` if set.
-        # If `unlock_date_time` is in the past, or if `unlock_type` is NONE, we consider it "globally" unlocked.
-        # Prerequisite-based unlocks are user-specific, so they don't fit well into a global `calculated_points` property.
-        # Let's refine: point reduction applies if the challenge is generally available (e.g., timed unlock passed)
-        # OR if it has been solved by at least one user (meaning it was unlocked for them).
-        
-        # Let's simplify: point reduction applies if the challenge has been solved by at least one user.
-        # This means we need to check if there are any submissions for this challenge.
-        has_been_solved = Submission.query.filter_by(challenge_id=self.id).first() is not None
-        
-        # If unlock_date_time is set and in the past, it's also considered "unlocked" for point reduction purposes.
-        is_timed_unlocked = False
-        if self.unlock_date_time:
-            aware_unlock_date_time = make_datetime_timezone_aware(self.unlock_date_time)
-            if now >= aware_unlock_date_time:
-                is_timed_unlocked = True
-
-        if self.unlock_point_reduction_type != 'NONE' and (has_been_solved or is_timed_unlocked):
-            if self.unlock_point_reduction_type == 'FIXED':
-                current_points = max(self.minimum_points, current_points - (self.unlock_point_reduction_value or 0))
-            elif self.unlock_point_reduction_type == 'PERCENTAGE':
-                reduction_factor = (self.unlock_point_reduction_value or 0) / 100.0
-                current_points = max(self.minimum_points, int(current_points * (1 - reduction_factor)))
-            elif self.unlock_point_reduction_type == 'TIME_DECAY_TO_ZERO':
-                if self.unlock_point_reduction_target_date and now < self.unlock_point_reduction_target_date:
-                    time_to_target = (self.unlock_point_reduction_target_date - now).total_seconds()
-                    total_decay_time = (self.unlock_point_reduction_target_date - (self.unlock_date_time or now)).total_seconds()
-                    
-                    if total_decay_time > 0:
-                        decay_progress = 1 - (time_to_target / total_decay_time)
-                        # Decay from initial points (before any other decay) down to minimum_points
-                        # The initial points for this decay should be `self.points`
-                        decayed_value = self.points - (self.points - self.minimum_points) * decay_progress
-                        current_points = max(self.minimum_points, int(decayed_value))
-                    else: # Target date is same as or before unlock date/now, so immediately minimum points
-                        current_points = self.minimum_points
-                elif self.unlock_point_reduction_target_date and now >= self.unlock_point_reduction_target_date:
-                    current_points = self.minimum_points # Reached or passed target date, points are at minimum
-
         return current_points
 
     @property
@@ -512,6 +456,8 @@ class Challenge(db.Model):
             return True
         # Check for timed unlock in the future
         if self.unlock_type in ['TIMED', 'COMBINED'] and self.unlock_date_time:
+            # Import here to avoid circular dependency
+            from scripts.utils import make_datetime_timezone_aware
             aware_unlock_date_time = self.unlock_date_time
             if aware_unlock_date_time.tzinfo is None:
                 aware_unlock_date_time = aware_unlock_date_time.replace(tzinfo=UTC)

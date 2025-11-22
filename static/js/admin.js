@@ -59,4 +59,48 @@ document.addEventListener('DOMContentLoaded', function() {
             dropdown.classList.add('hidden');
         }
     });
+
+    // New JavaScript for challenge form dynamic flag logic
+    const multiFlagTypeSelect = document.getElementById('multi_flag_type_select');
+    const flagsAndThresholdSection = document.getElementById('flags_and_threshold_section');
+    const dynamicFlagApiKeySection = document.getElementById('dynamic_flag_api_key_section');
+    const hasDynamicFlagCheckbox = document.getElementById('has_dynamic_flag_checkbox');
+    const challengeId = document.querySelector('input[name="challenge_id"]')?.value; // Get challenge_id if available
+
+    function toggleFlagFields() {
+        if (!multiFlagTypeSelect) return; // Exit if elements are not present (e.g., on other admin pages)
+
+        if (multiFlagTypeSelect.value === 'DYNAMIC') {
+            if (flagsAndThresholdSection) flagsAndThresholdSection.style.display = 'none';
+            if (dynamicFlagApiKeySection) dynamicFlagApiKeySection.style.display = 'block';
+            if (hasDynamicFlagCheckbox) hasDynamicFlagCheckbox.checked = true;
+        } else {
+            if (flagsAndThresholdSection) flagsAndThresholdSection.style.display = 'block';
+            if (dynamicFlagApiKeySection) dynamicFlagApiKeySection.style.display = 'none';
+            if (hasDynamicFlagCheckbox) hasDynamicFlagCheckbox.checked = false;
+        }
+    }
+
+    // Initial call to set visibility based on current selection
+    toggleFlagFields();
+
+    // Add event listener for changes
+    if (multiFlagTypeSelect) {
+        multiFlagTypeSelect.addEventListener('change', toggleFlagFields);
+    }
+
+    // Also, if the hasDynamicFlagCheckbox is manually changed, update the multi-flag type
+    if (hasDynamicFlagCheckbox) {
+        hasDynamicFlagCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                multiFlagTypeSelect.value = 'DYNAMIC';
+            } else {
+                // Revert to SINGLE if unchecked, or logic to pick a default non-dynamic type
+                if (multiFlagTypeSelect.value === 'DYNAMIC') {
+                    multiFlagTypeSelect.value = 'SINGLE'; // Default to SINGLE when unchecking dynamic
+                }
+            }
+            toggleFlagFields();
+        });
+    }
 });

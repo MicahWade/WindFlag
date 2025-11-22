@@ -4,6 +4,9 @@
     <div class="max-w-md mx-auto bg-gray-800 p-8 rounded-lg shadow-lg">
         <form method="POST" action="" class="space-y-4">
             {{ form.hidden_tag() }}
+            {% if challenge %}
+                <input type="hidden" name="challenge_id" value="{{ challenge.id }}">
+            {% endif %}
             <fieldset class="border-b border-gray-700 pb-4">
                 <legend class="text-2xl font-bold text-gray-100 mb-4">{{ title }}</legend>
                 <div class="mb-4">
@@ -20,7 +23,13 @@
                     {% endif %}
                 </div>
                 <div class="mb-4">
-                    {{ form.description.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                    <div class="flex items-center mb-2">
+                        {{ form.description.label(class="block text-gray-300 text-sm font-bold") }}
+                        <div class="tooltip ml-2">
+                            <i class="fas fa-question-circle"></i>
+                            <span class="tooltiptext">This field supports Markdown.</span>
+                        </div>
+                    </div>
                     {% if form.description.errors %}
                         {{ form.description(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
                         <p class="text-red-400 text-xs italic">
@@ -104,7 +113,101 @@
                         {% endif %}
                     </div>
                 </fieldset>
+                <div class="mb-4 flex items-center">
+                    {{ form.multi_flag_type.label(class="block text-gray-300 text-sm font-bold mb-2") | replace('Multi-Flag Type', 'Flag Type') }}
+                    {% if form.multi_flag_type.errors %}
+                        {{ form.multi_flag_type(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="multi_flag_type_select") }}
+                        <p class="text-red-400 text-xs italic">
+                            {% for error in form.multi_flag_type.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </p>
+                    {% else %}
+                        {{ form.multi_flag_type(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="multi_flag_type_select") }}
+                    {% endif %}
+                </div>
 
+                <div id="flags_input_fields_section">
+                    <div class="mb-4" id="multi_flag_threshold_field">
+                        {{ form.multi_flag_threshold.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {% if form.multi_flag_threshold.errors %}
+                            {{ form.multi_flag_threshold(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.multi_flag_threshold.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% else %}
+                            {{ form.multi_flag_threshold(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        {{ form.flags_input.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {% if form.flags_input.errors %}
+                            {{ form.flags_input(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.flags_input.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% else %}
+                            {{ form.flags_input(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-4" id="dynamic_flag_api_key_section" style="display: none;">
+                    <h4 class="text-gray-300 text-lg font-bold mb-2">Dynamic Flag API Key Settings</h4>
+                    <p class="text-gray-400 text-sm mb-2">This challenge is configured to use a dynamic flag.</p>
+                    {% if challenge %} {# Check if challenge object exists (i.e., we are updating an existing challenge) #}
+                        <p class="text-gray-400 text-sm mb-2">
+                            Manage the challenge-specific API key used to retrieve the dynamic flag.
+                        </p>
+                        <a href="{{ url_for('admin.dynamic_flag_settings', challenge_id=challenge.id) }}" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded text-xs shadow-md">Manage Dynamic Flag API Key</a>
+                    {% else %}
+                        <p class="text-yellow-400 text-sm mt-2">Dynamic Flag API Key settings will be available after the challenge is created.</p>
+                    {% endif %}
+                </div>
+                
+
+                <div class="mb-4 flex items-center">
+                    {{ form.case_sensitive(class="mr-2 leading-tight") }}
+                    {{ form.case_sensitive.label(class="text-gray-300 text-sm font-bold") }}
+                    {% if form.case_sensitive.errors %}
+                        <p class="text-red-400 text-xs italic ml-2">
+                            {% for error in form.case_sensitive.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="mb-4">
+                    {{ form.category.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                    {% if form.category.errors %}
+                        {{ form.category(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="category_select") }}
+                        <p class="text-red-400 text-xs italic">
+                            {% for error in form.category.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </p>
+                    {% else %}
+                        {{ form.category(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="category_select") }}
+                    {% endif %}
+                </div>
+                <div class="mb-4 new-category-name-field" id="new_category_name_field">
+                    {{ form.new_category_name.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                    {% if form.new_category_name.errors %}
+                        {{ form.new_category_name(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                        <p class="text-red-400 text-xs italic">
+                            {% for error in form.new_category_name.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </p>
+                    {% else %}
+                        {{ form.new_category_name(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                    {% endif %}
+                </div>
                 <fieldset class="border-t border-gray-700 pt-4 mt-4">
                     <legend class="text-xl font-bold text-gray-100 mb-4">General Prerequisites</legend>
                     <div class="mb-4" id="prerequisite_challenge_ids_input_field">
@@ -226,162 +329,7 @@
                             <p class="text-red-400 text-xs italic">{{ error }}</p>
                         {% endfor %}
                     </div>
-                    <div class="mb-4" id="timezone_field" style="display: none;">
-                        <div class="flex items-center">
-                            {{ form.timezone.label(class="block text-gray-300 text-sm font-bold mb-2") }}
-                            <div class="tooltip ml-2">
-                                <i class="fas fa-question-circle" id="timezone_tooltip_icon"></i>
-                                <span class="tooltiptext">The timezone for the Unlock Date and Time. Dates will be converted to UTC for storage.</span>
-                            </div>
-                        </div>
-                        {% if form.timezone.errors %}
-                            {{ form.timezone(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                            <p class="text-red-400 text-xs italic">
-                                {% for error in form.timezone.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </p>
-                        {% else %}
-                            {{ form.timezone(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                        {% endif %}
-                    </div>
                 </fieldset>
-
-                <fieldset class="border-t border-gray-700 pt-4 mt-4">
-                    <legend class="text-xl font-bold text-gray-100 mb-4">Dynamic Point Adjustment on Unlock</legend>
-                    <div class="mb-4">
-                        {{ form.unlock_point_reduction_type.label(class="block text-gray-300 text-sm font-bold mb-2") }}
-                        {% if form.unlock_point_reduction_type.errors %}
-                            {{ form.unlock_point_reduction_type(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="unlock_point_reduction_type_select") }}
-                            <p class="text-red-400 text-xs italic">
-                                {% for error in form.unlock_point_reduction_type.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </p>
-                        {% else %}
-                            {{ form.unlock_point_reduction_type(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="unlock_point_reduction_type_select") }}
-                        {% endif %}
-                    </div>
-                    <div class="mb-4" id="unlock_point_reduction_value_field">
-                        {{ form.unlock_point_reduction_value.label(class="block text-gray-300 text-sm font-bold mb-2") }}
-                        {% if form.unlock_point_reduction_value.errors %}
-                            {{ form.unlock_point_reduction_value(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                            <p class="text-red-400 text-xs italic">
-                                {% for error in form.unlock_point_reduction_value.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </p>
-                        {% else %}
-                            {{ form.unlock_point_reduction_value(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                        {% endif %}
-                    </div>
-                    <div class="mb-4" id="unlock_point_reduction_target_date_field">
-                        {{ form.unlock_point_reduction_target_date.label(class="block text-gray-300 text-sm font-bold mb-2") }}
-                        {% if form.unlock_point_reduction_target_date.errors %}
-                            {{ form.unlock_point_reduction_target_date(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", type="date") }}
-                            <p class="text-red-400 text-xs italic">
-                                {% for error in form.unlock_point_reduction_target_date.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </p>
-                        {% else %}
-                            {{ form.unlock_point_reduction_target_date(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", type="date") }}
-                        {% endif %}
-                    </div>
-                </fieldset>
-
-                <div class="mb-4">
-                    {{ form.multi_flag_type.label(class="block text-gray-300 text-sm font-bold mb-2") }}
-                    {% if form.multi_flag_type.errors %}
-                        {{ form.multi_flag_type(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="multi_flag_type_select") }}
-                        <p class="text-red-400 text-xs italic">
-                            {% for error in form.multi_flag_type.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </p>
-                    {% else %}
-                        {{ form.multi_flag_type(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="multi_flag_type_select") }}
-                    {% endif %}
-                </div>
-
-                <div class="mb-4" id="multi_flag_threshold_field">
-                    {{ form.multi_flag_threshold.label(class="block text-gray-300 text-sm font-bold mb-2") }}
-                    {% if form.multi_flag_threshold.errors %}
-                        {{ form.multi_flag_threshold(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                        <p class="text-red-400 text-xs italic">
-                            {% for error in form.multi_flag_threshold.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </p>
-                    {% else %}
-                        {{ form.multi_flag_threshold(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                    {% endif %}
-                </div>
-
-                <div class="mb-4">
-                    {{ form.flags_input.label(class="block text-gray-300 text-sm font-bold mb-2") }}
-                    {% if form.flags_input.errors %}
-                        {{ form.flags_input(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                        <p class="text-red-400 text-xs italic">
-                            {% for error in form.flags_input.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </p>
-                    {% else %}
-                        {{ form.flags_input(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                    {% endif %}
-                </div>
-                {# New field for is_hidden #}
-                <div class="mb-4 flex items-center">
-                    {{ form.is_hidden(class="mr-2 leading-tight") }}
-                    {{ form.is_hidden.label(class="text-gray-300 text-sm font-bold") }}
-                    {% if form.is_hidden.errors %}
-                        <p class="text-red-400 text-xs italic ml-2">
-                            {% for error in form.is_hidden.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </p>
-                    {% endif %}
-                </div>
-                {# End new fields #}
-
-                <div class="mb-4 flex items-center">
-                    {{ form.case_sensitive(class="mr-2 leading-tight") }}
-                    {{ form.case_sensitive.label(class="text-gray-300 text-sm font-bold") }}
-                    {% if form.case_sensitive.errors %}
-                        <p class="text-red-400 text-xs italic ml-2">
-                            {% for error in form.case_sensitive.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </p>
-                    {% endif %}
-                </div>
-                <div class="mb-4">
-                    {{ form.category.label(class="block text-gray-300 text-sm font-bold mb-2") }}
-                    {% if form.category.errors %}
-                        {{ form.category(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="category_select") }}
-                        <p class="text-red-400 text-xs italic">
-                            {% for error in form.category.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </p>
-                    {% else %}
-                        {{ form.category(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="category_select") }}
-                    {% endif %}
-                </div>
-                <div class="mb-4 new-category-name-field" id="new_category_name_field">
-                    {{ form.new_category_name.label(class="block text-gray-300 text-sm font-bold mb-2") }}
-                    {% if form.new_category_name.errors %}
-                        {{ form.new_category_name(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                        <p class="text-red-400 text-xs italic">
-                            {% for error in form.new_category_name.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </p>
-                    {% else %}
-                        {{ form.new_category_name(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                    {% endif %}
-                </div>
             </fieldset>
             <div class="flex items-center justify-between">
                 {{ form.submit(class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline shadow-md transform hover:scale-105 transition duration-300 ease-in-out") }}
@@ -394,7 +342,7 @@
         const usersSuperAdminStatus = {{ users_super_admin_status | tojson }};
         const currentLoggedInUserId = {{ current_user_id | tojson }};
     </script>
-    <script src="{{ url_for('static', filename='js/timezone_picker.js') }}"></script> {# Updated script name #}
-    <script src="{{ url_for('static', filename='js/timezone_picker.js') }}"></script> {# Updated script name #}
+    <script src="{{ url_for('static', filename='js/timezone_picker.js') }}"></script>
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/challenge_form.js') }}"></script>
 {% endblock content %}

@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, IntegerField, SelectField, SelectMultipleField, HiddenField
 from wtforms.fields.datetime import DateTimeField, DateField # Import DateField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
-from scripts.models import User, Category, MULTI_FLAG_TYPES, POINT_DECAY_TYPES, UNLOCK_TYPES, UNLOCK_POINT_REDUCTION_TYPES
+from scripts.models import User, Category, MULTI_FLAG_TYPES, POINT_DECAY_TYPES, UNLOCK_TYPES, DYNAMIC_FLAG_TYPE # Import DYNAMIC_FLAG_TYPE
 from flask import current_app
 import json
 import pytz # Re-add pytz import
@@ -196,7 +196,7 @@ class ChallengeForm(FlaskForm):
                                     validators=[NumberRange(min=0)],
                                     default=0)
     proactive_decay = BooleanField('Apply decay proactively', default=False)
-    multi_flag_type = SelectField('Multi-Flag Type',
+    multi_flag_type = SelectField('Flag Type',
                                   choices=[(t, t.replace('_', ' ').title()) for t in MULTI_FLAG_TYPES],
                                   validators=[DataRequired()],
                                   default='SINGLE')
@@ -206,7 +206,7 @@ class ChallengeForm(FlaskForm):
                                         default=1) # Default to 1, but will be validated based on type
     
     flags_input = TextAreaField('Flags (one per line)',
-                                validators=[DataRequired()],
+                                validators=[], # Removed DataRequired here, will validate conditionally
                                 render_kw={"rows": 5, "placeholder": "Enter each flag on a new line"})
 
     case_sensitive = BooleanField('Flags are Case-Sensitive', default=True)
@@ -230,24 +230,13 @@ class ChallengeForm(FlaskForm):
     unlock_date_time = DateField('Unlock Date', format='%Y-%m-%d',
                                      render_kw={"placeholder": "YYYY-MM-DD"})
 
-    # New fields for dynamic point adjustment on unlock
-    unlock_point_reduction_type = SelectField('Unlock Point Reduction Type',
-                                              choices=[(t, t.replace('_', ' ').title()) for t in UNLOCK_POINT_REDUCTION_TYPES],
-                                              validators=[DataRequired()],
-                                              default='NONE')
-    unlock_point_reduction_value = IntegerField('Unlock Point Reduction Value',
-                                                validators=[NumberRange(min=0)],
-                                                render_kw={"placeholder": "e.g., 10 for fixed, 20 for 20%"})
-    unlock_point_reduction_target_date = DateField('Unlock Point Reduction Target Date', format='%Y-%m-%d',
-                                                       render_kw={"placeholder": "YYYY-MM-DD"})
     is_hidden = BooleanField('Hide Challenge from Users', default=False) # New: Field to hide challenge
-
     submit = SubmitField('Submit Challenge')
 
     def validate(self, extra_validators=None):
         """
         Performs custom validation for the ChallengeForm, including category selection,
-        multi-flag type, threshold, flag count, and new unlock/point reduction fields.
+        multi-flag type, threshold, flag count, and new unlock fields.
 
         Args:
             extra_validators: Optional extra validators to run.
@@ -267,7 +256,10 @@ class ChallengeForm(FlaskForm):
             return False
         
         # Validate multi_flag_type and threshold
-        if self.multi_flag_type.data == 'N_OF_M':
+        if self.multi_flag_type.data == DYNAMIC_FLAG_TYPE:
+            # For dynamic flags, traditional flags_input and threshold are not required
+            pass # No specific flag input validation for dynamic type
+        elif self.multi_flag_type.data == 'N_OF_M':
             if not self.multi_flag_threshold.data or self.multi_flag_threshold.data < 1:
                 self.multi_flag_threshold.errors.append('Threshold is required and must be at least 1 for N_OF_M type.')
                 return False
@@ -277,10 +269,21 @@ class ChallengeForm(FlaskForm):
             if self.multi_flag_threshold.data > len(provided_flags):
                 self.multi_flag_threshold.errors.append(f'Threshold ({self.multi_flag_threshold.data}) cannot be greater than the number of provided flags ({len(provided_flags)}).')
                 return False
+            if not provided_flags:
+                self.flags_input.errors.append('At least one flag is required for N_OF_M type.')
+                return False
         elif self.multi_flag_type.data == 'SINGLE':
             provided_flags = [f.strip() for f in self.flags_input.data.split('\n') if f.strip()]
             if len(provided_flags) != 1:
                 self.flags_input.errors.append('SINGLE type challenges must have exactly one flag.')
+                return False
+            if not provided_flags:
+                self.flags_input.errors.append('At least one flag is required for SINGLE type.')
+                return False
+        else: # 'ANY', 'ALL'
+            provided_flags = [f.strip() for f in self.flags_input.data.split('\n') if f.strip()]
+            if not provided_flags:
+                self.flags_input.errors.append('At least one flag is required for this multi-flag type.')
                 return False
         
         # Validate unlock fields
@@ -311,22 +314,8 @@ class ChallengeForm(FlaskForm):
                 self.unlock_date_time.errors.append('Unlock date and time is required for this unlock type.')
                 return False
         
-        # Validate unlock point reduction fields
-        if self.unlock_point_reduction_type.data in ['FIXED', 'PERCENTAGE']:
-            if self.unlock_point_reduction_value.data is None or self.unlock_point_reduction_value.data < 0:
-                self.unlock_point_reduction_value.errors.append('Unlock point reduction value is required for this reduction type.')
-                return False
-        
-        if self.unlock_point_reduction_type.data == 'TIME_DECAY_TO_ZERO':
-            if not self.unlock_point_reduction_target_date.data:
-                self.unlock_point_reduction_target_date.errors.append('Unlock point reduction target date is required for time decay to zero.')
-                return False
-            # Ensure target date is after unlock date time if both are set
-            if self.unlock_date_time.data and self.unlock_point_reduction_target_date.data <= self.unlock_date_time.data:
-                self.unlock_point_reduction_target_date.errors.append('Target date must be after the unlock date and time.')
-                return False
-
         return True
+
 
 class AdminSettingsForm(FlaskForm):
     """

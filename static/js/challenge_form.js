@@ -14,11 +14,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const prerequisiteChallengeIdsInputField = document.getElementById('prerequisite_challenge_ids_input_field');
     const unlockDateTime = document.getElementById('unlock_date_time_field');
 
-    // New point reduction fields
-    const unlockPointReductionTypeSelect = document.getElementById('unlock_point_reduction_type_select');
-    const unlockPointReductionValueField = document.getElementById('unlock_point_reduction_value_field');
-    const unlockPointReductionTargetDateField = document.getElementById('unlock_point_reduction_target_date_field');
-
     const formulas = {
         'STATIC': 'Challenge Value is awarded as-is',
         'LINEAR': 'Initial - (Decay * SolveCount)',
@@ -51,7 +46,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateUnlockForm() {
         const selectedUnlockType = unlockTypeSelect.value;
-        const selectedReductionType = unlockPointReductionTypeSelect.value;
 
         // Hide all unlock-related fields initially
         prerequisitePercentageValueField.style.display = 'none';
@@ -75,16 +69,41 @@ document.addEventListener('DOMContentLoaded', function () {
             // prerequisiteChallengeIdsInputField.style.display = 'block'; // Removed: This field is now always visible
             unlockDateTime.style.display = 'block';
         }
+    }
 
-        // Hide all point reduction-related fields initially
-        unlockPointReductionValueField.style.display = 'none';
-        unlockPointReductionTargetDateField.style.display = 'none';
+    function updateFlagFields() {
+        const multiFlagType = document.getElementById('multi_flag_type_select').value;
+        const thresholdField = document.getElementById('multi_flag_threshold_field');
+        const flagsInputSection = document.getElementById('flags_input_fields_section');
+        const dynamicFlagApiKeySection = document.getElementById('dynamic_flag_api_key_section');
 
-        // Show fields based on selected point reduction type
-        if (selectedReductionType === 'FIXED' || selectedReductionType === 'PERCENTAGE') {
-            unlockPointReductionValueField.style.display = 'block';
-        } else if (selectedReductionType === 'TIME_DECAY_TO_ZERO') {
-            unlockPointReductionTargetDateField.style.display = 'block';
+        // Hide all related fields initially
+        thresholdField.style.display = 'none';
+        flagsInputSection.style.display = 'block'; // Default to showing the main flags input
+        dynamicFlagApiKeySection.style.display = 'none';
+
+        if (multiFlagType === 'N_OF_M') {
+            thresholdField.style.display = 'block';
+        } else if (multiFlagType === 'DYNAMIC') {
+            // For DYNAMIC, hide the standard flag inputs and show the API key section
+            flagsInputSection.style.display = 'none';
+            dynamicFlagApiKeySection.style.display = 'block';
+        } else if (multiFlagType === 'HTTP') {
+            flagsInputSection.style.display = 'none';
+            thresholdField.style.display = 'none';
+            dynamicFlagApiKeySection.style.display = 'none';
+        }
+        // For other types like 'STANDARD' or 'LIST', no special fields are needed, so the default state is correct.
+    }
+    
+    function updateCategoryFields() {
+        const categorySelect = document.getElementById('category_select');
+        const newCategoryNameField = document.getElementById('new_category_name_field');
+
+        if (categorySelect.value === '0') {
+            newCategoryNameField.style.display = 'block';
+        } else {
+            newCategoryNameField.style.display = 'none';
         }
     }
 
@@ -98,9 +117,16 @@ document.addEventListener('DOMContentLoaded', function () {
         updateUnlockForm(); // Initial call to set correct visibility
     }
 
-    if (unlockPointReductionTypeSelect) {
-        unlockPointReductionTypeSelect.addEventListener('change', updateUnlockForm);
-        updateUnlockForm(); // Initial call to set correct visibility
+    const multiFlagTypeSelect = document.getElementById('multi_flag_type_select');
+    if (multiFlagTypeSelect) {
+        multiFlagTypeSelect.addEventListener('change', updateFlagFields);
+        updateFlagFields(); // Initial call to set correct visibility
+    }
+
+    const categorySelect = document.getElementById('category_select');
+    if (categorySelect) {
+        categorySelect.addEventListener('change', updateCategoryFields);
+        updateCategoryFields(); // Initial call
     }
 
     // Custom logic for prerequisite_challenge_ids_input_field (checkboxes)

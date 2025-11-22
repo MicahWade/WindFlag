@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     modalChallengeName.textContent = data.name;
-                    modalChallengeDescription.textContent = data.description;
+                    modalChallengeDescription.innerHTML = marked.parse(data.description);
                     modalChallengePoints.textContent = data.points + ' pts';
 
                     const isCompleted = data.is_completed;

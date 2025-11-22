@@ -13,6 +13,8 @@ from sqlalchemy.orm import joinedload # Import joinedload for eager loading
 import pytz # New: For timezone handling
 from datetime import datetime, UTC # New: For datetime and UTC timezone
 from scripts.utils import make_datetime_timezone_aware
+import secrets # New: for generating API keys
+import hashlib # New: for hashing API keys
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -361,7 +363,8 @@ def new_challenge():
                               unlock_point_reduction_type=form.unlock_point_reduction_type.data,
                               unlock_point_reduction_value=form.unlock_point_reduction_value.data,
                               unlock_point_reduction_target_date=unlock_point_reduction_target_date_utc,
-                              is_hidden=form.is_hidden.data)
+                              is_hidden=form.is_hidden.data,
+                              has_dynamic_flag=form.has_dynamic_flag.data) # Save has_dynamic_flag
         db.session.add(challenge)
         db.session.commit() # Commit to get challenge.id
 
@@ -444,6 +447,7 @@ def update_challenge(challenge_id):
         challenge.unlock_point_reduction_value = form.unlock_point_reduction_value.data
         challenge.unlock_point_reduction_target_date = unlock_point_reduction_target_date_utc
         challenge.is_hidden = form.is_hidden.data
+        challenge.has_dynamic_flag = form.has_dynamic_flag.data # Save has_dynamic_flag
         
         # Delete existing flags and add new ones
         ChallengeFlag.query.filter_by(challenge_id=challenge.id).delete()
@@ -475,6 +479,7 @@ def update_challenge(challenge_id):
         form.prerequisite_count_category_ids_input.data = challenge.prerequisite_count_category_ids
         form.prerequisite_challenge_ids_input.data = challenge.prerequisite_challenge_ids
         form.is_hidden.data = challenge.is_hidden
+        form.has_dynamic_flag.data = challenge.has_dynamic_flag # Load has_dynamic_flag
 
         # Convert UTC datetimes from DB to local timezone for display
         # Use the default timezone for display if not explicitly set in the form
@@ -495,7 +500,42 @@ def update_challenge(challenge_id):
     return render_template('admin/create_challenge.html', title='Update Challenge', form=form,
                            is_current_user_super_admin=bool(current_user.is_super_admin),
                            users_super_admin_status={}, # Not directly used here, but admin.js expects it
-                           current_user_id=current_user.id)
+                           current_user_id=current_user.id,
+                           challenge=challenge) # Explicitly pass the challenge object
+
+@admin_bp.route('/challenge/<int:challenge_id>/dynamic_flag_settings', methods=['GET', 'POST'])
+@admin_required
+def dynamic_flag_settings(challenge_id):
+    """
+    Manages dynamic flag settings for a specific challenge, including API key generation.
+    """
+    challenge = Challenge.query.get_or_404(challenge_id)
+    generated_key = None
+
+    if request.method == 'POST':
+        if 'generate_key' in request.form:
+            raw_key = secrets.token_urlsafe(32)
+            key_hash = hashlib.sha256(raw_key.encode('utf-8')).hexdigest()
+            challenge.dynamic_flag_api_key_hash = key_hash
+            challenge.has_dynamic_flag = True # Automatically enable dynamic flag when key is generated
+            db.session.commit()
+            generated_key = raw_key
+            flash('New dynamic flag API key generated successfully! Please save it now as it will not be shown again.', 'success')
+        elif 'toggle_dynamic_flag' in request.form:
+            challenge.has_dynamic_flag = not challenge.has_dynamic_flag
+            # If dynamic flag is disabled, clear the key hash for security
+            if not challenge.has_dynamic_flag:
+                challenge.dynamic_flag_api_key_hash = None
+            db.session.commit()
+            flash(f'Dynamic flag status toggled to {challenge.has_dynamic_flag}.', 'success')
+        
+        return redirect(url_for('admin.dynamic_flag_settings', challenge_id=challenge.id))
+
+    return render_template('admin/dynamic_flag_settings.html', 
+                           title=f'Dynamic Flag Settings for {challenge.name}',
+                           challenge=challenge,
+                           generated_key=generated_key)
+
 
 @admin_bp.route('/challenge/<int:challenge_id>/delete', methods=['POST'])
 @admin_required

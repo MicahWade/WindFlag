@@ -3,8 +3,7 @@ from flask import request, jsonify, current_app, g
 from functools import wraps
 import hashlib
 
-# Import models and extensions as needed for the decorator
-from scripts.models import ApiKey, User
+# Import extensions as needed for the decorator
 from scripts.extensions import db
 
 
@@ -24,6 +23,9 @@ def api_key_required(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        # Import inside the function to avoid circular dependency
+        from scripts.models import ApiKey, User
+        
         api_key_header = request.headers.get('X-API-KEY')
 
         if not api_key_header:
