@@ -70,9 +70,17 @@ def seed_database():
     db.session.add_all(users)
     db.session.commit()
 
+    # Set some users to hidden immediately after creation
+    # This ensures that eligible_users_for_seeding considers these users as hidden from the start
+    if len(users) > 0:
+        users[0].hidden = True
+    if len(users) > 1:
+        users[1].hidden = True
+    db.session.commit()
+
     # Create 20 Challenges across a few categories
     categories = []
-    for i in range(1, 4): # 3 categories
+    for i in range(1, 6): # 5 categories
         category = Category(name=f"Category {i}")
         categories.append(category)
     
@@ -102,8 +110,8 @@ def seed_database():
     challenges.append(http_challenge)
     db.session.add(http_challenge)
 
-    # --- Create a TIMED Challenge ---
-    timed_challenge = Challenge(name="Timed Challenge", description="This challenge will be available in the future.",
+    # --- Create a TIMED Challenge (Red Stripe - locked by time) ---
+    timed_challenge = Challenge(name="Timed Challenge (Red)", description="This challenge will be available in the future.",
                                 points=100, case_sensitive=True, category_id=categories[2].id,
                                 unlock_type='TIMED', unlock_date_time=datetime.now(UTC) + timedelta(days=1))
     challenges.append(timed_challenge)
@@ -116,7 +124,58 @@ def seed_database():
     challenges.append(proactive_decay_challenge)
     db.session.add(proactive_decay_challenge)
 
-    for i in range(1, 17): # 16 more challenges to make it 20
+    # --- Explicit Challenges for Stripes ---
+    # Red Stripe (Locked by Prerequisite Count - unachievable with demo data)
+    red_stripe_prereq_challenge = Challenge(name="Red Stripe (Prereq Locked)", description="Requires 99 challenges from Category 1 to unlock.",
+                                            points=50, category_id=categories[0].id,
+                                            unlock_type='PREREQUISITE_COUNT', prerequisite_count_value=99,
+                                            prerequisite_count_category_ids=[categories[0].id])
+    challenges.append(red_stripe_prereq_challenge)
+    db.session.add(red_stripe_prereq_challenge)
+
+    # Orange Stripe (Unlockable - No Solves) - Will be given 0 submissions later
+    orange_stripe_no_solves = Challenge(name="Orange Stripe (No Solves)", description="This challenge should have no solves.",
+                                        points=75, category_id=categories[1].id)
+    challenges.append(orange_stripe_no_solves)
+    db.session.add(orange_stripe_no_solves)
+    db.session.commit() # Commit here to ensure IDs are generated
+
+    # Yellow Prerequisite Challenge (solved by ~25% of users)
+    yellow_prereq_challenge = Challenge(name="Yellow Prereq", description="Prerequisite for Yellow Stripe.",
+                                       points=10, category_id=categories[4].id) # Using a new category
+    challenges.append(yellow_prereq_challenge)
+    db.session.add(yellow_prereq_challenge)
+
+    # Blue Prerequisite Challenge (solved by ~65% of users)
+    blue_prereq_challenge = Challenge(name="Blue Prereq", description="Prerequisite for Blue Stripe.",
+                                      points=10, category_id=categories[4].id) # Using same new category
+    challenges.append(blue_prereq_challenge)
+    db.session.add(blue_prereq_challenge)
+    db.session.commit() # Commit here to ensure IDs are generated
+
+    # Yellow Stripe (Unlocked 0-50% Solves) - Now dependent on yellow_prereq_challenge
+    yellow_stripe_low_solves = Challenge(name="Yellow Stripe (Low Solves)", description="This challenge should have 0-50% unlocked.",
+                                         points=120, category_id=categories[2].id,
+                                         unlock_type='PREREQUISITE_CHALLENGES',
+                                         prerequisite_challenge_ids=[yellow_prereq_challenge.id])
+    challenges.append(yellow_stripe_low_solves)
+    db.session.add(yellow_stripe_low_solves)
+
+    # Blue Stripe (Rarely Unlocked 50-90% Solves) - Now dependent on blue_prereq_challenge
+    blue_stripe_medium_solves = Challenge(name="Blue Stripe (Medium Solves)", description="This challenge should have 50-90% unlocked.",
+                                          points=150, category_id=categories[3].id,
+                                          unlock_type='PREREQUISITE_CHALLENGES',
+                                          prerequisite_challenge_ids=[blue_prereq_challenge.id])
+    challenges.append(blue_stripe_medium_solves)
+    db.session.add(blue_stripe_medium_solves)
+    
+    # Hidden Category Challenge (Red Stripe if hidden and no solves)
+    hidden_category_challenge = Challenge(name="Hidden Cat Challenge", description="Challenge in a hidden category.",
+                                          points=80, category_id=hidden_category.id, is_hidden=True)
+    challenges.append(hidden_category_challenge)
+    db.session.add(hidden_category_challenge)
+
+    for i in range(1, 31): # 30 more challenges
         category_id = categories[(i-1) % len(categories)].id
         
         multi_flag_type = random.choice(MULTI_FLAG_TYPES)
@@ -176,25 +235,13 @@ def seed_database():
     
     db.session.commit()
 
-    challenge_flags = []
-    for challenge in challenges: 
-        if challenge.multi_flag_type not in ['DYNAMIC', 'HTTP']:
-            num_flags_to_create = 1 
-            if challenge.multi_flag_type == 'ANY' or challenge.multi_flag_type == 'ALL':
-                num_flags_to_create = random.randint(1, 3)
-            elif challenge.multi_flag_type == 'N_OF_M':
-                multi_flag_threshold = challenge.multi_flag_threshold if challenge.multi_flag_threshold else 1
-                num_flags_to_create = random.randint(multi_flag_threshold, multi_flag_threshold + 2) # Ensure enough flags for N_OF_M
-                if num_flags_to_create < multi_flag_threshold: # Just in case random is too low
-                    num_flags_to_create = multi_flag_threshold
-
-            for j in range(num_flags_to_create):
-                flag_content = f"flag{{{challenge.id}-{j+1}}}"
-                challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
-                challenge_flags.append(challenge_flag)
-    
-    db.session.add_all(challenge_flags)
-    db.session.commit()
+    # Get specific challenge IDs for easier reference
+    orange_id = next(c.id for c in challenges if c.name == "Orange Stripe (No Solves)")
+    yellow_id = next(c.id for c in challenges if c.name == "Yellow Stripe (Low Solves)")
+    blue_id = next(c.id for c in challenges if c.name == "Blue Stripe (Medium Solves)")
+    hidden_cat_id = next(c.id for c in challenges if c.name == "Hidden Cat Challenge")
+    yellow_prereq_id = next(c.id for c in challenges if c.name == "Yellow Prereq")
+    blue_prereq_id = next(c.id for c in challenges if c.name == "Blue Prereq")
 
     # Generate Hints for Challenges
     hints_to_add = []
@@ -217,39 +264,67 @@ def seed_database():
     flag_attempts_to_add = []
     user_hints_to_add = []
     
-    for user in users:
-        user_current_score = 0
-        solved_challenges_ids = set()
-        last_submission_time = start_date
+    # Store user solved challenges and scores
+    user_data = {user.id: {'solved_challenges': set(), 'score': 0, 'last_submission_time': start_date} for user in users}
+    
+    # Filter users for seeding to match eligible users in stripe calculation
+    eligible_users_for_seeding = [user for user in users if not user.is_admin and not user.hidden]
 
-        num_challenges_to_solve = random.randint(5, 15)
+    # Exclude challenges that should have 0 solves (Orange Stripe, specific Red Stripes)
+    challenges_to_exclude_from_solves = [orange_id, hidden_cat_id] # Add any other challenges that should get 0 solves
+
+    for challenge in challenges:
+        if challenge.id in challenges_to_exclude_from_solves or challenge.multi_flag_type in ['DYNAMIC', 'HTTP']:
+            continue # Skip submission generation for these
+
+        solve_percentage = 0
+        if challenge.id == yellow_prereq_id: # Control solve rate for yellow prerequisite
+            solve_percentage = 1.0 / len(eligible_users_for_seeding) # Exactly one user solves this
+        elif challenge.id == blue_prereq_id: # Control solve rate for blue prerequisite
+            solve_percentage = 0.65
+        elif challenge.id == yellow_id:
+            solve_percentage = 1.0 
+        elif challenge.id == blue_id:
+            solve_percentage = 1.0 
+        else:
+            solve_percentage = random.uniform(0.3, 0.9) # General challenges: 30-90% solves
+
+        # Use eligible_users_for_seeding for sampling solvers
+        num_solvers = int(len(eligible_users_for_seeding) * solve_percentage)
+        # Ensure num_solvers does not exceed the number of eligible users
+        num_solvers = min(num_solvers, len(eligible_users_for_seeding))
+        solvers = random.sample(eligible_users_for_seeding, num_solvers)
         
-        challenges_for_user = random.sample(challenges, num_challenges_to_solve)
-        challenges_for_user.sort(key=lambda c: c.id)
-
-        for challenge in challenges_for_user:
-            if challenge.id in solved_challenges_ids or challenge.multi_flag_type in ['DYNAMIC', 'HTTP']:
+        for user in solvers:
+            # Ensure challenge hasn't been solved by this user already
+            if challenge.id in user_data[user.id]['solved_challenges']:
                 continue
 
+            # Simulate submission time
             time_delta = timedelta(hours=random.randint(1, 48))
-            submission_time = last_submission_time + time_delta
-            last_submission_time = submission_time 
+            submission_time = user_data[user.id]['last_submission_time'] + time_delta
+            user_data[user.id]['last_submission_time'] = submission_time 
 
-            user_current_score += challenge.points
-            submissions_to_add.append(Submission(user_id=user.id, challenge_id=challenge.id, timestamp=submission_time, score_at_submission=user_current_score))
-            solved_challenges_ids.add(challenge.id)
+            # Add submission
+            user_data[user.id]['score'] += challenge.points
+            submissions_to_add.append(Submission(user_id=user.id, challenge_id=challenge.id, timestamp=submission_time, score_at_submission=user_data[user.id]['score']))
+            user_data[user.id]['solved_challenges'].add(challenge.id)
             
-            db.session.refresh(challenge)
+            # Add flag submissions and attempts
+            db.session.refresh(challenge) # Refresh to get associated flags
             for flag in challenge.flags:
                 flag_submissions_to_add.append(FlagSubmission(user_id=user.id, challenge_id=challenge.id, challenge_flag_id=flag.id, timestamp=submission_time))
                 flag_attempts_to_add.append(FlagAttempt(user_id=user.id, challenge_id=challenge.id, submitted_flag=flag.flag_content, is_correct=True, timestamp=submission_time))
 
+            # Generate hints for solved challenges
             for hint in challenge.hints:
-                if random.random() < 0.3: # 30% chance to unlock a hint
+                if random.random() < 0.3: # 30% chance to unlock a hint for solvers
                     user_hints_to_add.append(UserHint(user_id=user.id, hint_id=hint.id, timestamp=submission_time - timedelta(minutes=10)))
-                    user_current_score -= hint.cost
-
-        user.score = user_current_score
+                    user_data[user.id]['score'] -= hint.cost # Deduct hint cost
+    
+    # Update user scores in the database
+    for user in users:
+        user.score = user_data[user.id]['score']
 
     db.session.add_all(submissions_to_add)
     db.session.add_all(flag_submissions_to_add)

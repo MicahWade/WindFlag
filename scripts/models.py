@@ -388,20 +388,6 @@ class Challenge(db.Model):
 
         unlocked_count = 0
         for user in eligible_users:
-            # Temporarily override is_hidden check for this calculation
-            # We want to know if it's unlocked *if it weren't explicitly hidden*
-            # This is a bit tricky. The `is_unlocked_for_user` method already
-            # checks `is_hidden`. If `is_hidden` is True, it will return False.
-            # For this specific calculation, we want to know if the *prerequisites*
-            # are met, regardless of the `is_hidden` flag itself.
-            # A simpler approach is to check the unlock conditions directly,
-            # or to pass a flag to `is_unlocked_for_user`.
-            
-            # Let's refine: `is_unlocked_for_user` should be used as is,
-            # because if a challenge is `is_hidden=True`, it's not "unlocked"
-            # for any regular user, and thus shouldn't count towards this percentage.
-            # The request implies "non which is over 50% of users can see it",
-            # which means if it's hidden, no one can see it, so it's 0%.
             if self.is_unlocked_for_user(user):
                 unlocked_count += 1
         
