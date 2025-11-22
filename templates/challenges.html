@@ -2,98 +2,106 @@
 {% block content %}
     <script src="{{ url_for('static', filename='js/challenges.js') }}"></script>
     <h1 class="text-3xl font-bold mb-6 text-gray-100">Challenges</h1>
-    {% for category_data in categories %}
-        {% if category_data.is_unlocked %}
-            <h2 class="text-2xl font-semibold text-gray-200 mb-4">{{ category_data.name }}</h2>
-            {% if category_data.challenges %}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {% for challenge in category_data.challenges %}
-                        {% if challenge.is_locked %}
-                            <div class="bg-gray-700 p-6 rounded-lg shadow-lg challenge-card locked-challenge">
-                                <h5 class="text-xl font-bold text-gray-400 mb-2">{{ challenge.name }}</h5>
-                                <p class="text-gray-500">Locked</p>
-                                <p class="text-gray-500 text-sm mt-2">
-                                    {% if challenge.unlock_info.type == 'PREREQUISITE_PERCENTAGE' %}
-                                        Unlocks after completing {{ challenge.unlock_info.prerequisite_percentage_value }}% of challenges.
-                                    {% elif challenge.unlock_info.type == 'PREREQUISITE_COUNT' %}
-                                        Unlocks after completing {{ challenge.unlock_info.prerequisite_count_value }} challenges.
-                                    {% elif challenge.unlock_info.type == 'PREREQUISITE_CHALLENGES' %}
-                                        Unlocks after completing specific challenges.
-                                    {% elif challenge.unlock_info.type == 'TIMED' %}
-                                        Unlocks on {{ challenge.unlock_info.unlock_date_time | datetimeformat }}.
-                                    {% elif challenge.unlock_info.type == 'COMBINED' %}
-                                        Unlocks when all conditions are met.
-                                    {% else %}
-                                        Unlock conditions not specified.
-                                    {% endif %}
-                                </p>
-                            </div>
-                        {% else %}
-                            {% set completion_percentage = 0 %}
-                            {% if challenge.is_completed %}
-                                {% set completion_percentage = 100 %}
-                            {% elif challenge.total_flags > 0 %}
-                                {% set completion_percentage = (challenge.submitted_flags_count / challenge.total_flags * 100) | round(0, 'floor') %}
-                            {% endif %}
-                            <div class="bg-gray-800 p-6 rounded-lg shadow-lg challenge-card cursor-pointer transform hover:scale-105 transition duration-300 ease-in-out {% if challenge.is_completed %}completed-challenge{% endif %} relative" {# Added relative class #}
-                                 data-id="{{ challenge.id }}"
-                                 data-name="{{ challenge.name }}"
-                                 data-description="{{ challenge.description }}"
-                                 data-points="{{ challenge.display_points }}" {# Use display_points #}
-                                 data-completed="{{ 'true' if challenge.is_completed else 'false' }}"
-                                 data-multi-flag-type="{{ challenge.multi_flag_type }}"
-                                 data-submitted-flags-count="{{ challenge.submitted_flags_count }}"
-                                 data-total-flags="{{ challenge.total_flags }}"
-                                 data-completion-percentage="{{ completion_percentage }}"> {# New data attribute #}
-                                
-                                {% if current_user.is_admin %}
-                                {# Challenge Stripes (visible to admins only) #}
-                                {% if challenge.is_red_stripe %}
-                                    <div class="admin-stripe admin-stripe-red">Locked</div>
-                                {% elif challenge.is_orange_stripe %}
-                                    <div class="admin-stripe admin-stripe-orange">Unlockable (No Solves)</div>
-                                {% elif challenge.is_yellow_stripe %}
-                                    <div class="admin-stripe admin-stripe-yellow">Unlocked (0-50%)</div>
-                                {% elif challenge.is_blue_stripe %}
-                                    <div class="admin-stripe admin-stripe-blue">Rarely Unlocked (50-90%)</div>
-                                {% endif %}
-                                {% endif %}
-
-                                <h5 class="text-xl font-bold text-gray-100 mb-2">{{ challenge.name }}</h5>
-                                <p class="text-gray-300">{{ challenge.display_points }} pts</p>
-                                {# Removed: Flag progress display on card #}
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p class="text-gray-300 mb-8">No challenges in this category yet.</p>
-            {% endif %}
-        {% else %} {# Category is locked #}
-            <h2 class="text-2xl font-semibold text-gray-200 mb-4">{{ category_data.name }}</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <div class="bg-gray-700 p-6 rounded-lg shadow-lg category-card locked-category">
-                    <h5 class="text-xl font-bold text-gray-400 mb-2">{{ category_data.name }}</h5>
-                    <p class="text-gray-500">Category Locked</p>
-                    <p class="text-gray-500 text-sm mt-2">
-                        {% if category_data.unlock_info.type == 'PREREQUISITE_PERCENTAGE' %}
-                            Unlocks after completing {{ category_data.unlock_info.prerequisite_percentage_value }}% of challenges.
-                        {% elif category_data.unlock_info.type == 'PREREQUISITE_COUNT' %}
-                            Unlocks after completing {{ category_data.unlock_info.prerequisite_count_value }} challenges.
-                        {% elif category_data.unlock_info.type == 'PREREQUISITE_CHALLENGES' %}
-                            Unlocks after completing specific challenges.
-                        {% elif category_data.unlock_info.type == 'TIMED' %}
-                            Unlocks on {{ category_data.unlock_info.unlock_date_time | datetimeformat }}.
-                        {% elif category_data.unlock_info.type == 'COMBINED' %}
-                            Unlocks when all conditions are met.
-                        {% else %}
-                            Unlock conditions not specified.
-                        {% endif %}
-                    </p>
-                </div>
+        {% for category_data in categories %}
+        <div class="accordion-item bg-gray-800 rounded-lg shadow-lg mb-6">
+            <div class="accordion-header p-4 cursor-pointer flex justify-between items-center" data-category-id="{{ category_data.name | lower | replace(' ', '-') }}">
+                <h2 class="text-2xl font-semibold text-gray-200">{{ category_data.name }}</h2>
+                <svg class="w-6 h-6 text-gray-400 transform transition-transform duration-200 accordion-icon rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
             </div>
-        {% endif %}
-    {% endfor %}
+            <div class="accordion-content p-4">
+            {% if category_data.is_unlocked %}
+                {% if category_data.challenges %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        {% for challenge in category_data.challenges %}
+                            {% if challenge.is_locked %}
+                                <div class="bg-gray-700 p-6 rounded-lg shadow-lg challenge-card locked-challenge">
+                                    <h5 class="text-xl font-bold text-gray-400 mb-2">{{ challenge.name }}</h5>
+                                    <p class="text-gray-500">Locked</p>
+                                    <p class="text-gray-500 text-sm mt-2">
+                                        {% if challenge.unlock_info.type == 'PREREQUISITE_PERCENTAGE' %}
+                                            Unlocks after completing {{ challenge.unlock_info.prerequisite_percentage_value }}% of challenges.
+                                        {% elif challenge.unlock_info.type == 'PREREQUISITE_COUNT' %}
+                                            Unlocks after completing {{ challenge.unlock_info.prerequisite_count_value }} challenges.
+                                        {% elif challenge.unlock_info.type == 'PREREQUISITE_CHALLENGES' %}
+                                            Unlocks after completing specific challenges.
+                                        {% elif challenge.unlock_info.type == 'TIMED' %}
+                                            Unlocks on {{ challenge.unlock_info.unlock_date_time | datetimeformat }}.
+                                        {% elif challenge.unlock_info.type == 'COMBINED' %}
+                                            Unlocks when all conditions are met.
+                                        {% else %}
+                                            Unlock conditions not specified.
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            {% else %}
+                                {% set completion_percentage = 0 %}
+                                {% if challenge.is_completed %}
+                                    {% set completion_percentage = 100 %}
+                                {% elif challenge.total_flags > 0 %}
+                                    {% set completion_percentage = (challenge.submitted_flags_count / challenge.total_flags * 100) | round(0, 'floor') %}
+                                {% endif %}
+                                <div class="bg-gray-800 p-6 rounded-lg shadow-lg challenge-card cursor-pointer transform hover:scale-105 transition duration-300 ease-in-out {% if challenge.is_completed %}completed-challenge{% endif %} relative" {# Added relative class #}
+                                     data-id="{{ challenge.id }}"
+                                     data-name="{{ challenge.name }}"
+                                     data-description="{{ challenge.description }}"
+                                     data-points="{{ challenge.display_points }}" {# Use display_points #}
+                                     data-completed="{{ 'true' if challenge.is_completed else 'false' }}"
+                                     data-multi-flag-type="{{ challenge.multi_flag_type }}"
+                                     data-submitted-flags-count="{{ challenge.submitted_flags_count }}"
+                                     data-total-flags="{{ challenge.total_flags }}"
+                                     data-completion-percentage="{{ completion_percentage }}"> {# New data attribute #}
+                                    
+                                    {% if current_user.is_admin %}
+                                    {# Challenge Stripes (visible to admins only) #}
+                                    {% if challenge.is_red_stripe %}
+                                        <div class="admin-stripe admin-stripe-red">Locked</div>
+                                    {% elif challenge.is_orange_stripe %}
+                                        <div class="admin-stripe admin-stripe-orange">Unlockable (No Solves)</div>
+                                    {% elif challenge.is_yellow_stripe %}
+                                        <div class="admin-stripe admin-stripe-yellow">Unlocked (0-50%)</div>
+                                    {% elif challenge.is_blue_stripe %}
+                                        <div class="admin-stripe admin-stripe-blue">Rarely Unlocked (50-90%)</div>
+                                    {% endif %}
+                                    {% endif %}
+
+                                    <h5 class="text-xl font-bold text-gray-100 mb-2">{{ challenge.name }}</h5>
+                                    <p class="text-gray-300">{{ challenge.display_points }} pts</p>
+                                    {# Removed: Flag progress display on card #}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-300 mb-8">No challenges in this category yet.</p>
+                {% endif %}
+            {% else %} {# Category is locked #}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-gray-700 p-6 rounded-lg shadow-lg category-card locked-category">
+                        <h5 class="text-xl font-bold text-gray-400 mb-2">{{ category_data.name }}</h5>
+                        <p class="text-gray-500">Category Locked</p>
+                        <p class="text-gray-500 text-sm mt-2">
+                            {% if category_data.unlock_info.type == 'PREREQUISITE_PERCENTAGE' %}
+                                Unlocks after completing {{ category_data.unlock_info.prerequisite_percentage_value }}% of challenges.
+                            {% elif category_data.unlock_info.type == 'PREREQUISITE_COUNT' %}
+                                Unlocks after completing {{ category_data.unlock_info.prerequisite_count_value }} challenges.
+                            {% elif category_data.unlock_info.type == 'PREREQUISITE_CHALLENGES' %}
+                                Unlocks after completing specific challenges.
+                            {% elif category_data.unlock_info.type == 'TIMED' %}
+                                Unlocks on {{ category_data.unlock_info.unlock_date_time | datetimeformat }}.
+                            {% elif category_data.unlock_info.type == 'COMBINED' %}
+                                Unlocks when all conditions are met.
+                            {% else %}
+                                Unlock conditions not specified.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
+            </div>
+        </div>
+        {% endfor %}
 
     <!-- Challenge Modal -->
     <div id="challengeModal" class="fixed inset-0 overflow-y-auto h-full w-full opacity-0 pointer-events-none transition-opacity duration-300 z-50">

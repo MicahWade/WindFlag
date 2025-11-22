@@ -327,4 +327,40 @@ document.addEventListener('DOMContentLoaded', function() {
             showFlashMessage('An error occurred during submission.', 'danger');
         });
     });
+
+    // Accordion functionality
+    const accordionHeaders = document.querySelectorAll('.accordion-header');
+    const ACCORDION_STATE_KEY = 'accordionState'; // Key for localStorage
+
+    // Load accordion states from localStorage on page load
+    const savedAccordionStates = JSON.parse(localStorage.getItem(ACCORDION_STATE_KEY)) || {};
+
+    accordionHeaders.forEach(header => {
+        const content = header.nextElementSibling;
+        const icon = header.querySelector('.accordion-icon');
+        const categoryId = header.dataset.categoryId; // Get the category ID
+
+        // Initialize state based on localStorage or default to open
+        let isOpen = savedAccordionStates[categoryId] !== false; // Default to true if not in storage or is true
+
+        if (isOpen) {
+            content.classList.remove('hidden');
+            icon.classList.add('rotate-180');
+        } else {
+            content.classList.add('hidden');
+            icon.classList.remove('rotate-180');
+        }
+
+        header.addEventListener('click', () => {
+            // Toggle the 'hidden' class on the content
+            content.classList.toggle('hidden');
+            // Toggle the 'rotate-180' class on the icon
+            icon.classList.toggle('rotate-180');
+
+            // Update state and save to localStorage
+            isOpen = !content.classList.contains('hidden');
+            savedAccordionStates[categoryId] = isOpen;
+            localStorage.setItem(ACCORDION_STATE_KEY, JSON.stringify(savedAccordionStates));
+        });
+    });
 });
