@@ -53,17 +53,15 @@
                                      data-total-flags="{{ challenge.total_flags }}"
                                      data-completion-percentage="{{ completion_percentage }}"> {# New data attribute #}
                                     
-                                    {% if current_user.is_admin %}
-                                    {# Challenge Stripes (visible to admins only) #}
-                                    {% if challenge.is_red_stripe %}
+                                    {# Challenge Stripes #}
+                                    {% if challenge.computed_red_stripe %}
                                         <div class="admin-stripe admin-stripe-red">Locked</div>
-                                    {% elif challenge.is_orange_stripe %}
+                                    {% elif challenge.computed_orange_stripe %}
                                         <div class="admin-stripe admin-stripe-orange">Unlockable (No Solves)</div>
-                                    {% elif challenge.is_yellow_stripe %}
+                                    {% elif challenge.computed_yellow_stripe %}
                                         <div class="admin-stripe admin-stripe-yellow">Unlocked (0-50%)</div>
-                                    {% elif challenge.is_blue_stripe %}
+                                    {% elif challenge.computed_blue_stripe %}
                                         <div class="admin-stripe admin-stripe-blue">Rarely Unlocked (50-90%)</div>
-                                    {% endif %}
                                     {% endif %}
 
                                     <h5 class="text-xl font-bold text-gray-100 mb-2">{{ challenge.name }}</h5>

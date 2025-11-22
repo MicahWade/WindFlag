@@ -28,6 +28,7 @@ import os
 import json
 import yaml
 from dotenv import load_dotenv
+from scripts.utils import make_datetime_timezone_aware # New: For timezone handling
 
 
 def create_app(config_class=Config):
@@ -319,7 +320,48 @@ def create_app(config_class=Config):
                 for hint in challenge.hints:
                     hint.is_revealed = hint.id in revealed_hint_ids
                 
+                # --- Determine Challenge Stripes for Public View ---
+                # This logic is adapted from admin_routes.py to ensure public challenges also have stripe data
+                now = datetime.now(UTC)
+                unlocked_percentage = challenge.get_unlocked_percentage_for_eligible_users()
 
+                # Determine Red Stripe (Hidden / Timed)
+                is_red_stripe = False
+                if challenge.is_hidden or challenge.category.is_hidden:
+                    is_red_stripe = True  # Explicitly hidden or category hidden
+                elif challenge.unlock_type == 'TIMED' and challenge.unlock_date_time:
+                    aware_unlock_date_time = make_datetime_timezone_aware(challenge.unlock_date_time)
+                    if now < aware_unlock_date_time:
+                        is_red_stripe = True  # Timed unlock in the future
+
+                # Determine Orange Stripe (Unlockable (No Solves))
+                is_orange_stripe = False
+                if not is_red_stripe and \
+                   challenge.unlock_type != 'NONE' and \
+                   (challenge.unlock_type != 'TIMED' or (challenge.unlock_date_time and now >= aware_unlock_date_time)) and \
+                   unlocked_percentage == 0:
+                    is_orange_stripe = True
+
+                # Determine Yellow Stripe (Unlocked (0-50%))
+                is_yellow_stripe = False
+                if not is_red_stripe and \
+                   not is_orange_stripe and \
+                   unlocked_percentage > 0 and unlocked_percentage <= 50.0:
+                    is_yellow_stripe = True
+
+                # Determine Blue Stripe (Rarely Unlocked (50-90%))
+                is_blue_stripe = False
+                if not is_red_stripe and \
+                   not is_orange_stripe and \
+                   not is_yellow_stripe and \
+                   unlocked_percentage > 50.0 and unlocked_percentage <= 90.0:
+                    is_blue_stripe = True
+                
+                # Assign to computed attributes on the challenge object
+                challenge.computed_red_stripe = is_red_stripe
+                challenge.computed_orange_stripe = is_orange_stripe
+                challenge.computed_yellow_stripe = is_yellow_stripe
+                challenge.computed_blue_stripe = is_blue_stripe
                 
                 display_challenges.append(challenge)
             
@@ -458,6 +500,10 @@ def create_app(config_class=Config):
                     current_user.score += points_awarded # Update user score
                     new_submission.score_at_submission = current_user.score # Record score at this submission
                     db.session.commit()
+
+                    # Recalculate stripe status for the solved challenge
+                    challenge.update_stripe_status()
+                    
                     return jsonify({'success': True, 'message': f'Correct Flag! Challenge Solved! You earned {points_awarded} points!'})
                 else:
                     # 7. Flag was correct, but challenge not fully solved yet
@@ -1032,6 +1078,19 @@ def create_admin(username, password):
         db.session.commit()
         print(f"Super Admin user with username {username} created successfully.")
 
+def recalculate_all_challenge_stripes():
+    """
+    Recalculates and updates the stripe status for all challenges.
+    """
+    with create_app().app_context():
+        from scripts.models import Challenge
+        print("Recalculating stripe statuses for all challenges...")
+        challenges = Challenge.query.all()
+        for challenge in challenges:
+            challenge.update_stripe_status()
+            print(f"Updated stripe status for Challenge: {challenge.name}")
+        print("All challenge stripe statuses recalculated successfully.")
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='WindFlag CTF Platform', add_help=False)
     parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
@@ -1041,6 +1100,7 @@ if __name__ == '__main__':
     parser.add_argument('-yaml', '-y', type=str, metavar='YAML_FILE', help='Import challenges from a YAML file.')
     parser.add_argument('-users', '-u', type=str, metavar='JSON_FILE', help='Import users from a JSON file.') # New argument
     parser.add_argument('-export-yaml', '-e', nargs='+', metavar=('OUTPUT_FILE', 'DATA_TYPE'), help='Export data to a YAML file. Specify "all", "users", "challenges", "categories", "submissions", "flag_attempts", or "awards".')
+    parser.add_argument('-recalculate-stripes', action='store_true', help='Recalculate and update stripe statuses for all challenges.')
     parser.add_argument('-test', nargs='?', type=int, const=1800, help='Run the server in test mode with an optional timeout in seconds (default: 1800)')
     args = parser.parse_args()
 
@@ -1090,6 +1150,8 @@ if __name__ == '__main__':
         if len(args.export_yaml) > 1:
             data_type = args.export_yaml[1]
         export_data_to_yaml(output_file, data_type)
+    elif args.recalculate_stripes:
+        recalculate_all_challenge_stripes()
     else:
         # Otherwise, run the Flask app
         if args.test is not None:

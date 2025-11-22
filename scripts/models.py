@@ -256,6 +256,10 @@ class Challenge(db.Model):
     is_hidden = db.Column(db.Boolean, nullable=False, default=False) # New: Field to hide challenge from non-admins
     has_dynamic_flag = db.Column(db.Boolean, nullable=False, default=False) # New: Field to enable/disable dynamic flag
     dynamic_flag_api_key_hash = db.Column(db.String(128), nullable=True) # Hashed API key for dynamic flag access
+    computed_red_stripe = db.Column(db.Boolean, nullable=False, default=False)
+    computed_orange_stripe = db.Column(db.Boolean, nullable=False, default=False)
+    computed_yellow_stripe = db.Column(db.Boolean, nullable=False, default=False)
+    computed_blue_stripe = db.Column(db.Boolean, nullable=False, default=False)
     
     flags = db.relationship('ChallengeFlag', backref='challenge', lazy=True, cascade="all, delete-orphan")
 
@@ -440,63 +444,83 @@ class Challenge(db.Model):
         """
         Red Stripe ("Locked"): Challenge or category is hidden, or timed unlock is in the future.
         """
-        now = datetime.now(UTC)
-        # Check if the challenge itself is hidden or its category is hidden
-        if self.is_hidden or (self.category and self.category.is_hidden):
-            return True
-        # Check for timed unlock in the future
-        if self.unlock_type in ['TIMED', 'COMBINED'] and self.unlock_date_time:
-            # Import here to avoid circular dependency
-            from scripts.utils import make_datetime_timezone_aware
-            aware_unlock_date_time = self.unlock_date_time
-            if aware_unlock_date_time.tzinfo is None:
-                aware_unlock_date_time = aware_unlock_date_time.replace(tzinfo=UTC)
-            if now < aware_unlock_date_time:
-                return True
-        return False
+        return self.computed_red_stripe
 
     @property
     def is_orange_stripe(self):
         """
         Orange Stripe ("Unlockable (No Solves)"): Not Red, has prerequisites, 0% unlocked, and not timed-locked.
         """
-        if self.is_red_stripe:
-            return False
-        
-        # Has prerequisites (excluding 'NONE' and 'TIMED' as they are handled by red stripe or not prerequisites)
-        has_prerequisites = self.unlock_type in ['PREREQUISITE_PERCENTAGE', 'PREREQUISITE_COUNT', 'PREREQUISITE_CHALLENGES', 'COMBINED']
-        
-        # Not timed-locked (already covered by not being red stripe, but explicit for clarity)
-        not_timed_locked = not (self.unlock_type in ['TIMED', 'COMBINED'] and self.unlock_date_time and datetime.now(UTC) < self.unlock_date_time)
-
-        # 0% unlocked for eligible users
-        unlocked_percentage = self.get_unlocked_percentage_for_eligible_users()
-        zero_percent_unlocked = (unlocked_percentage == 0.0)
-
-        return has_prerequisites and zero_percent_unlocked and not_timed_locked
+        return self.computed_orange_stripe
 
     @property
     def is_yellow_stripe(self):
         """
         Yellow Stripe ("Unlocked (0-50%)"): Not Red, not Orange, >0% and <=50% unlocked.
         """
-        if self.is_red_stripe or self.is_orange_stripe:
-            return False
-        
-        unlocked_percentage = self.get_unlocked_percentage_for_eligible_users()
-        return 0 < unlocked_percentage <= 50
+        return self.computed_yellow_stripe
 
     @property
     def is_blue_stripe(self):
         """
         Blue Stripe ("Rarely Unlocked (50-90%)"): Not Red, not Orange, not Yellow, >50% and <=90% unlocked.
         """
-        if self.is_red_stripe or self.is_orange_stripe or self.is_yellow_stripe:
-            return False
-        
-        unlocked_percentage = self.get_unlocked_percentage_for_eligible_users()
-        return 50 < unlocked_percentage <= 90
+        return self.computed_blue_stripe
 
+    # New method to calculate all stripe statuses
+    def _calculate_stripe_status(self):
+        """
+        Calculates all stripe statuses based on current challenge and global state.
+        This method is for internal use by `update_stripe_status`.
+        """
+        now = datetime.now(UTC)
+
+        # Calculate unlocked percentage once
+        unlocked_percentage = self.get_unlocked_percentage_for_eligible_users()
+
+        # RED STRIPE Logic
+        red = self.is_hidden or (self.category and self.category.is_hidden)
+        if not red and self.unlock_type in ['TIMED', 'COMBINED'] and self.unlock_date_time:
+            from scripts.utils import make_datetime_timezone_aware
+            aware_unlock_date_time = self.unlock_date_time
+            if aware_unlock_date_time.tzinfo is None:
+                aware_unlock_date_time = aware_unlock_date_time.replace(tzinfo=UTC)
+            if now < aware_unlock_date_time:
+                red = True
+
+        # ORANGE STRIPE Logic
+        orange = False
+        if not red:
+            has_prerequisites = self.unlock_type in ['PREREQUISITE_PERCENTAGE', 'PREREQUISITE_COUNT', 'PREREQUISITE_CHALLENGES', 'COMBINED']
+            zero_percent_unlocked = (unlocked_percentage == 0.0)
+            orange = has_prerequisites and zero_percent_unlocked
+
+        # YELLOW STRIPE Logic
+        yellow = False
+        if not red and not orange:
+            yellow = 0 < unlocked_percentage <= 50
+
+        # BLUE STRIPE Logic
+        blue = False
+        if not red and not orange and not yellow:
+            blue = 50 < unlocked_percentage <= 90
+            
+        return red, orange, yellow, blue
+
+    def update_stripe_status(self):
+        """
+        Recalculates and updates the stored stripe statuses for this challenge.
+        This method should be called when challenge properties or user submissions change.
+        """
+        red, orange, yellow, blue = self._calculate_stripe_status()
+
+        self.computed_red_stripe = red
+        self.computed_orange_stripe = orange
+        self.computed_yellow_stripe = yellow
+        self.computed_blue_stripe = blue
+        db.session.add(self)
+        db.session.commit()
+        
     def __repr__(self):
         return f"Challenge('{self.name}', '{self.points}', Type: '{self.multi_flag_type}')"
 
