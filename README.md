@@ -26,7 +26,7 @@ WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwin
     ```
 
 2.  **Configure Environment Variables:**
-    Copy the `.env.template` file to `.env` and fill in the values. For more information, see [ENV.md](ENV.md).
+    Copy the `.env.template` file to `.env` and fill in the values. For more information, see [ENV.md](docs/ENV.md).
 
 3.  **Run the Application:**
     The default database (`app.db`) will be created automatically if it doesn't exist.
@@ -49,11 +49,11 @@ Alternatively, you can manually create a user and set the `is_admin` flag to `Tr
 
 ## Importing and Exporting Data via YAML/JSON
 
-Challenges can be imported from a YAML file using the `-yaml` or `-y` command-line argument. Users can be imported from a JSON file using `-users` or `-u`. Data can also be exported to YAML using `-export-yaml` or `-e`. For details on the YAML/JSON formats and usage for import and export, refer to [yaml.md](yaml.md).
+Challenges can be imported from a YAML file using the `-yaml` or `-y` command-line argument. Users can be imported from a JSON file using `-users` or `-u`. Data can also be exported to YAML using `-export-yaml` or `-e`. For details on the YAML/JSON formats and usage for import and export, refer to [yaml.md](docs/yaml.md).
 
 ## Admin Documentation
 
-For detailed information on admin-specific features, including challenge visibility and management, refer to [admin.md](admin.md).
+For detailed information on admin-specific features, including challenge visibility and management, refer to [admin.md](docs/admin.md).
 
 ### Admin Challenge Stripes
 

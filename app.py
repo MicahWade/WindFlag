@@ -16,6 +16,10 @@ from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 from scripts.extensions import db, login_manager, bcrypt, get_setting
 from scripts.admin_routes import admin_bp
+from scripts.api_key_routes import api_key_bp # Import api_key_bp
+from scripts.api_routes import api_bp # Import api_bp
+from flask_restx import Api # Import Api from flask_restx
+
 from scripts.chart_data_utils import get_profile_points_over_time_data, get_profile_fails_vs_succeeds_data, get_profile_categories_per_score_data, get_profile_challenges_complete_data, get_global_score_history_data
 import sys
 import argparse
@@ -47,9 +51,14 @@ def create_app(config_class=Config):
     login_manager.unauthorized_handler(lambda: redirect(url_for('home')))
     bcrypt.init_app(app)
 
+    # Note: Flask-RESTX Api is initialized within scripts/api_routes.py
+    # and its blueprint (api_bp) is registered here.
+
     from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission, Award, AwardCategory, FlagAttempt, Hint, UserHint # Import FlagAttempt, Hint, UserHint
 
     app.register_blueprint(admin_bp) # Register admin blueprint
+    app.register_blueprint(api_key_bp) # Register api_key blueprint
+    app.register_blueprint(api_bp) # Register the API blueprint which contains Flask-RESTX
 
     @app.context_processor
     def inject_global_config():
