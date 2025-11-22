@@ -13,6 +13,6 @@ API access is secured using API Keys. To use the API, you must:
 For detailed information on the API endpoints, refer to the following sections:
 
 *   **[Core API Endpoints](core_api.md)**: Includes general API status and user profile information.
-*   **[Challenges API Endpoints](challenges_api.md)**: Provides access to dynamic flags for challenges.
+*   **[Challenges API Endpoints](challenges_api.md)**: Explains how to manage challenges through the web interface.
 
 For interactive API documentation with request/response schemas, please refer to the live documentation available at `/api/docs`.

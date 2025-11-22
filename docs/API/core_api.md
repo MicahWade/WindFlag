@@ -6,7 +6,7 @@ This section details the core endpoints of the WindFlag CTF Platform API. These 
 
 All endpoints in the Core API namespace require authentication using a user-generated API key. This key must be provided in the `X-API-KEY` header for every request.
 
-For more information on generating and managing API keys, please refer to the [API Overview](../api_overview.md) and the platform's user interface.
+For more information on generating and managing API keys, please refer to the [API Overview](./api_overview.md) and the platform's user interface.
 
 ## 1. GET /status
 
