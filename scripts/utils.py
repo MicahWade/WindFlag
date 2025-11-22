@@ -2,9 +2,44 @@ from datetime import datetime, UTC
 from flask import request, jsonify, current_app, g
 from functools import wraps
 import hashlib
+import random
+import os
 
 # Import extensions as needed for the decorator
 from scripts.extensions import db
+
+
+def generate_usernames():
+    """
+    Generates a list of usernames based on the configuration in the .env file.
+    """
+    words_file_path = current_app.config.get('WORDS_FILE_PATH', 'words.text')
+    if not os.path.exists(words_file_path):
+        current_app.logger.error(f"Words file not found at: {words_file_path}")
+        return []
+
+    with open(words_file_path, 'r') as f:
+        words = [line.strip() for line in f if line.strip()]
+
+    if not words:
+        current_app.logger.error(f"Words file is empty: {words_file_path}")
+        return []
+
+    num_words = current_app.config.get('USERNAME_WORD_COUNT', 2)
+    add_number = current_app.config.get('USERNAME_ADD_NUMBER', True)
+    num_users = current_app.config.get('PRESET_USER_COUNT', 10)
+
+    usernames = []
+    for _ in range(num_users):
+        username_words = random.choices(words, k=num_words)
+        username = "".join(word.capitalize() for word in username_words)
+        
+        if add_number:
+            username += str(random.randint(10, 99))
+        
+        usernames.append(username)
+    
+    return usernames
 
 
 def make_datetime_timezone_aware(dt: datetime) -> datetime:

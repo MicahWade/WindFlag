@@ -352,7 +352,7 @@ def new_challenge():
                               proactive_decay=form.proactive_decay.data,
                               case_sensitive=form.case_sensitive.data,
                               category_id=category_id,
-                              multi_flag_type=form.multi_flag_type.data,
+                              multi_flag_type='DYNAMIC' if form.has_dynamic_flag.data else form.multi_flag_type.data,
                               multi_flag_threshold=form.multi_flag_threshold.data if form.multi_flag_type.data == 'N_OF_M' else None,
                               unlock_type=form.unlock_type.data,
                               prerequisite_percentage_value=form.prerequisite_percentage_value.data,
@@ -364,7 +364,7 @@ def new_challenge():
                               unlock_point_reduction_value=form.unlock_point_reduction_value.data,
                               unlock_point_reduction_target_date=unlock_point_reduction_target_date_utc,
                               is_hidden=form.is_hidden.data,
-                              has_dynamic_flag=form.has_dynamic_flag.data) # Save has_dynamic_flag
+                              dynamic_flag_api_key_hash=None) # Dynamic flag key is generated AFTER creation, so initialize to None
         db.session.add(challenge)
         db.session.commit() # Commit to get challenge.id
 
@@ -398,6 +398,32 @@ def update_challenge(challenge_id):
     form.prerequisite_challenge_ids_input.choices = _get_prerequisite_challenge_choices()
     form.prerequisite_count_category_ids_input.choices = _get_category_multi_select_choices()
     form.timezone.choices = _get_timezone_choices() # Set timezone choices
+    generated_key = None
+
+    if request.method == 'POST':
+        if 'generate_key' in request.form:
+            raw_key = secrets.token_urlsafe(32)
+            key_hash = hashlib.sha256(raw_key.encode('utf-8')).hexdigest()
+            challenge.dynamic_flag_api_key_hash = key_hash
+            challenge.has_dynamic_flag = True # Automatically enable dynamic flag when key is generated
+            db.session.commit()
+            generated_key = raw_key
+            flash('New dynamic flag API key generated successfully! Please save it now as it will not be shown again.', 'success')
+            # Rerender the form with the generated key
+            return render_template('admin/create_challenge.html', title='Update Challenge', form=form,
+                                   is_current_user_super_admin=bool(current_user.is_super_admin),
+                                   users_super_admin_status={}, # Not directly used here, but admin.js expects it
+                                   current_user_id=current_user.id,
+                                   challenge=challenge,
+                                   generated_key=generated_key)
+        elif 'toggle_dynamic_flag' in request.form:
+            challenge.has_dynamic_flag = not challenge.has_dynamic_flag
+            # If dynamic flag is disabled, clear the key hash for security
+            if not challenge.has_dynamic_flag:
+                challenge.dynamic_flag_api_key_hash = None
+            db.session.commit()
+            flash(f'Dynamic flag status toggled to {challenge.has_dynamic_flag}.', 'success')
+            return redirect(url_for('admin.update_challenge', challenge_id=challenge.id))
 
     if form.validate_on_submit():
         category_id = None
@@ -434,7 +460,7 @@ def update_challenge(challenge_id):
         challenge.proactive_decay = form.proactive_decay.data
         challenge.case_sensitive = form.case_sensitive.data
         challenge.category_id = category_id
-        challenge.multi_flag_type = form.multi_flag_type.data
+        challenge.multi_flag_type = 'DYNAMIC' if form.has_dynamic_flag.data else form.multi_flag_type.data
         challenge.multi_flag_threshold = form.multi_flag_threshold.data if form.multi_flag_type.data == 'N_OF_M' else None
         
         challenge.unlock_type = form.unlock_type.data
@@ -479,7 +505,7 @@ def update_challenge(challenge_id):
         form.prerequisite_count_category_ids_input.data = challenge.prerequisite_count_category_ids
         form.prerequisite_challenge_ids_input.data = challenge.prerequisite_challenge_ids
         form.is_hidden.data = challenge.is_hidden
-        form.has_dynamic_flag.data = challenge.has_dynamic_flag # Load has_dynamic_flag
+        form.has_dynamic_flag.data = challenge.dynamic_flag_api_key_hash is not None # Load has_dynamic_flag based on api key hash
 
         # Convert UTC datetimes from DB to local timezone for display
         # Use the default timezone for display if not explicitly set in the form
@@ -501,41 +527,8 @@ def update_challenge(challenge_id):
                            is_current_user_super_admin=bool(current_user.is_super_admin),
                            users_super_admin_status={}, # Not directly used here, but admin.js expects it
                            current_user_id=current_user.id,
-                           challenge=challenge) # Explicitly pass the challenge object
-
-@admin_bp.route('/challenge/<int:challenge_id>/dynamic_flag_settings', methods=['GET', 'POST'])
-@admin_required
-def dynamic_flag_settings(challenge_id):
-    """
-    Manages dynamic flag settings for a specific challenge, including API key generation.
-    """
-    challenge = Challenge.query.get_or_404(challenge_id)
-    generated_key = None
-
-    if request.method == 'POST':
-        if 'generate_key' in request.form:
-            raw_key = secrets.token_urlsafe(32)
-            key_hash = hashlib.sha256(raw_key.encode('utf-8')).hexdigest()
-            challenge.dynamic_flag_api_key_hash = key_hash
-            challenge.has_dynamic_flag = True # Automatically enable dynamic flag when key is generated
-            db.session.commit()
-            generated_key = raw_key
-            flash('New dynamic flag API key generated successfully! Please save it now as it will not be shown again.', 'success')
-        elif 'toggle_dynamic_flag' in request.form:
-            challenge.has_dynamic_flag = not challenge.has_dynamic_flag
-            # If dynamic flag is disabled, clear the key hash for security
-            if not challenge.has_dynamic_flag:
-                challenge.dynamic_flag_api_key_hash = None
-            db.session.commit()
-            flash(f'Dynamic flag status toggled to {challenge.has_dynamic_flag}.', 'success')
-        
-        return redirect(url_for('admin.dynamic_flag_settings', challenge_id=challenge.id))
-
-    return render_template('admin/dynamic_flag_settings.html', 
-                           title=f'Dynamic Flag Settings for {challenge.name}',
                            challenge=challenge,
-                           generated_key=generated_key)
-
+                           generated_key=generated_key) # Explicitly pass the challenge object
 
 @admin_bp.route('/challenge/<int:challenge_id>/delete', methods=['POST'])
 @admin_required
@@ -889,7 +882,7 @@ def analytics():
     # Data for User-Challenge Matrix Table
     all_users, all_challenges, user_challenge_status = _get_user_challenge_matrix_data()
 
-    return render_template('admin/analytics.html', 
+    return render_template('admin/analytics.html',
                            title='Admin Analytics',
                            category_labels=category_labels,
                            category_values=category_values,
@@ -906,3 +899,11 @@ def analytics():
                            all_users=all_users,
                            all_challenges=all_challenges,
                            user_challenge_status=user_challenge_status)
+
+@admin_bp.route('/docs/dynamic_flags')
+@admin_required
+def dynamic_flags_docs():
+    """
+    Renders the documentation page for dynamic flags.
+    """
+    return render_template('docs/dynamic_flags.html', title='Dynamic Flags Documentation')

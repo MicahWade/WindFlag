@@ -13,6 +13,10 @@ The application uses a `.env` file to manage environment variables. You can crea
 -   `REQUIRE_EMAIL`: Set to `False` to make the email field optional during user registration. Set to `True` (default) to make it a required field.
 -   `BASIC_INDEX_PAGE`: Set to `true` to display a minimal home page containing only the welcome section. Set to `false` (default) or omit to display the full, expanded home page with additional content and graphics.
 -   `DISABLE_SIGNUP`: Set to `True` to disable new user registrations. Set to `False` (default) to allow new user registrations.
+-   `USERNAME_WORD_COUNT`: The number of words to use when generating usernames. Defaults to `2`.
+-   `USERNAME_ADD_NUMBER`: Set to `True` to add a random two-digit number to the end of generated usernames. Defaults to `True`.
+-   `PRESET_USER_COUNT`: The number of users to generate with the seed script. Defaults to `10`.
+-   `WORDS_FILE_PATH`: The path to the file containing words to use for username generation. Defaults to `words.text`.
 
 ## `.env.template`
 

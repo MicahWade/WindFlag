@@ -158,16 +158,63 @@
                 </div>
 
                 <div class="mb-4" id="dynamic_flag_api_key_section" style="display: none;">
-                    <h4 class="text-gray-300 text-lg font-bold mb-2">Dynamic Flag API Key Settings</h4>
-                    <p class="text-gray-400 text-sm mb-2">This challenge is configured to use a dynamic flag.</p>
-                    {% if challenge %} {# Check if challenge object exists (i.e., we are updating an existing challenge) #}
-                        <p class="text-gray-400 text-sm mb-2">
-                            Manage the challenge-specific API key used to retrieve the dynamic flag.
-                        </p>
-                        <a href="{{ url_for('admin.dynamic_flag_settings', challenge_id=challenge.id) }}" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded text-xs shadow-md">Manage Dynamic Flag API Key</a>
-                    {% else %}
-                        <p class="text-yellow-400 text-sm mt-2">Dynamic Flag API Key settings will be available after the challenge is created.</p>
-                    {% endif %}
+                    <fieldset class="border-t border-gray-700 pt-4 mt-4">
+                        <legend class="text-xl font-bold text-gray-100 mb-4">Dynamic Flag Settings</legend>
+                        {% if challenge %}
+                            <div class="bg-card p-6 rounded-lg shadow-lg mb-6">
+                                <div class="mb-4">
+                                    <p class="text-text-primary"><strong>Dynamic Flag Enabled:</strong> 
+                                        <span class="{% if challenge.has_dynamic_flag %}text-green-500{% else %}text-red-500{% endif %}">
+                                            {{ challenge.has_dynamic_flag }}
+                                        </span>
+                                        <a href="{{ url_for('admin.dynamic_flags_docs') }}" target="_blank" class="ml-2">
+                                            <i class="fas fa-question-circle"></i>
+                                        </a>
+                                    </p>
+                                </div>
+                
+                                <div class="mb-6">
+                                    <p class="text-text-primary"><strong>Dynamic Flag API Key Hash:</strong> 
+                                        {% if challenge.dynamic_flag_api_key_hash %}
+                                            <span class="font-mono bg-background-light p-1 rounded">{{ challenge.dynamic_flag_api_key_hash[:8] }}...</span>
+                                            <button onclick="copyToClipboard('{{ challenge.dynamic_flag_api_key_hash }}')" class="ml-2 px-2 py-1 bg-button text-button-text rounded hover:bg-button-hover transition duration-200">Copy Full Hash</button>
+                                        {% else %}
+                                            <span class="text-muted">No API Key set.</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                
+                                {% if generated_key %}
+                                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
+                                        <p class="font-bold">New API Key Generated!</p>
+                                        <p>Please save this key *now*, as it will not be shown again:</p>
+                                        <code class="block font-mono bg-green-200 p-2 rounded break-all mt-2">{{ generated_key }}</code>
+                                        <button onclick="copyToClipboard('{{ generated_key }}')" class="ml-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition duration-200 mt-2">Copy Key</button>
+                                    </div>
+                                {% endif %}
+                
+                                <div class="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
+                                    <form method="POST" action="{{ url_for('admin.update_challenge', challenge_id=challenge.id) }}">
+                                        <input type="hidden" name="generate_key" value="true">
+                                        <button type="submit"
+                                                class="w-full md:w-auto px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200">
+                                            Generate New Dynamic Flag API Key
+                                        </button>
+                                    </form>
+                
+                                    <form method="POST" action="{{ url_for('admin.update_challenge', challenge_id=challenge.id) }}">
+                                        <input type="hidden" name="toggle_dynamic_flag" value="true">
+                                        <button type="submit"
+                                                class="w-full md:w-auto px-4 py-2 {% if challenge.has_dynamic_flag %}bg-red-500 hover:bg-red-600{% else %}bg-green-500 hover:bg-green-600{% endif %} text-white rounded transition duration-200">
+                                            {% if challenge.has_dynamic_flag %}Disable Dynamic Flag{% else %}Enable Dynamic Flag{% endif %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% else %}
+                            <p class="text-yellow-400 text-sm mt-2">Dynamic Flag API Key settings will be available after the challenge is created.</p>
+                        {% endif %}
+                    </fieldset>
                 </div>
                 
 

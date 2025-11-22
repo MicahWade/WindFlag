@@ -249,8 +249,12 @@ class Challenge(db.Model):
     prerequisite_count_category_ids = db.Column(db.JSON, nullable=True) # New: Stores a list of category IDs for prerequisite count
     prerequisite_challenge_ids = db.Column(db.JSON, nullable=True) # Stores a list of challenge IDs
     unlock_date_time = db.Column(db.DateTime, nullable=True)
+    unlock_point_reduction_type = db.Column(db.String(50), nullable=True) # e.g., 'NONE', 'PERCENTAGE', 'FIXED'
+    unlock_point_reduction_value = db.Column(db.Integer, nullable=True) # Value for percentage or fixed reduction
+    unlock_point_reduction_target_date = db.Column(db.DateTime, nullable=True)
     
     is_hidden = db.Column(db.Boolean, nullable=False, default=False) # New: Field to hide challenge from non-admins
+    has_dynamic_flag = db.Column(db.Boolean, nullable=False, default=False) # New: Field to enable/disable dynamic flag
     dynamic_flag_api_key_hash = db.Column(db.String(128), nullable=True) # Hashed API key for dynamic flag access
     
     flags = db.relationship('ChallengeFlag', backref='challenge', lazy=True, cascade="all, delete-orphan")

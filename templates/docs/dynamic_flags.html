@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-6 text-center text-primary">How to Use Dynamic Flags</h1>
+
+    <div class="bg-card p-6 rounded-lg shadow-lg mb-6">
+        <h2 class="text-2xl font-semibold mb-4 text-secondary">What are Dynamic Flags?</h2>
+        <p class="text-text-primary mb-4">
+            Dynamic flags are flags that change for each user. This is useful for preventing flag sharing and ensuring that each user has to solve the challenge themselves.
+        </p>
+        <p class="text-text-primary mb-4">
+            When a challenge is configured with a dynamic flag, the platform will make a request to a URL you provide to get the flag for a specific user.
+        </p>
+
+        <h2 class="text-2xl font-semibold mb-4 mt-6 text-secondary">How to Configure a Dynamic Flag</h2>
+        <ol class="list-decimal list-inside text-text-primary space-y-2">
+            <li>When creating or editing a challenge, set the "Flag Type" to "Dynamic".</li>
+            <li>Once the challenge is created, you will see the "Dynamic Flag Settings" section on the challenge edit page.</li>
+            <li>Click on "Generate New Dynamic Flag API Key" to generate a new API key for the challenge. <strong>Save this key, as it will not be shown again.</strong></li>
+            <li>Your application should expose an endpoint that accepts a `POST` request with a JSON body containing `user_id`.</li>
+            <li>Your endpoint should return a JSON response with a `flag` key, which contains the dynamic flag for the user.</li>
+            <li>You must include the generated API key in the `X-API-KEY` header of the request to your endpoint.</li>
+        </ol>
+
+        <h2 class="text-2xl font-semibold mb-4 mt-6 text-secondary">Example Request</h2>
+        <p class="text-text-primary mb-4">
+            Here is an example of a request that the platform will make to your endpoint:
+        </p>
+        <pre class="bg-background-light p-4 rounded-lg text-sm overflow-x-auto"><code>POST /your-dynamic-flag-endpoint
+Host: your-server.com
+Content-Type: application/json
+X-API-KEY: your_generated_api_key
+
+{
+    "user_id": 123
+}</code></pre>
+
+        <h2 class="text-2xl font-semibold mb-4 mt-6 text-secondary">Example Response</h2>
+        <p class="text-text-primary mb-4">
+            Here is an example of a valid response from your endpoint:
+        </p>
+        <pre class="bg-background-light p-4 rounded-lg text-sm overflow-x-auto"><code>{
+    "flag": "flag{this_is_a_dynamic_flag_for_user_123}"
+}</code></pre>
+
+        <div class="mt-8 text-center">
+            <a href="{{ url_for('admin.manage_challenges') }}" class="text-link hover:underline">Back to Challenges</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

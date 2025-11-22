@@ -20,6 +20,10 @@ class Config:
     BASIC_INDEX_PAGE = os.environ.get('BASIC_INDEX_PAGE', 'False').lower() == 'true'
     DISABLE_SIGNUP = os.environ.get('DISABLE_SIGNUP', 'False').lower() == 'true'
     TIMEZONE = os.environ.get('TIMEZONE', 'UTC') # New: Timezone setting
+    USERNAME_WORD_COUNT = int(os.environ.get('USERNAME_WORD_COUNT', 2))
+    USERNAME_ADD_NUMBER = os.environ.get('USERNAME_ADD_NUMBER', 'True').lower() == 'true'
+    PRESET_USER_COUNT = int(os.environ.get('PRESET_USER_COUNT', 10))
+    WORDS_FILE_PATH = os.environ.get('WORDS_FILE_PATH', 'words.text')
 
 class TestConfig(Config):
     """

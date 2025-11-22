@@ -50,11 +50,16 @@ def seed_database():
     db.session.add_all([admin1, admin2, test_admin])
     db.session.commit()
 
-    # Create 24 Users
+    # Create users from the generated usernames
+    from scripts.utils import generate_usernames
+    from flask import current_app
+    
     users = []
+    generated_usernames = generate_usernames()
     user_password = bcrypt.generate_password_hash("userpass").decode('utf-8')
-    for i in range(1, 25):
-        user = User(username=f"user{i}", email=f"user{i}@example.com", password_hash=user_password, is_admin=False, hidden=False, score=0)
+
+    for username in generated_usernames:
+        user = User(username=username, email=f"{username}@example.com", password_hash=user_password, is_admin=False, hidden=False, score=0)
         users.append(user)
     
     # Add specific user "zen"

@@ -29,3 +29,40 @@ The visual stripes provide a quick overview:
 *   **Blue** points to challenges that are accessible but have a low engagement rate among the user base.
 
 By using these visual cues, administrators can more effectively manage challenge visibility, balance difficulty, and ensure a smooth user experience.
+
+## Dynamic Flags
+
+The platform supports dynamic flags, which are flags that change for each user. This is useful for preventing flag sharing and ensuring that each user has to solve the challenge themselves.
+
+### Configuration
+
+To configure a dynamic flag for a challenge, follow these steps:
+
+1.  **Set Flag Type to "Dynamic"**: When creating or editing a challenge, set the "Flag Type" to "Dynamic". This will reveal the "Dynamic Flag Settings" section on the challenge edit page.
+
+2.  **Generate API Key**: Once the challenge is created, you will see the "Dynamic Flag Settings" section. Click on "Generate New Dynamic Flag API Key" to generate a new API key for the challenge. **Save this key, as it will not be shown again.**
+
+### Your Application
+
+Your application should expose an endpoint that accepts a `POST` request with a JSON body containing `user_id`. Your endpoint should return a JSON response with a `flag` key, which contains the dynamic flag for the user. You must include the generated API key in the `X-API-KEY` header of the request to your endpoint.
+
+#### Example Request
+
+```
+POST /your-dynamic-flag-endpoint
+Host: your-server.com
+Content-Type: application/json
+X-API-KEY: your_generated_api_key
+
+{
+    "user_id": 123
+}
+```
+
+#### Example Response
+
+```json
+{
+    "flag": "flag{this_is_a_dynamic_flag_for_user_123}"
+}
+```

@@ -229,8 +229,17 @@ class ChallengeForm(FlaskForm):
     timezone = SelectField('Timezone', choices=[], default='Australia/Sydney') # New timezone field
     unlock_date_time = DateField('Unlock Date', format='%Y-%m-%d',
                                      render_kw={"placeholder": "YYYY-MM-DD"})
+    unlock_point_reduction_type = SelectField('Unlock Point Reduction Type',
+                                               choices=[('NONE', 'None'), ('PERCENTAGE', 'Percentage'), ('FIXED', 'Fixed')],
+                                               default='NONE')
+    unlock_point_reduction_value = IntegerField('Unlock Point Reduction Value',
+                                                validators=[NumberRange(min=0)],
+                                                default=0)
+    unlock_point_reduction_target_date = DateField('Unlock Point Reduction Target Date', format='%Y-%m-%d',
+                                                     render_kw={"placeholder": "YYYY-MM-DD"})
 
     is_hidden = BooleanField('Hide Challenge from Users', default=False) # New: Field to hide challenge
+    has_dynamic_flag = BooleanField('Has Dynamic Flag', default=False) # New: Field to enable/disable dynamic flag
     submit = SubmitField('Submit Challenge')
 
     def validate(self, extra_validators=None):

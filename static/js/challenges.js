@@ -78,7 +78,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     modalChallengeName.textContent = data.name;
-                    modalChallengeDescription.innerHTML = marked.parse(data.description);
+                    try {
+                        modalChallengeDescription.innerHTML = marked.parse(data.description);
+                    } catch (e) {
+                        console.error('Error parsing markdown:', e);
+                        modalChallengeDescription.textContent = data.description;
+                    }
                     modalChallengePoints.textContent = data.points + ' pts';
 
                     const isCompleted = data.is_completed;
