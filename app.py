@@ -267,10 +267,22 @@ def create_app(config_class=Config):
         # Get all hints revealed by the current user
         revealed_hint_ids = {uh.hint_id for uh in UserHint.query.filter_by(user_id=current_user.id).all()}
 
+        # --- Performance Optimization: Pre-fetch data for stripe calculations ---
+        # 1. Fetch all eligible users (non-admin, non-hidden) once
+        eligible_users_cache = User.query.filter_by(is_admin=False, hidden=False).all()
+        
+        # 2. Fetch all submissions by all users and build a cache: {user_id: {challenge_id, ...}}
+        # This will be used by challenge.is_unlocked_for_user and category.is_unlocked_for_user
+        all_submissions = Submission.query.with_entities(Submission.user_id, Submission.challenge_id).all()
+        user_completed_challenges_cache = {}
+        for user_id, challenge_id in all_submissions:
+            user_completed_challenges_cache.setdefault(user_id, set()).add(challenge_id)
+        # --- End Performance Optimization ---
+
         # Prepare categories and challenges for display, considering unlock status
         display_categories = []
         for category in all_categories:
-            category_is_unlocked = category.is_unlocked_for_user(current_user)
+            category_is_unlocked = category.is_unlocked_for_user(current_user, user_completed_challenges_cache)
             
             # If category is not unlocked for a regular user, prepare a locked placeholder
             if not current_user.is_admin and not category_is_unlocked:
@@ -296,7 +308,7 @@ def create_app(config_class=Config):
             for challenge in category.challenges:
                 # For regular users, if a challenge is not unlocked, it should not be displayed at all.
                 # This covers both explicitly hidden challenges and challenges locked by prerequisites.
-                if not current_user.is_admin and not challenge.is_unlocked_for_user(current_user):
+                if not current_user.is_admin and not challenge.is_unlocked_for_user(current_user, user_completed_challenges_cache):
                     continue # Skip this challenge entirely for regular users if not unlocked
 
                 # If we reach here, it means:
@@ -323,7 +335,7 @@ def create_app(config_class=Config):
                 # --- Determine Challenge Stripes for Public View ---
                 # This logic is adapted from admin_routes.py to ensure public challenges also have stripe data
                 now = datetime.now(UTC)
-                unlocked_percentage = challenge.get_unlocked_percentage_for_eligible_users()
+                unlocked_percentage = challenge.get_unlocked_percentage_for_eligible_users(eligible_users_cache, user_completed_challenges_cache)
 
                 # Determine Red Stripe (Hidden / Timed)
                 is_red_stripe = False

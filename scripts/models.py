@@ -97,9 +97,10 @@ class Category(db.Model):
     def __repr__(self):
         return f"Category('{self.name}')"
 
-    def is_unlocked_for_user(self, user):
+    def is_unlocked_for_user(self, user, user_completed_challenges_cache):
         """
-        Determines if the category is unlocked for the given user based on its unlock_type.
+        Determines if the category is unlocked for the given user based on its unlock_type,
+        using a pre-fetched cache for user completed challenges.
         """
         # Admins can always view categories, regardless of unlock conditions.
         if user and user.is_admin:
@@ -115,8 +116,8 @@ class Category(db.Model):
         unlocked_by_prerequisites = True
         unlocked_by_time = True
 
-        # Get all challenge IDs completed by the user
-        user_completed_challenge_ids = {s.challenge_id for s in Submission.query.filter_by(user_id=user.id).all()}
+        # Get all challenge IDs completed by the user from the cache
+        user_completed_challenge_ids = user_completed_challenges_cache.get(user.id, set())
         
         # Universal Prerequisite: Always check specific challenge prerequisites if they are set
         if self.prerequisite_challenge_ids:
@@ -126,14 +127,13 @@ class Category(db.Model):
 
         # Only proceed with unlock_type specific checks if universal prerequisites are met
         if unlocked_by_prerequisites:
-            all_challenges = Challenge.query.all()
-            total_challenges_count = len(all_challenges)
+            all_challenges_count = Challenge.query.count() # Changed from .all() to .count() for efficiency
             user_completed_challenges_count = len(user_completed_challenge_ids)
 
             # Check unlock_type specific conditions
             if self.unlock_type == 'PREREQUISITE_PERCENTAGE':
-                if total_challenges_count > 0:
-                    completed_percentage = (user_completed_challenges_count / total_challenges_count) * 100
+                if all_challenges_count > 0:
+                    completed_percentage = (user_completed_challenges_count / all_challenges_count) * 100
                     if completed_percentage < (self.prerequisite_percentage_value or 0):
                         unlocked_by_prerequisites = False
                 else: # No challenges in system, so percentage cannot be met
@@ -144,8 +144,8 @@ class Category(db.Model):
                     target_category_ids = set(self.prerequisite_count_category_ids)
                     
                     # Get challenges that belong to the target categories
-                    challenges_in_target_categories = Challenge.query.filter(Challenge.category_id.in_(list(target_category_ids))).all()
-                    challenges_in_target_categories_ids = {c.id for c in challenges_in_target_categories}
+                    # Eager load only IDs for efficiency
+                    challenges_in_target_categories_ids = {c.id for c in Challenge.query.filter(Challenge.category_id.in_(list(target_category_ids))).with_entities(Challenge.id).all()}
 
                     # Count user's completed challenges that are also in the target categories
                     user_completed_in_target_categories_count = len(user_completed_challenge_ids.intersection(challenges_in_target_categories_ids))
@@ -159,8 +159,8 @@ class Category(db.Model):
             elif self.unlock_type == 'COMBINED':
                 # For combined, check all relevant prerequisite types if they are set
                 if self.prerequisite_percentage_value:
-                    if total_challenges_count > 0:
-                        completed_percentage = (user_completed_challenges_count / total_challenges_count) * 100
+                    if all_challenges_count > 0:
+                        completed_percentage = (user_completed_challenges_count / all_challenges_count) * 100
                         if completed_percentage < self.prerequisite_percentage_value:
                             unlocked_by_prerequisites = False
                     else:
@@ -169,8 +169,7 @@ class Category(db.Model):
                 if unlocked_by_prerequisites and self.prerequisite_count_value:
                     if self.prerequisite_count_category_ids:
                         target_category_ids = set(self.prerequisite_count_category_ids)
-                        challenges_in_target_categories = Challenge.query.filter(Challenge.category_id.in_(list(target_category_ids))).all()
-                        challenges_in_target_categories_ids = {c.id for c in challenges_in_target_categories}
+                        challenges_in_target_categories_ids = {c.id for c in Challenge.query.filter(Challenge.category_id.in_(list(target_category_ids))).with_entities(Challenge.id).all()}
                         user_completed_in_target_categories_count = len(user_completed_challenge_ids.intersection(challenges_in_target_categories_ids))
                         if user_completed_in_target_categories_count < (self.prerequisite_count_value or 0):
                             unlocked_by_prerequisites = False
@@ -268,15 +267,17 @@ class Challenge(db.Model):
         """Returns the total number of challenges in the system."""
         return Challenge.query.count()
 
-    def get_user_completed_challenges(self, user):
-        """Returns a set of challenge IDs completed by the given user."""
-        if not user or not user.is_authenticated:
-            return set()
-        return {s.challenge_id for s in Submission.query.filter_by(user_id=user.id).all()}
-
-    def is_unlocked_for_user(self, user):
+    def get_user_completed_challenges(self, user_id, user_completed_challenges_cache):
         """
-        Determines if the challenge is unlocked for the given user based on its unlock_type.
+        Returns a set of challenge IDs completed by the given user,
+        using a pre-fetched cache for efficiency.
+        """
+        return user_completed_challenges_cache.get(user_id, set())
+
+    def is_unlocked_for_user(self, user, user_completed_challenges_cache):
+        """
+        Determines if the challenge is unlocked for the given user based on its unlock_type,
+        using a pre-fetched cache for user completed challenges.
         """
         # Admins can always view challenges, regardless of unlock conditions.
         # This means for an admin, the challenge is always considered "unlocked" for display/management.
@@ -293,7 +294,7 @@ class Challenge(db.Model):
         unlocked_by_prerequisites = True
         unlocked_by_time = True
 
-        user_completed_challenge_ids = self.get_user_completed_challenges(user)
+        user_completed_challenge_ids = self.get_user_completed_challenges(user.id, user_completed_challenges_cache)
         
         # Universal Prerequisite: Always check specific challenge prerequisites if they are set
         if self.prerequisite_challenge_ids:
@@ -303,14 +304,13 @@ class Challenge(db.Model):
 
         # Only proceed with unlock_type specific checks if universal prerequisites are met
         if unlocked_by_prerequisites:
-            all_challenges = Challenge.query.all()
-            total_challenges_count = len(all_challenges)
+            all_challenges_count = Challenge.query.count() # Changed from .all() to .count() for efficiency
             user_completed_challenges_count = len(user_completed_challenge_ids)
 
             # Check unlock_type specific conditions
             if self.unlock_type == 'PREREQUISITE_PERCENTAGE':
-                if total_challenges_count > 0:
-                    completed_percentage = (user_completed_challenges_count / total_challenges_count) * 100
+                if all_challenges_count > 0:
+                    completed_percentage = (user_completed_challenges_count / all_challenges_count) * 100
                     if completed_percentage < (self.prerequisite_percentage_value or 0):
                         unlocked_by_prerequisites = False
                 else: # No challenges in system, so percentage cannot be met
@@ -318,12 +318,11 @@ class Challenge(db.Model):
             elif self.unlock_type == 'PREREQUISITE_COUNT':
                 if self.prerequisite_count_category_ids:
                     # Filter completed challenges by specified categories
-                    from scripts.models import Category # Import here to avoid circular dependency
                     target_category_ids = set(self.prerequisite_count_category_ids)
                     
                     # Get challenges that belong to the target categories
-                    challenges_in_target_categories = Challenge.query.filter(Challenge.category_id.in_(list(target_category_ids))).all()
-                    challenges_in_target_categories_ids = {c.id for c in challenges_in_target_categories}
+                    # Eager load only IDs for efficiency
+                    challenges_in_target_categories_ids = {c.id for c in Challenge.query.filter(Challenge.category_id.in_(list(target_category_ids))).with_entities(Challenge.id).all()}
 
                     # Count user's completed challenges that are also in the target categories
                     user_completed_in_target_categories_count = len(user_completed_challenge_ids.intersection(challenges_in_target_categories_ids))
@@ -340,8 +339,8 @@ class Challenge(db.Model):
             elif self.unlock_type == 'COMBINED':
                 # For combined, check all relevant prerequisite types if they are set
                 if self.prerequisite_percentage_value:
-                    if total_challenges_count > 0:
-                        completed_percentage = (user_completed_challenges_count / total_challenges_count) * 100
+                    if all_challenges_count > 0:
+                        completed_percentage = (user_completed_challenges_count / all_challenges_count) * 100
                         if completed_percentage < self.prerequisite_percentage_value:
                             unlocked_by_prerequisites = False
                     else:
@@ -349,10 +348,8 @@ class Challenge(db.Model):
                 
                 if unlocked_by_prerequisites and self.prerequisite_count_value:
                     if self.prerequisite_count_category_ids:
-                        from scripts.models import Category # Import here to avoid circular dependency
                         target_category_ids = set(self.prerequisite_count_category_ids)
-                        challenges_in_target_categories = Challenge.query.filter(Challenge.category_id.in_(list(target_category_ids))).all()
-                        challenges_in_target_categories_ids = {c.id for c in challenges_in_target_categories}
+                        challenges_in_target_categories_ids = {c.id for c in Challenge.query.filter(Challenge.category_id.in_(list(target_category_ids))).with_entities(Challenge.id).all()}
                         user_completed_in_target_categories_count = len(user_completed_challenge_ids.intersection(challenges_in_target_categories_ids))
                         if user_completed_in_target_categories_count < (self.prerequisite_count_value or 0):
                             unlocked_by_prerequisites = False
@@ -378,24 +375,20 @@ class Challenge(db.Model):
         else: # PREREQUISITE_PERCENTAGE, PREREQUISITE_COUNT, PREREQUISITE_CHALLENGES (now handled universally)
             return unlocked_by_prerequisites
 
-    def get_unlocked_percentage_for_eligible_users(self):
+    def get_unlocked_percentage_for_eligible_users(self, eligible_users_cache, user_completed_challenges_cache):
         """
         Calculates the percentage of eligible users (non-admin, non-hidden)
-        for whom this challenge is currently unlocked.
+        for whom this challenge is currently unlocked, using pre-fetched caches.
         """
-        # Import User model here to avoid circular dependency at module level
-        from scripts.models import User 
-
-        eligible_users = User.query.filter_by(is_admin=False, hidden=False).all()
-        if not eligible_users:
+        if not eligible_users_cache:
             return 0.0
 
         unlocked_count = 0
-        for user in eligible_users:
-            if self.is_unlocked_for_user(user):
+        for user in eligible_users_cache:
+            if self.is_unlocked_for_user(user, user_completed_challenges_cache):
                 unlocked_count += 1
         
-        return (unlocked_count / len(eligible_users)) * 100 if eligible_users else 0.0
+        return (unlocked_count / len(eligible_users_cache)) * 100 if eligible_users_cache else 0.0
 
     @property
     def calculated_points(self):
