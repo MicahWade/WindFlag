@@ -55,13 +55,33 @@ Challenges can be imported from a YAML file using the `-yaml` or `-y` command-li
 
 For detailed information on admin-specific features, including challenge visibility and management, refer to [admin.md](admin.md).
 
+### Admin Challenge Stripes
+
+For administrators, challenges on the `/challenges` page display colored stripes to quickly convey their status based on unlock conditions and user solve rates. These stripes follow a specific precedence: Red > Orange > Yellow > Blue.
+
+*   **Red Stripe ("Locked")**:
+    *   **Condition**: The challenge itself is hidden (`is_hidden = True`), its category is hidden, or it has a timed unlock in the future.
+    *   **Meaning**: The challenge is currently inaccessible to regular users due to explicit hiding or a future unlock date.
+
+*   **Orange Stripe ("Unlockable (No Solves)")**:
+    *   **Condition**: Not Red, has prerequisites (e.g., percentage, count, or specific challenges), is not timed-locked (or its timed unlock has passed), and 0% of eligible users have unlocked it.
+    *   **Meaning**: The challenge is visible but no regular user has yet met its prerequisites to unlock it.
+
+*   **Yellow Stripe ("Unlocked (0-50%)")**:
+    *   **Condition**: Not Red, not Orange, and more than 0% but less than or equal to 50% of eligible users have unlocked it.
+    *   **Meaning**: The challenge is unlocked for some users, but it's still relatively rare or new.
+
+*   **Blue Stripe ("Rarely Unlocked (50-90%)")**:
+    *   **Condition**: Not Red, not Orange, not Yellow, and more than 50% but less than or equal to 90% of eligible users have unlocked it.
+    *   **Meaning**: The challenge is unlocked for a significant portion of users, but not yet widely solved.
+
+*   **No Stripe**:
+    *   **Condition**: Not Red, Orange, Yellow, or Blue. This typically means the challenge is unlocked for more than 90% of eligible users, or it has no special unlock conditions and is generally available.
+    *   **Meaning**: The challenge is widely accessible and/or commonly solved.
+
 ## Testing
 
 To run the automated tests, use the `run_tests.py` script. This will start the application in test mode and run the unit and end-to-end tests.
-
-```bash
-python run_tests.py
-```
 
 ## Environment Variables
 
