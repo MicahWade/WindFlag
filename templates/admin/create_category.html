@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-    <div class="max-w-md mx-auto bg-gray-800 p-8 rounded-lg shadow-lg">
+    <div class="max-w-2xl mx-auto bg-gray-800 p-8 rounded-lg shadow-lg">
         <form method="POST" action="" class="space-y-4">
             {{ form.hidden_tag() }}
+            {{ form.category_id() }} {# Hidden field for category ID #}
             <fieldset class="border-b border-gray-700 pb-4">
                 <legend class="text-2xl font-bold text-gray-100 mb-4">{{ title }}</legend>
                 <div class="mb-4">
@@ -19,10 +20,196 @@
                     {% endif %}
                 </div>
             </fieldset>
+
+            {# Category Unlocking Settings #}
+            <fieldset class="border-b border-gray-700 pb-4">
+                <legend class="text-xl font-bold text-gray-100 mb-4">Category Unlocking Settings</legend>
+
+                <div class="mb-4">
+                    {{ form.unlock_type.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                    {{ form.unlock_type(class="shadow border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                    {% for error in form.unlock_type.errors %}
+                        <p class="text-red-400 text-xs italic">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div id="prerequisite_percentage_value_group" class="mb-4 {% if form.unlock_type.data not in ['PREREQUISITE_PERCENTAGE', 'COMBINED'] %}hidden{% endif %}">
+                    {{ form.prerequisite_percentage_value.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                    {{ form.prerequisite_percentage_value(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                    {% for error in form.prerequisite_percentage_value.errors %}
+                        <p class="text-red-400 text-xs italic">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div id="prerequisite_count_value_group" class="mb-4 {% if form.unlock_type.data not in ['PREREQUISITE_COUNT', 'COMBINED'] %}hidden{% endif %}">
+                    {{ form.prerequisite_count_value.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                    {{ form.prerequisite_count_value(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                    {% for error in form.prerequisite_count_value.errors %}
+                        <p class="text-red-400 text-xs italic">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                {# Prerequisite Count Categories Multi-Select (checkboxes) #}
+                <div id="prerequisite_count_category_ids_group" class="mb-4 {% if form.unlock_type.data not in ['PREREQUISITE_COUNT', 'COMBINED'] %}hidden{% endif %}">
+                    <label class="block text-gray-300 text-sm font-bold mb-2">Prerequisite Count Categories</label>
+                    <div class="prerequisite-categories-container border border-gray-600 rounded p-2 max-h-60 overflow-y-auto bg-gray-700">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 ml-2">
+                            {% for choice_id, choice_name in form.prerequisite_count_category_ids_input.choices %}
+                                <label class="inline-flex items-center text-gray-300 text-sm">
+                                    <input type="checkbox" name="prerequisite_count_category_ids_checkbox" value="{{ choice_id }}" class="form-checkbox h-4 w-4 text-blue-600 rounded focus:ring-blue-500 mr-1" {% if choice_id in (form.prerequisite_count_category_ids_input.data or []) %}checked{% endif %}>
+                                    {{ choice_name }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {# Hidden input to store selected IDs for form submission #}
+                    {{ form.prerequisite_count_category_ids_input(class="hidden") }}
+                    {% for error in form.prerequisite_count_category_ids_input.errors %}
+                        <p class="text-red-400 text-xs italic">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                {# Prerequisite Challenges Multi-Select (checkboxes) #}
+                <div id="prerequisite_challenge_ids_group" class="mb-4 {% if form.unlock_type.data not in ['PREREQUISITE_CHALLENGES', 'COMBINED'] %}hidden{% endif %}">
+                    <label class="block text-gray-300 text-sm font-bold mb-2">Prerequisite Challenges</label>
+                    <div class="prerequisite-challenges-container border border-gray-600 rounded p-2 max-h-60 overflow-y-auto bg-gray-700">
+                        {% for group_label, group_choices in form.prerequisite_challenge_ids_input.choices %}
+                            <div class="category-group mb-2">
+                                <h4 class="text-gray-200 font-semibold text-sm mb-1">{{ group_label }}</h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 ml-2">
+                                    {% for choice_id, choice_name in group_choices %}
+                                        <label class="inline-flex items-center text-gray-300 text-sm">
+                                            <input type="checkbox" name="prerequisite_challenge_ids_checkbox" value="{{ choice_id }}" class="form-checkbox h-4 w-4 text-blue-600 rounded focus:ring-blue-500 mr-1" {% if choice_id in (form.prerequisite_challenge_ids_input.data or []) %}checked{% endif %}>
+                                            {{ choice_name }}
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {# Hidden input to store selected IDs for form submission #}
+                    {{ form.prerequisite_challenge_ids_input(class="hidden") }}
+                    {% for error in form.prerequisite_challenge_ids_input.errors %}
+                        <p class="text-red-400 text-xs italic">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div id="unlock_date_time_group" class="mb-4 {% if form.unlock_type.data not in ['TIMED', 'COMBINED'] %}hidden{% endif %}">
+                    {{ form.unlock_date_time.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                    {{ form.unlock_date_time(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                    {% for error in form.unlock_date_time.errors %}
+                        <p class="text-red-400 text-xs italic">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                {# Timezone Picker for Category Unlock Date #}
+                <div class="mb-4">
+                    {{ form.timezone.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                    <div class="relative">
+                        <input type="text" id="timezone_search_input" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline" placeholder="Search timezone">
+                        <div id="timezone_dropdown_list" class="absolute z-10 w-full bg-gray-700 border border-gray-600 rounded mt-1 max-h-60 overflow-y-auto hidden">
+                            {# Options will be dynamically added here #}
+                        </div>
+                    </div>
+                    {{ form.timezone(id="timezone_select_hidden", class="hidden") }} {# Hidden select for actual value #}
+                    {% for error in form.timezone.errors %}
+                        <p class="text-red-400 text-xs italic">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-4">
+                    {{ form.is_hidden(class="mr-2 leading-tight") }}
+                    {{ form.is_hidden.label(class="text-gray-300 text-sm font-bold") }}
+                    {% for error in form.is_hidden.errors %}
+                        <p class="text-red-400 text-xs italic">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
             <div class="flex items-center justify-between">
                 {{ form.submit(class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline shadow-md transform hover:scale-105 transition duration-300 ease-in-out") }}
             </div>
         </form>
     </div>
 {% endblock content %}
+
+{% block scripts %}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='js/timezone_picker.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Function to toggle visibility of fields based on unlock_type
+            function toggleCategoryUnlockFields() {
+                const unlockType = document.getElementById('unlock_type').value;
+
+                document.getElementById('prerequisite_percentage_value_group').classList.add('hidden');
+                document.getElementById('prerequisite_count_value_group').classList.add('hidden');
+                document.getElementById('prerequisite_count_category_ids_group').classList.add('hidden');
+                document.getElementById('prerequisite_challenge_ids_group').classList.add('hidden');
+                document.getElementById('unlock_date_time_group').classList.add('hidden');
+
+                if (unlockType === 'PREREQUISITE_PERCENTAGE') {
+                    document.getElementById('prerequisite_percentage_value_group').classList.remove('hidden');
+                } else if (unlockType === 'PREREQUISITE_COUNT') {
+                    document.getElementById('prerequisite_count_value_group').classList.remove('hidden');
+                    document.getElementById('prerequisite_count_category_ids_group').classList.remove('hidden');
+                } else if (unlockType === 'PREREQUISITE_CHALLENGES') {
+                    document.getElementById('prerequisite_challenge_ids_group').classList.remove('hidden');
+                } else if (unlockType === 'TIMED') {
+                    document.getElementById('unlock_date_time_group').classList.remove('hidden');
+                } else if (unlockType === 'COMBINED') {
+                    document.getElementById('prerequisite_percentage_value_group').classList.remove('hidden');
+                    document.getElementById('prerequisite_count_value_group').classList.remove('hidden');
+                    document.getElementById('prerequisite_count_category_ids_group').classList.remove('hidden');
+                    document.getElementById('prerequisite_challenge_ids_group').classList.remove('hidden');
+                    document.getElementById('unlock_date_time_group').classList.remove('hidden');
+                }
+            }
+
+            // Attach event listener to unlock_type select
+            document.getElementById('unlock_type').addEventListener('change', toggleCategoryUnlockFields);
+
+            // Initial call to set field visibility based on current value
+            toggleCategoryUnlockFields();
+
+            // --- Checkbox Group Management ---
+            function setupCheckboxGroup(checkboxName, hiddenInputId) {
+                const checkboxes = document.querySelectorAll(`input[name="${checkboxName}"]`);
+                const hiddenInput = document.getElementById(hiddenInputId);
+
+                function updateHiddenInput() {
+                    const selectedValues = Array.from(checkboxes)
+                        .filter(cb => cb.checked)
+                        .map(cb => parseInt(cb.value)); // Ensure values are integers
+                    hiddenInput.value = JSON.stringify(selectedValues);
+                }
+
+                // Set initial state of checkboxes based on hidden input's value
+                if (hiddenInput.value) {
+                    try {
+                        const initialSelected = JSON.parse(hiddenInput.value);
+                        checkboxes.forEach(cb => {
+                            if (initialSelected.includes(parseInt(cb.value))) {
+                                cb.checked = true;
+                            }
+                        });
+                    } catch (e) {
+                        console.error("Error parsing initial selected values for checkbox group:", e);
+                    }
+                }
+
+                checkboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', updateHiddenInput);
+                });
+
+                // Initial update
+                updateHiddenInput();
+            }
+
+            setupCheckboxGroup('prerequisite_count_category_ids_checkbox', 'prerequisite_count_category_ids_input');
+            setupCheckboxGroup('prerequisite_challenge_ids_checkbox', 'prerequisite_challenge_ids_input');
+        });
+    </script>
+{% endblock scripts %}
 

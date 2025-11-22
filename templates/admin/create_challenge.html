@@ -212,6 +212,20 @@
                             {{ form.unlock_date_time(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", type="date") }}
                         {% endif %}
                     </div>
+                    {# Timezone Picker for Challenge Unlock Date #}
+                    <div class="mb-4">
+                        {{ form.timezone.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        <div class="relative">
+                            <input type="text" id="timezone_search_input" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline" placeholder="Search timezone">
+                            <div id="timezone_dropdown_list" class="absolute z-10 w-full bg-gray-700 border border-gray-600 rounded mt-1 max-h-60 overflow-y-auto hidden">
+                                {# Options will be dynamically added here #}
+                            </div>
+                        </div>
+                        {{ form.timezone(id="timezone_select_hidden", class="hidden") }} {# Hidden select for actual value #}
+                        {% for error in form.timezone.errors %}
+                            <p class="text-red-400 text-xs italic">{{ error }}</p>
+                        {% endfor %}
+                    </div>
                     <div class="mb-4" id="timezone_field" style="display: none;">
                         <div class="flex items-center">
                             {{ form.timezone.label(class="block text-gray-300 text-sm font-bold mb-2") }}
@@ -380,5 +394,7 @@
         const usersSuperAdminStatus = {{ users_super_admin_status | tojson }};
         const currentLoggedInUserId = {{ current_user_id | tojson }};
     </script>
+    <script src="{{ url_for('static', filename='js/timezone_picker.js') }}"></script> {# Updated script name #}
+    <script src="{{ url_for('static', filename='js/timezone_picker.js') }}"></script> {# Updated script name #}
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 {% endblock content %}

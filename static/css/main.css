@@ -39,14 +39,18 @@
     z-index: 10; /* Ensure it's above other content */
 }
 
-.admin-stripe-hidden-from-all {
+.admin-stripe-red {
     background-color: #DC2626; /* Tailwind red-600 */
 }
 
-.admin-stripe-locked-some-users {
+.admin-stripe-yellow {
     background-color: #F59E0B; /* Tailwind yellow-500 */
 }
 
-.admin-stripe-rarely-unlocked {
+.admin-stripe-orange {
+    background-color: #F97316; /* Tailwind orange-500 */
+}
+
+.admin-stripe-blue {
     background-color: #3B82F6; /* Tailwind blue-600 */
 }

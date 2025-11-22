@@ -104,6 +104,25 @@ class CategoryForm(FlaskForm):
     """
     name = StringField('Category Name',
                        validators=[DataRequired(), Length(min=2, max=50)])
+    
+    # New fields for category unlocking (similar to ChallengeForm)
+    unlock_type = SelectField('Unlock Type',
+                              choices=[(t, t.replace('_', ' ').title()) for t in UNLOCK_TYPES],
+                              validators=[DataRequired()],
+                              default='NONE')
+    prerequisite_percentage_value = IntegerField('Prerequisite Percentage Value',
+                                                 validators=[NumberRange(min=0, max=100)],
+                                                 render_kw={"placeholder": "e.g., 50 for 50% of challenges"})
+    prerequisite_count_value = IntegerField('Prerequisite Count Value',
+                                            validators=[NumberRange(min=0)],
+                                            render_kw={"placeholder": "e.g., 5 for 5 challenges"})
+    prerequisite_count_category_ids_input = HiddenField('Prerequisite Count Categories') # Populated by JS
+    prerequisite_challenge_ids_input = HiddenField('Prerequisite Challenge IDs') # Populated by JS
+    timezone = SelectField('Timezone', choices=[], default='Australia/Sydney') # New timezone field
+    unlock_date_time = DateField('Unlock Date', format='%Y-%m-%d',
+                                     render_kw={"placeholder": "YYYY-MM-DD"})
+    is_hidden = BooleanField('Hide Category from Users', default=False) # New: Field to hide category
+
     submit = SubmitField('Submit Category')
 
     def validate_name(self, name):
@@ -119,8 +138,45 @@ class CategoryForm(FlaskForm):
         # Import here to avoid circular dependency
         from scripts.models import Category
         category = Category.query.filter_by(name=name.data).first()
-        if category:
+        if category and category.id != self.category_id.data: # Allow updating existing category with same name
             raise ValidationError('That category name is taken. Please choose a different one.')
+    
+    # Add a HiddenField for category_id to allow validation during updates
+    category_id = HiddenField()
+
+    def validate(self, extra_validators=None):
+        """
+        Performs custom validation for the CategoryForm, including unlock fields.
+        """
+        if not super().validate(extra_validators=extra_validators):
+            return False
+        
+        # Validate unlock fields (similar to ChallengeForm)
+        if self.unlock_type.data in ['PREREQUISITE_PERCENTAGE', 'COMBINED']:
+            if self.prerequisite_percentage_value.data is None or self.prerequisite_percentage_value.data < 0:
+                self.prerequisite_percentage_value.errors.append('Prerequisite percentage value is required for this unlock type.')
+                return False
+        
+        if self.unlock_type.data in ['PREREQUISITE_COUNT', 'COMBINED']:
+            if self.prerequisite_count_value.data is None or self.prerequisite_count_value.data < 0:
+                self.prerequisite_count_value.errors.append('Prerequisite count value is required for this unlock type.')
+                return False
+            
+            try:
+                prerequisite_category_ids = json.loads(self.prerequisite_count_category_ids_input.data or '[]')
+                if prerequisite_category_ids and not self.prerequisite_count_value.data:
+                    self.prerequisite_count_value.errors.append('Prerequisite count value must be set if categories are selected for count.')
+                    return False
+            except json.JSONDecodeError:
+                self.prerequisite_count_category_ids_input.errors.append('Invalid format for prerequisite count category IDs.')
+                return False
+
+        if self.unlock_type.data in ['TIMED', 'COMBINED']:
+            if not self.unlock_date_time.data:
+                self.unlock_date_time.errors.append('Unlock date is required for this unlock type.')
+                return False
+        
+        return True
 
 class ChallengeForm(FlaskForm):
     """

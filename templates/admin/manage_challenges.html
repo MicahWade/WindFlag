@@ -36,12 +36,14 @@
                 {% for data in challenges_data %}
                     {% set challenge = data.challenge %}
                     {% set row_class = '' %}
-                    {% if data.is_hidden %}
-                        {% set row_class = 'bg-red-900/50' %} {# Hidden for all users #}
-                    {% elif data.is_locked_by_prerequisites %}
-                        {% set row_class = 'bg-red-900/50' %} {# Hidden due to unmet prerequisites #}
-                    {% elif data.is_rarely_unlocked %}
-                        {% set row_class = 'bg-blue-900/50' %} {# Rarely unlocked #}
+                    {% if data.is_red_stripe %}
+                        {% set row_class = 'bg-red-900/50' %} {# Locked #}
+                    {% elif data.is_orange_stripe %}
+                        {% set row_class = 'bg-orange-900/50' %} {# Unlockable (No Solves) #}
+                    {% elif data.is_yellow_stripe %}
+                        {% set row_class = 'bg-yellow-900/50' %} {# Unlocked (0-50%) #}
+                    {% elif data.is_blue_stripe %}
+                        {% set row_class = 'bg-blue-900/50' %} {# Rarely Unlocked (50-90%) #}
                     {% endif %}
                     <tr class="{{ row_class }}">
                         <td class="px-5 py-5 border-b border-gray-700 text-sm">
@@ -60,12 +62,14 @@
                             <p class="text-gray-200 whitespace-no-wrap">{{ challenge.unlock_type }}</p>
                         </td>
                         <td class="px-5 py-5 border-b border-gray-700 text-sm">
-                            {% if data.is_hidden %}
-                                <span class="text-red-400">Hidden (All Users)</span>
-                            {% elif data.is_locked_by_prerequisites %}
-                                <span class="text-red-400">Hidden (Prereqs)</span>
-                            {% elif data.is_rarely_unlocked %}
-                                <span class="text-blue-400">Rarely Unlocked</span>
+                            {% if data.is_red_stripe %}
+                                <span class="text-red-400">Locked</span>
+                            {% elif data.is_orange_stripe %}
+                                <span class="text-orange-400">Unlockable (No Solves)</span>
+                            {% elif data.is_yellow_stripe %}
+                                <span class="text-yellow-400">Unlocked (0-50%)</span>
+                            {% elif data.is_blue_stripe %}
+                                <span class="text-blue-400">Rarely Unlocked (50-90%)</span>
                             {% else %}
                                 <span class="text-green-400">Visible</span>
                             {% endif %}

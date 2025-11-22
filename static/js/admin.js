@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Hide dropdown when clicking outside
     document.addEventListener('click', function(event) {
-        if (!dropdown.contains(event.target) && !event.target.closest('.user-row')) {
+        if (dropdown && !dropdown.contains(event.target) && !event.target.closest('.user-row')) {
             dropdown.classList.add('hidden');
         }
     });
