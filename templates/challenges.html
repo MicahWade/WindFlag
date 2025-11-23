@@ -3,7 +3,6 @@
     {{ super() }}
 {% endblock %}
 {% block content %}
-    <script src="{{ url_for('static', filename='js/challenges.js') }}"></script>
     <h1 class="text-3xl font-bold mb-6 text-gray-100">Challenges</h1>
         {% for category_data in categories %}
         <div class="accordion-item bg-gray-800 rounded-lg shadow-lg mb-6">
@@ -55,7 +54,8 @@
                                      data-submitted-flags-count="{{ challenge.submitted_flags_count }}"
                                      data-total-flags="{{ challenge.total_flags }}"
                                      data-completion-percentage="{{ completion_percentage }}"
-                                     data-challenge-type="{{ challenge.challenge_type }}"> {# New data attribute #}
+                                     data-challenge-type="{{ challenge.challenge_type }}"
+                                     data-challenge-language="{{ challenge.language | default('python') }}"> {# New data attribute for language #}
                                     
                                     {# Challenge Stripes #}
                                     {% if challenge.computed_red_stripe %}
@@ -174,6 +174,20 @@
     </div>
 {% endblock content %}
 {% block scripts %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/sql/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/ruby/ruby.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/go/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/php/php.min.js"></script>
+    <script src="{{ url_for('static', filename='js/challenges.js') }}"></script>
     <script>
         // Add a Jinja2 filter for datetime formatting
         function datetimeformat(value) {

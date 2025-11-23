@@ -18,6 +18,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const flagSubmissionSection = document.getElementById('flagSubmissionSection');
     const codeSubmissionSection = document.getElementById('codeSubmissionSection');
     const codeEditor = document.getElementById('codeEditor');
+    let editor = CodeMirror.fromTextArea(codeEditor, { // Declare and initialize here
+        lineNumbers: true,
+        mode: "text/plain", // Default to plain text, mode will be set dynamically
+        theme: "dracula",
+        indentUnit: 4, // 4 spaces for indentation
+        tabSize: 4, // 4 spaces for tab
+        indentWithTabs: false // Use spaces instead of tabs
+    });
     const modalRunCodeButton = document.getElementById('modalRunCodeButton');
     const codeResult = document.getElementById('codeResult');
 
@@ -116,18 +124,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (currentChallengeType === 'CODING') {
                         flagSubmissionSection.classList.add('hidden');
                         codeSubmissionSection.classList.remove('hidden');
-                        codeEditor.value = data.starter_code || ''; // Load starter code if available
+                        const challengeLanguage = this.dataset.challengeLanguage || 'python'; // Get language from data attribute, default to python
+                        editor.setOption('mode', challengeLanguage); // Set CodeMirror mode
+                        editor.setValue(data.starter_code || ''); // Load starter code into CodeMirror
                         if (isCompleted) {
-                            codeEditor.disabled = true;
+                            editor.setOption('readOnly', true);
                             modalRunCodeButton.disabled = true;
                             modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
                             modalChallengeStatus.textContent = 'You have already completed this challenge!';
                             modalChallengeStatus.classList.remove('hidden');
                         } else {
-                            codeEditor.disabled = false;
+                            editor.setOption('readOnly', false);
                             modalRunCodeButton.disabled = false;
                             modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
                         }
+                        editor.refresh(); // Important to refresh after setting value and options when editor might have been hidden
                     } else { // FLAG challenge type
                         flagSubmissionSection.classList.remove('hidden');
                         codeSubmissionSection.classList.add('hidden');
@@ -256,9 +267,11 @@ document.addEventListener('DOMContentLoaded', function() {
             solversContent.classList.add('hidden'); // Hide solvers content
             viewSolversBtn.textContent = 'View Solvers'; // Reset button text
 
-            // --- CodeMirror Cleanup ---
-            // Removed CodeMirror specific cleanup.
-            // --- End CodeMirror Cleanup ---
+            // CodeMirror Cleanup
+            if (editor) {
+                editor.setValue(''); // Clear content
+                editor.setOption('readOnly', false); // Ensure it's editable for next challenge
+            }
         });
     });
 
@@ -381,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle code submission
     modalRunCodeButton.addEventListener('click', function() {
-        const code = codeEditor.value; // Get code from CodeMirror instance
+        const code = editor.getValue(); // Get code from CodeMirror instance
         const challengeId = currentChallengeId;
 
         codeResult.classList.add('hidden'); // Hide previous result
