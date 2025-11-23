@@ -398,6 +398,46 @@ def seed_database():
     db.session.add_all(user_hints_to_add)
     db.session.commit()
 
+    # --- Add a specific failed flag attempt ---
+    # Pick a random user and a random challenge
+    if users and challenges:
+        random_user = random.choice(users)
+        random_challenge = random.choice(challenges)
+        
+        # Ensure the random challenge has flags, otherwise pick another or skip
+        if not random_challenge.flags:
+            # Try to find a challenge with flags
+            challenge_with_flags = next((c for c in challenges if c.flags), None)
+            if challenge_with_flags:
+                random_challenge = challenge_with_flags
+            else:
+                print("Warning: No challenges with flags found for failed attempt demo data.")
+                # If no challenges with flags, skip adding a failed attempt involving flags
+                # This could still be useful for coding challenges, but the prompt implies flag attempts.
+                pass 
+
+        # Proceed only if a suitable challenge (with flags or coding) is found
+        if random_challenge:
+            incorrect_flag_content = f"WRONG_FLAG_{random_challenge.id}_BY_{random_user.id}"
+            
+            # If it's a coding challenge, the "flag" would be the submitted code
+            if random_challenge.challenge_type == 'CODING':
+                incorrect_flag_content = f"incorrect_code_for_{random_challenge.id}_by_{random_user.id}"
+
+            failed_attempt_time = datetime.now(UTC) - timedelta(minutes=random.randint(1, 60))
+            
+            failed_flag_attempt = FlagAttempt(
+                user_id=random_user.id,
+                challenge_id=random_challenge.id,
+                submitted_flag=incorrect_flag_content,
+                is_correct=False,
+                timestamp=failed_attempt_time
+            )
+            db.session.add(failed_flag_attempt)
+            db.session.commit()
+            print(f"Added a failed attempt by {random_user.username} for {random_challenge.name} (type: {random_challenge.challenge_type}).")
+    # --- End of specific failed flag attempt ---
+
     # Set some users to hidden
     users[0].hidden = True
     users[1].hidden = True

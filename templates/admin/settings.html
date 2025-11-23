@@ -50,6 +50,21 @@
                 {{ form.profile_challenges_complete_chart_enabled.label(class="ml-2 block text-gray-300 text-sm font-bold") }}
             </div>
 
+            <h2 class="text-xl font-bold text-gray-100 mb-4 mt-6">Challenge Display Settings</h2>
+            <div class="mb-4">
+                {{ form.accordion_display_style.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                {% if form.accordion_display_style.errors %}
+                    {{ form.accordion_display_style(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                    <p class="text-red-400 text-xs italic">
+                        {% for error in form.accordion_display_style.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </p>
+                {% else %}
+                    {{ form.accordion_display_style(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                {% endif %}
+            </div>
+
             <div class="mb-4">
                 {{ form.timezone.label(class="block text-gray-300 text-sm font-bold mb-2") }}
                 <div class="relative">

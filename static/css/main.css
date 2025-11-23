@@ -54,3 +54,7 @@
 .admin-stripe-blue {
     background-color: #3B82F6; /* Tailwind blue-600 */
 }
+
+.completed-challenge-line {
+    border-left: 4px solid #10B981; /* Tailwind green-500 */
+}

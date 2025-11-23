@@ -68,6 +68,7 @@ def admin_settings():
         _update_setting('PROFILE_CATEGORIES_PER_SCORE_CHART_ENABLED', form.profile_categories_per_score_chart_enabled.data)
         _update_setting('PROFILE_CHALLENGES_COMPLETE_CHART_ENABLED', form.profile_challenges_complete_chart_enabled.data)
         _update_setting('TIMEZONE', form.timezone.data) # New: Save timezone setting
+        _update_setting('ACCORDION_DISPLAY_STYLE', form.accordion_display_style.data) # New: Save accordion display style setting
 
         db.session.commit()
         flash('Settings updated successfully!', 'success')
@@ -80,6 +81,7 @@ def admin_settings():
         form.profile_categories_per_score_chart_enabled.data = get_setting('PROFILE_CATEGORIES_PER_SCORE_CHART_ENABLED', 'True').lower() == 'true'
         form.profile_challenges_complete_chart_enabled.data = get_setting('PROFILE_CHALLENGES_COMPLETE_CHART_ENABLED', 'True').lower() == 'true'
         form.timezone.data = get_setting('TIMEZONE', 'Australia/Sydney') # New: Load timezone setting
+        form.accordion_display_style.data = get_setting('ACCORDION_DISPLAY_STYLE', 'boxes') # New: Load accordion display style setting
     return render_template('admin/settings.html', title='Admin Settings', form=form)
 
 # Category CRUD
@@ -218,11 +220,23 @@ def manage_challenges():
     # Create a dummy user for checking unlock status for non-admins
     # This user has no submissions, so any challenge with prerequisites will be locked for them.
     # We don't add this user to the DB, just use it for the `is_unlocked_for_user` method.
-    from scripts.models import User # Import here to avoid circular dependency
+    from scripts.models import User, Submission # Import Submission as well
     dummy_user = User(username="dummy_user", is_admin=False, hidden=False, score=0)
 
+    # --- Performance Optimization: Pre-fetch data for stripe calculations ---
+    # 1. Fetch all eligible users (non-admin, non-hidden) once
+    eligible_users_cache = User.query.filter_by(is_admin=False, hidden=False).all()
+    
+    # 2. Fetch all submissions by all users and build a cache: {user_id: {challenge_id, ...}}
+    # This will be used by challenge.is_unlocked_for_user and category.is_unlocked_for_user
+    all_submissions = Submission.query.with_entities(Submission.user_id, Submission.challenge_id).all()
+    user_completed_challenges_cache = {}
+    for user_id, challenge_id_val in all_submissions:
+        user_completed_challenges_cache.setdefault(user_id, set()).add(challenge_id_val)
+    # --- End Performance Optimization ---
+
     for challenge in all_challenges:
-        unlocked_percentage = challenge.get_unlocked_percentage_for_eligible_users()
+        unlocked_percentage = challenge.get_unlocked_percentage_for_eligible_users(eligible_users_cache, user_completed_challenges_cache) # Pass caches
         now = datetime.now(UTC)
 
         # --- Determine Red Stripe (Hidden / Timed) ---

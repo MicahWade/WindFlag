@@ -282,6 +282,10 @@ def create_app(config_class=Config):
         # Prepare categories and challenges for display, considering unlock status
         display_categories = []
         for category in all_categories:
+            # Explicitly hide categories marked as hidden from regular users
+            if category.is_hidden and not current_user.is_admin:
+                continue # Skip this category entirely
+
             category_is_unlocked = category.is_unlocked_for_user(current_user, user_completed_challenges_cache)
             
             # If category is not unlocked for a regular user, prepare a locked placeholder
@@ -299,12 +303,17 @@ def create_app(config_class=Config):
                     'name': category.name,
                     'is_unlocked': False,
                     'unlock_info': unlock_info,
-                    'challenges': [] # No challenges to display for a locked category
+                    'challenges': [], # No challenges to display for a locked category
+                    'solved_count': 0,
+                    'visible_count': 0
                 })
                 continue # Skip to the next category
 
             # If category is unlocked (or current_user is admin), process its challenges
             display_challenges = []
+            solved_count_for_category = 0
+            visible_count_for_category = 0
+
             for challenge in category.challenges:
                 # For regular users, if a challenge is not unlocked, it should not be displayed at all.
                 # This covers both explicitly hidden challenges and challenges locked by prerequisites.
@@ -315,7 +324,13 @@ def create_app(config_class=Config):
                 # 1. It's an admin user (who sees everything as unlocked for management)
                 # 2. It's a regular user AND the challenge is unlocked for them.
                 
+                # This challenge is visible
+                visible_count_for_category += 1
+
                 challenge.is_completed = challenge.id in completed_challenge_ids
+                if challenge.is_completed:
+                    solved_count_for_category += 1
+                
                 # Use the calculated_points property from the model
                 challenge.display_points = challenge.calculated_points
                 
@@ -384,9 +399,12 @@ def create_app(config_class=Config):
                 display_categories.append({
                     'name': category.name,
                     'is_unlocked': True, # For admin, it's always considered unlocked for display
-                    'challenges': display_challenges
+                    'challenges': display_challenges,
+                    'solved_count': solved_count_for_category,
+                    'visible_count': visible_count_for_category
                 })
-        return render_template('challenges.html', title='Challenges', categories=display_categories, flag_form=flag_form, current_user_score=current_user.score)
+        accordion_display_style = get_setting('ACCORDION_DISPLAY_STYLE', 'boxes')
+        return render_template('challenges.html', title='Challenges', categories=display_categories, flag_form=flag_form, current_user_score=current_user.score, accordion_display_style=accordion_display_style)
 
     # The calculate_points function is now integrated into the Challenge model as a property.
     # This function is no longer needed here.

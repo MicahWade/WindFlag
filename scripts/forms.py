@@ -343,6 +343,10 @@ class AdminSettingsForm(FlaskForm):
     profile_categories_per_score_chart_enabled = BooleanField('Enable "Categories per Score" Chart on Profile', default=True)
     profile_challenges_complete_chart_enabled = BooleanField('Enable "Challenges Complete" Chart on Profile', default=True)
     timezone = SelectField('Default Timezone', choices=_get_timezone_choices(), validators=[DataRequired()], default='Australia/Sydney') # New: Timezone setting
+    accordion_display_style = SelectField('Accordion Display Style',
+                                        choices=[('boxes', 'Boxes'), ('lines', 'Lines')],
+                                        validators=[DataRequired()],
+                                        default='boxes')
 
     submit = SubmitField('Save Settings')
 
