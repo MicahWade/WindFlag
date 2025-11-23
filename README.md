@@ -15,7 +15,7 @@ WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwin
 *   **Award System**: Admins can grant awards to users with customizable categories and points.
 *   **YAML Challenge Import/Export**: Easily import and export challenges, including associated hints, from a structured YAML file.
 *   **Responsive Design**: Built with Tailwind CSS for a modern and responsive user interface.
-*   **Code Editor (CodeMirror)**: Integrated a powerful in-browser code editor (CodeMirror) for coding challenges, featuring syntax highlighting for a wide range of programming languages (Python, JavaScript, Java, C++, C, HTML, CSS, SQL, Ruby, Go, PHP) and themes.
+*   **Code Editor (CodeMirror)**: Integrated a powerful in-browser code editor (CodeMirror) for coding challenges, featuring syntax highlighting for Bash, Dart, Haskell, JavaScript (Node), PHP, and Python, and themes.
 
 ## How to Run
 
