@@ -18,7 +18,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                         {% for challenge in category_data.challenges %}
                             {% if challenge.is_locked %}
-                                <div class="bg-gray-700 p-6 rounded-lg shadow-lg challenge-card locked-challenge">
+                                <div class="bg-gray-700 p-6 rounded-lg shadow-lg challenge-card locked-challenge border border-gray-600">
                                     <h5 class="text-xl font-bold text-gray-400 mb-2">{{ challenge.name }}</h5>
                                     <p class="text-gray-500">Locked</p>
                                     <p class="text-gray-500 text-sm mt-2">
@@ -44,7 +44,7 @@
                                 {% elif challenge.total_flags > 0 %}
                                     {% set completion_percentage = (challenge.submitted_flags_count / challenge.total_flags * 100) | round(0, 'floor') %}
                                 {% endif %}
-                                <div class="bg-gray-800 p-6 rounded-lg shadow-lg challenge-card cursor-pointer transform hover:scale-105 transition duration-300 ease-in-out {% if challenge.is_completed %}completed-challenge{% endif %} relative" {# Added relative class #}
+                                <div class="bg-gray-800 p-6 rounded-lg shadow-lg challenge-card cursor-pointer transform hover:scale-105 transition duration-300 ease-in-out {% if challenge.is_completed %}completed-challenge{% endif %} relative border border-gray-700" {# Added relative class and border #}
                                      data-id="{{ challenge.id }}"
                                      data-name="{{ challenge.name }}"
                                      data-description="{{ challenge.description }}"
@@ -80,7 +80,7 @@
                 {% endif %}
             {% else %} {# Category is locked #}
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-gray-700 p-6 rounded-lg shadow-lg category-card locked-category">
+                    <div class="bg-gray-700 p-6 rounded-lg shadow-lg category-card locked-category border border-gray-600">
                         <h5 class="text-xl font-bold text-gray-400 mb-2">{{ category_data.name }}</h5>
                         <p class="text-gray-500">Category Locked</p>
                         <p class="text-gray-500 text-sm mt-2">
