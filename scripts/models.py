@@ -200,6 +200,9 @@ MULTI_FLAG_TYPES = ('SINGLE', 'ANY', 'ALL', 'N_OF_M', DYNAMIC_FLAG_TYPE, 'HTTP')
 POINT_DECAY_TYPES = ('STATIC', 'LINEAR', 'LOGARITHMIC')
 UNLOCK_TYPES = ('NONE', 'HIDDEN', 'PREREQUISITE_PERCENTAGE', 'PREREQUISITE_COUNT', 'PREREQUISITE_CHALLENGES', 'TIMED', 'COMBINED')
 
+# New: Define Challenge Types
+CHALLENGE_TYPES = ('FLAG', 'CODING') # Added for coding challenges
+
 class Challenge(db.Model):
     """
     Represents a challenge in the CTF platform.
@@ -225,6 +228,11 @@ class Challenge(db.Model):
         prerequisite_challenge_ids (list): List of specific challenge IDs that must be completed for unlocking.
         unlock_date_time (datetime): Specific date and time for timed unlocking.
         flags (relationship): One-to-many relationship with ChallengeFlag.
+        challenge_type (str): Type of challenge ('FLAG' or 'CODING').
+        language (str): Programming language for 'CODING' challenges.
+        expected_output (str): Expected STDOUT for 'CODING' challenges.
+        setup_code (str): Setup code/commands for 'CODING' challenges.
+        test_case_input (str): Input for 'CODING' challenges.
     """
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
@@ -259,6 +267,14 @@ class Challenge(db.Model):
     computed_orange_stripe = db.Column(db.Boolean, nullable=False, default=False)
     computed_yellow_stripe = db.Column(db.Boolean, nullable=False, default=False)
     computed_blue_stripe = db.Column(db.Boolean, nullable=False, default=False)
+
+    # New fields for coding challenges
+    challenge_type = db.Column(db.String(10), nullable=False, default='FLAG') # 'FLAG' or 'CODING'
+    language = db.Column(db.String(50), nullable=True) # e.g., 'python3', 'nodejs', 'php', 'bash', 'dart', 'haskell'
+    expected_output = db.Column(db.Text, nullable=True)
+    setup_code = db.Column(db.Text, nullable=True)
+    test_case_input = db.Column(db.Text, nullable=True)
+    starter_code = db.Column(db.Text, nullable=True) # New: Default code for coding challenges
     
     flags = db.relationship('ChallengeFlag', backref='challenge', lazy=True, cascade="all, delete-orphan")
 

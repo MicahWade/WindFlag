@@ -88,6 +88,10 @@ def seed_database():
     hidden_category = Category(name="Hidden Category", is_hidden=True, unlock_type='HIDDEN')
     categories.append(hidden_category)
 
+    # Add a new coding category
+    coding_category = Category(name="Coding")
+    categories.append(coding_category)
+
     db.session.add_all(categories)
     db.session.commit()
 
@@ -175,6 +179,68 @@ def seed_database():
     challenges.append(hidden_category_challenge)
     db.session.add(hidden_category_challenge)
 
+    # --- CODING CHALLENGES ---
+    python_coding_challenge = Challenge(name="Python: Hello World",
+                                        description="Write a Python program that prints 'Hello, Python!'",
+                                        points=50, category_id=coding_category.id,
+                                        challenge_type='CODING', language='python3',
+                                        expected_output='Hello, Python!',
+                                        setup_code=None, test_case_input=None,
+                                        starter_code="") # Removed starter_code content
+    challenges.append(python_coding_challenge)
+    db.session.add(python_coding_challenge)
+
+    nodejs_coding_challenge = Challenge(name="Node.js: Simple Sum",
+                                        description="Write a Node.js program that reads two numbers from stdin and prints their sum. For example, if input is '3\\n5', output should be '8'.",
+                                        points=75, category_id=coding_category.id,
+                                        challenge_type='CODING', language='nodejs',
+                                        expected_output='8',
+                                        setup_code=None, test_case_input='3\n5',
+                                        starter_code="") # Removed starter_code content
+    challenges.append(nodejs_coding_challenge)
+    db.session.add(nodejs_coding_challenge)
+
+    php_coding_challenge = Challenge(name="PHP: Echo Name",
+                                     description="Write a PHP program that reads a name from stdin and prints 'Hello, [name]!' For example, if input is 'World', output should be 'Hello, World!'.",
+                                     points=60, category_id=coding_category.id,
+                                     challenge_type='CODING', language='php',
+                                     expected_output='Hello, World!',
+                                     setup_code=None, test_case_input='World',
+                                     starter_code="") # Removed starter_code content
+    challenges.append(php_coding_challenge)
+    db.session.add(php_coding_challenge)
+
+    bash_coding_challenge = Challenge(name="Bash: Grep Log",
+                                      description="Write a Bash script that takes a word as argument and greps it from a provided log file. The log file is at /sandbox/log.txt. Print the matching lines. The script will receive 'Error' as test input.",
+                                      points=80, category_id=coding_category.id,
+                                      challenge_type='CODING', language='bash',
+                                      expected_output='Error line 1\nError line 2',
+                                      setup_code='echo "Info line 1\\nError line 1\\nInfo line 2\\nError line 2" > /sandbox/log.txt',
+                                      test_case_input='Error',
+                                      starter_code="") # Removed starter_code content
+    challenges.append(bash_coding_challenge)
+    db.session.add(bash_coding_challenge)
+
+    dart_coding_challenge = Challenge(name="Dart: Reverse String",
+                                      description="Write a Dart program that reads a string from stdin and prints its reverse. For example, if input is 'hello', output should be 'olleh'.",
+                                      points=90, category_id=coding_category.id,
+                                      challenge_type='CODING', language='dart',
+                                      expected_output='olleh',
+                                      setup_code=None, test_case_input='hello',
+                                      starter_code="") # Removed starter_code content
+    challenges.append(dart_coding_challenge)
+    db.session.add(dart_coding_challenge)
+
+    haskell_coding_challenge = Challenge(name="Haskell: Factorial",
+                                         description="Write a Haskell program to calculate the factorial of a number read from stdin. For example, if input is '5', output should be '120'.",
+                                         points=110, category_id=coding_category.id,
+                                         challenge_type='CODING', language='haskell',
+                                         expected_output='120',
+                                         setup_code=None, test_case_input='5',
+                                         starter_code="") # Removed starter_code content
+    challenges.append(haskell_coding_challenge)
+    db.session.add(haskell_coding_challenge)
+    
     for i in range(1, 31): # 30 more challenges
         category_id = categories[(i-1) % len(categories)].id
         

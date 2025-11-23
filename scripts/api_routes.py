@@ -2,10 +2,11 @@
 This module defines the API routes and functions for the WindFlag CTF platform.
 """
 from flask import Blueprint, request, jsonify, g
-from flask_login import current_user
+from flask_login import current_user, login_required
 from scripts.extensions import db
-from scripts.models import Challenge, Category, ChallengeFlag
+from scripts.models import Challenge, Category, ChallengeFlag, Submission, User
 from scripts.utils import api_key_required
+from scripts.code_execution import execute_code_in_sandbox, CodeExecutionResult
 from functools import wraps
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -161,6 +162,65 @@ def update_challenge_api(challenge_id):
 
     db.session.commit()
     return jsonify({'message': 'Challenge updated successfully'})
+
+
+@api_bp.route('/challenges/<int:challenge_id>/submit_code', methods=['POST'])
+@login_required # User must be logged in
+def submit_code_challenge(challenge_id):
+    """
+    Submits code for a coding challenge.
+    """
+    challenge = Challenge.query.get_or_404(challenge_id)
+    if challenge.challenge_type != 'CODING':
+        return jsonify({'message': 'This is not a coding challenge.'}), 400
+
+    data = request.get_json()
+    if not data or 'code' not in data:
+        return jsonify({'message': 'Request body must be JSON and include "code"'}), 400
+
+    user_code = data['code']
+
+    # Execute code in sandbox
+    execution_result = execute_code_in_sandbox(
+        language=challenge.language,
+        code=user_code,
+        expected_output=challenge.expected_output,
+        setup_code=challenge.setup_code,
+        test_case_input=challenge.test_case_input,
+        timeout=10 # Default timeout, can be made configurable per challenge
+    )
+
+    if execution_result.success:
+        # Check if the user has already solved this challenge
+        existing_submission = Submission.query.filter_by(
+            user_id=current_user.id,
+            challenge_id=challenge.id
+        ).first()
+
+        if not existing_submission:
+            # Mark challenge as solved for the user
+            new_submission = Submission(
+                user_id=current_user.id,
+                challenge_id=challenge.id,
+                score_at_submission=challenge.points # Store current points
+            )
+            db.session.add(new_submission)
+            current_user.score += challenge.points
+            db.session.commit()
+            return jsonify({'message': 'Challenge solved!', 'correct': True}), 200
+        else:
+            return jsonify({'message': 'Challenge already solved!', 'correct': True}), 200
+    else:
+        # Provide feedback on why it failed
+        feedback = {
+            'message': 'Code execution failed or output mismatch.',
+            'correct': False,
+            'stdout': execution_result.stdout,
+            'stderr': execution_result.stderr,
+            'error_message': execution_result.error_message,
+            'is_timeout': execution_result.is_timeout
+        }
+        return jsonify(feedback), 400
 
 
 @api_bp.route('/challenges/<int:challenge_id>', methods=['DELETE'])

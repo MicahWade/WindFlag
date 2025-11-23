@@ -7,7 +7,7 @@ routes for user authentication, profile management, challenge interaction,
 and scoreboard display. It also includes utility functions for data export/import
 and admin user creation.
 """
-from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
+from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, current_app
 from flask_login import login_user, current_user, logout_user, login_required
 from scripts.config import Config
 from scripts.forms import RegistrationForm, LoginForm, FlagSubmissionForm, InlineGiveAwardForm
@@ -650,43 +650,54 @@ def create_app(config_class=Config):
         Args:
             challenge_id (int): The ID of the challenge.
         """
-        challenge = Challenge.query.options(joinedload(Challenge.hints)).get_or_404(challenge_id)
-        
-        # Check if the challenge is unlocked for the current user
-        if not challenge.is_unlocked_for_user(current_user):
-            return jsonify({'success': False, 'message': 'This challenge is currently locked.'}), 403 # Forbidden
+        try:
+            challenge = Challenge.query.options(joinedload(Challenge.hints)).get_or_404(challenge_id)
+            
+            # Fetch all submissions by all users and build a cache: {user_id: {challenge_id, ...}}
+            all_submissions = Submission.query.with_entities(Submission.user_id, Submission.challenge_id).all()
+            user_completed_challenges_cache = {}
+            for user_id, challenge_id_val in all_submissions:
+                user_completed_challenges_cache.setdefault(user_id, set()).add(challenge_id_val)
 
-        # Get all hints revealed by the current user for this challenge
-        revealed_hint_ids = {uh.hint_id for uh in UserHint.query.filter_by(user_id=current_user.id).all()}
+            # Check if the challenge is unlocked for the current user
+            if not challenge.is_unlocked_for_user(current_user, user_completed_challenges_cache):
+                return jsonify({'success': False, 'message': 'This challenge is currently locked.'}), 403 # Forbidden
 
-        hints_data = []
-        for hint in challenge.hints:
-            hints_data.append({
-                'id': hint.id,
-                'title': hint.title, # New: Include hint title
-                'content': hint.content if hint.id in revealed_hint_ids else None, # Only send content if revealed
-                'cost': hint.cost,
-                'is_revealed': hint.id in revealed_hint_ids
+            # Get all hints revealed by the current user for this challenge
+            revealed_hint_ids = {uh.hint_id for uh in UserHint.query.filter_by(user_id=current_user.id).all()}
+
+            hints_data = []
+            for hint in challenge.hints:
+                hints_data.append({
+                    'id': hint.id,
+                    'title': hint.title, # New: Include hint title
+                    'content': hint.content if hint.id in revealed_hint_ids else None, # Only send content if revealed
+                    'cost': hint.cost,
+                    'is_revealed': hint.id in revealed_hint_ids
+                })
+            
+            # Get completion status and flag counts
+            is_completed = Submission.query.filter_by(user_id=current_user.id, challenge_id=challenge.id).first() is not None
+            submitted_flags_count = FlagSubmission.query.filter_by(user_id=current_user.id, challenge_id=challenge.id).count()
+            total_flags = len(challenge.flags)
+
+            return jsonify({
+                'id': challenge.id,
+                'name': challenge.name,
+                'description': challenge.description,
+                'points': challenge.calculated_points, # Use the calculated_points property
+                'is_completed': is_completed,
+                'multi_flag_type': challenge.multi_flag_type,
+                'submitted_flags_count': submitted_flags_count,
+                'total_flags': total_flags,
+                'hints': hints_data,
+                'current_user_score': current_user.score, # Pass current user's score for client-side checks
+                'language': challenge.language, # New: Pass challenge language for CodeMirror
+                'starter_code': challenge.starter_code # New: Pass starter code for CodeMirror
             })
-        
-        # Get completion status and flag counts
-        is_completed = Submission.query.filter_by(user_id=current_user.id, challenge_id=challenge.id).first() is not None
-        submitted_flags_count = FlagSubmission.query.filter_by(user_id=current_user.id, challenge_id=challenge.id).count()
-        total_flags = len(challenge.flags)
-
-        return jsonify({
-            'id': challenge.id,
-            'name': challenge.name,
-            'description': challenge.description,
-            'points': challenge.calculated_points, # Use the calculated_points property
-            'is_completed': is_completed,
-            'multi_flag_type': challenge.multi_flag_type,
-            'submitted_flags_count': submitted_flags_count,
-            'total_flags': total_flags,
-            'hints': hints_data,
-            'current_user_score': current_user.score # Pass current user's score for client-side checks
-        })
-
+        except Exception as e:
+            current_app.logger.error(f"Error in get_challenge_details for challenge_id {challenge_id}: {e}")
+            return jsonify({'success': False, 'message': f'Internal server error: {e}'}), 500
     @app.route('/scoreboard')
     @login_required
     def scoreboard():

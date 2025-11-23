@@ -14,7 +14,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const hintsList = document.getElementById('hintsList'); // New: Get hints list container
     const userScoreDisplay = document.getElementById('userScoreDisplay'); // Assuming you have a score display element
 
+    // New elements for coding challenges
+    const flagSubmissionSection = document.getElementById('flagSubmissionSection');
+    const codeSubmissionSection = document.getElementById('codeSubmissionSection');
+    const codeEditor = document.getElementById('codeEditor');
+    const modalRunCodeButton = document.getElementById('modalRunCodeButton');
+    const codeResult = document.getElementById('codeResult');
+
     let currentChallengeId = null;
+    let currentChallengeType = null; // New: Store current challenge type
 
     // Function to get a color based on percentage
     function getColorForPercentage(percentage) {
@@ -72,16 +80,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             currentChallengeId = this.dataset.id;
+            currentChallengeType = this.dataset.challengeType; // Get challenge type
             
             // Fetch challenge details including hints
             fetch(`/api/challenge_details/${currentChallengeId}`)
                 .then(response => response.json())
                 .then(data => {
                     modalChallengeName.textContent = data.name;
-                    try {
-                        modalChallengeDescription.innerHTML = marked.parse(data.description);
-                    } catch (e) {
-                        console.error('Error parsing markdown:', e);
+                    // Safely parse markdown description using marked, with fallback
+                    if (typeof marked !== 'undefined' && marked.parse) {
+                        try {
+                            modalChallengeDescription.innerHTML = marked.parse(data.description);
+                        } catch (e) {
+                            console.error('Error parsing markdown:', e);
+                            modalChallengeDescription.textContent = data.description;
+                        }
+                    } else {
+                        console.warn('Marked library not loaded, displaying raw description.');
                         modalChallengeDescription.textContent = data.description;
                     }
                     modalChallengePoints.textContent = data.points + ' pts';
@@ -95,25 +110,45 @@ document.addEventListener('DOMContentLoaded', function() {
                     modalChallengeStatus.classList.add('hidden');
                     modalFlagProgress.classList.add('hidden');
                     modalFlagProgress.textContent = '';
+                    codeResult.classList.add('hidden'); // Hide code result on modal open
 
-                    if (isCompleted) {
-                        modalChallengeStatus.textContent = 'You have already completed this challenge!';
-                        modalChallengeStatus.classList.remove('hidden');
-                        flagInput.disabled = true;
-                        submitButton.disabled = true;
-                        submitButton.classList.add('opacity-50', 'cursor-not-allowed');
-                    } else {
-                        flagInput.disabled = false;
-                        submitButton.disabled = false;
-                        submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
-
-                        if (totalFlags > 1) {
-                            modalFlagProgress.textContent = `Flags submitted: ${submittedFlagsCount} / ${totalFlags}`;
-                            modalFlagProgress.classList.remove('hidden');
+                    // Conditional display of forms
+                    if (currentChallengeType === 'CODING') {
+                        flagSubmissionSection.classList.add('hidden');
+                        codeSubmissionSection.classList.remove('hidden');
+                        codeEditor.value = data.starter_code || ''; // Load starter code if available
+                        if (isCompleted) {
+                            codeEditor.disabled = true;
+                            modalRunCodeButton.disabled = true;
+                            modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
+                            modalChallengeStatus.textContent = 'You have already completed this challenge!';
+                            modalChallengeStatus.classList.remove('hidden');
+                        } else {
+                            codeEditor.disabled = false;
+                            modalRunCodeButton.disabled = false;
+                            modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                        }
+                    } else { // FLAG challenge type
+                        flagSubmissionSection.classList.remove('hidden');
+                        codeSubmissionSection.classList.add('hidden');
+                        if (isCompleted) {
+                            modalChallengeStatus.textContent = 'You have already completed this challenge!';
+                            modalChallengeStatus.classList.remove('hidden');
+                            flagInput.disabled = true;
+                            submitButton.disabled = true;
+                            submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            flagInput.disabled = false;
+                            submitButton.disabled = false;
+                            submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                            if (totalFlags > 1) {
+                                modalFlagProgress.textContent = `Flags submitted: ${submittedFlagsCount} / ${totalFlags}`;
+                                modalFlagProgress.classList.remove('hidden');
+                            }
                         }
                     }
 
-                    // Populate hints section
+                    // Populate hints section (common to all challenge types)
                     if (data.hints && data.hints.length > 0) {
                         hintsList.innerHTML = ''; // Clear previous hints
                         document.getElementById('modalHintsSection').classList.remove('hidden'); // Show the section
@@ -136,12 +171,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         hintsList.innerHTML = ''; // Ensure it's empty
                     }
 
-                    // Update form action for submission
-                    modalFlagForm.action = `/submit_flag/${currentChallengeId}`;
+                    // Update form action for submission (only for FLAG challenges)
+                    if (currentChallengeType === 'FLAG') {
+                        modalFlagForm.action = `/submit_flag/${currentChallengeId}`;
+                    }
                     
                     // Show modal with animation
                     challengeModal.classList.remove('opacity-0', 'pointer-events-none');
                     modalContent.classList.remove('-translate-y-full');
+                    // No explicit refresh/focus here, rely on autofocus option.
+                    // If issues persist, might need a small delay after modal fully visible.
                 })
                 .catch(error => {
                     console.error('Error fetching challenge details:', error);
@@ -212,6 +251,14 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             challengeModal.classList.add('opacity-0', 'pointer-events-none');
             modalContent.classList.add('-translate-y-full');
+            showingSolvers = false; // Reset state when closing modal
+            challengeContent.classList.remove('hidden'); // Ensure challenge content is visible
+            solversContent.classList.add('hidden'); // Hide solvers content
+            viewSolversBtn.textContent = 'View Solvers'; // Reset button text
+
+            // --- CodeMirror Cleanup ---
+            // Removed CodeMirror specific cleanup.
+            // --- End CodeMirror Cleanup ---
         });
     });
 
@@ -219,6 +266,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target === challengeModal) {
             challengeModal.classList.add('opacity-0', 'pointer-events-none');
             modalContent.classList.add('-translate-y-full');
+            showingSolvers = false; // Reset state when closing modal
+            challengeContent.classList.remove('hidden'); // Ensure challenge content is visible
+            solversContent.classList.add('hidden'); // Hide solvers content
+            viewSolversBtn.textContent = 'View Solvers'; // Reset button text
         }
     });
 
@@ -325,6 +376,71 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error:', error);
             showFlashMessage('An error occurred during submission.', 'danger');
+        });
+    });
+
+    // Handle code submission
+    modalRunCodeButton.addEventListener('click', function() {
+        const code = codeEditor.value; // Get code from CodeMirror instance
+        const challengeId = currentChallengeId;
+
+        codeResult.classList.add('hidden'); // Hide previous result
+        codeResult.textContent = '';
+        modalRunCodeButton.disabled = true; // Disable button to prevent multiple submissions
+        modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+        fetch(`/api/challenges/${challengeId}/submit_code`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ code: code })
+        })
+        .then(response => response.json())
+        .then(data => {
+            modalRunCodeButton.disabled = false; // Re-enable button
+            modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            codeResult.classList.remove('hidden');
+            if (data.correct) {
+                showFlashMessage(data.message, 'success');
+                codeResult.classList.remove('bg-gray-900', 'text-gray-100', 'text-red-400');
+                codeResult.classList.add('bg-green-800', 'text-white');
+                codeResult.textContent = 'Correct! Challenge Solved.';
+                
+                // Update challenge card status
+                const currentCard = document.querySelector(`.challenge-card[data-id="${challengeId}"]`);
+                if (currentCard) {
+                    currentCard.dataset.completed = 'true';
+                    currentCard.classList.add('completed-challenge');
+                    currentCard.classList.remove(getColorForPercentage(parseInt(currentCard.dataset.completionPercentage)));
+                    currentCard.classList.add(getColorForPercentage(100));
+                    codeEditor.disabled = true;
+                    modalRunCodeButton.disabled = true;
+                    modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                modalChallengeStatus.textContent = data.message;
+                modalChallengeStatus.classList.remove('hidden');
+
+            } else {
+                showFlashMessage(data.message, 'danger');
+                codeResult.classList.remove('bg-gray-900', 'text-gray-100', 'bg-green-800');
+                codeResult.classList.add('text-red-400');
+                let output = '';
+                if (data.stdout) output += `STDOUT:\n${data.stdout}\n\n`;
+                if (data.stderr) output += `STDERR:\n${data.stderr}\n\n`;
+                if (data.error_message) output += `Error: ${data.error_message}`;
+                codeResult.textContent = output || 'Execution failed with no output.';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showFlashMessage('An error occurred during code submission.', 'danger');
+            modalRunCodeButton.disabled = false; // Re-enable button on error
+            modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            codeResult.classList.remove('hidden');
+            codeResult.classList.add('text-red-400');
+            codeResult.textContent = `Network error or unexpected response: ${error}`;
         });
     });
 
