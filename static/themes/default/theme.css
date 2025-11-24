@@ -1,9 +1,19 @@
 body.theme-default {
-    background-color: #1a202c; /* Equivalent to bg-gray-900 */
-    color: #e2e8f0;            /* Equivalent to text-gray-200 */
-    line-height: 1.5;          /* Equivalent to leading-normal */
-    letter-spacing: 0em;       /* Equivalent to tracking-normal */
-    /* Add any other base styles that were implicitly present or need to be overridden */
+    --bg-main: #1a202c;
+    --bg-surface: #2d3748;
+    --bg-input: #4a5568;
+    --text-header: #e2e8f0;
+    --text-main: #cbd5e0;
+    --text-muted: #a0aec0;
+    --border-color: #4a5568;
+    --primary: #4299e1;
+    --radius: 0.25rem;
+    --card-border: 1px solid #4a5568;
+    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    line-height: 1.5;
+    letter-spacing: 0em;
     --bg-completed: #047857; /* Tailwind green-700 for completed challenges */
     --bg-hover-surface: #374151; /* A slightly lighter gray for hover effect */
 }
