@@ -209,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
                              data-solves="${challenge.solves}">
                             <h5 class="theme-challenge-title text-xl font-bold mb-2">${challenge.name}</h5>
                             <p class="theme-challenge-points">${challenge.points} pts</p>
-                            <p class="theme-challenge-solves text-sm">${challenge.solves} solves</p>
                         </div>
                     `;
                 });
@@ -242,10 +241,58 @@ document.addEventListener('DOMContentLoaded', function() {
             challengeContainer.innerHTML = '<p class="text-red-500">Could not load challenges. Please try again later.</p>';
         });
 
+    const challengeContent = document.getElementById('challengeContent');
+    const solversContent = document.getElementById('solversContent');
+    const solversList = document.getElementById('solversList');
+    const solverCount = document.getElementById('solverCount');
+    const viewSolversBtn = document.getElementById('viewSolversBtn');
+
+    let showingSolvers = false;
+
+    if (viewSolversBtn) {
+        viewSolversBtn.addEventListener('click', function() {
+            if (!showingSolvers) {
+                fetch(`/api/challenge/${currentChallengeId}/solvers`)
+                    .then(response => response.json())
+                    .then(data => {
+                        solversList.innerHTML = '';
+                        if (data.solvers.length > 0) {
+                            data.solvers.forEach(solver => {
+                                const li = document.createElement('li');
+                                li.textContent = solver;
+                                solversList.appendChild(li);
+                            });
+                        } else {
+                            const li = document.createElement('li');
+                            li.textContent = 'No solvers yet.';
+                            solversList.appendChild(li);
+                        }
+                        solverCount.textContent = data.solver_count;
+                        challengeContent.classList.add('hidden');
+                        solversContent.classList.remove('hidden');
+                        viewSolversBtn.textContent = 'View Challenge';
+                        showingSolvers = true;
+                    })
+                    .catch(error => console.error('Error fetching solvers:', error));
+            } else {
+                solversContent.classList.add('hidden');
+                challengeContent.classList.remove('hidden');
+                viewSolversBtn.textContent = 'View Solvers';
+                showingSolvers = false;
+            }
+        });
+    }
+
     closeModalButtons.forEach(button => {
         button.addEventListener('click', function() {
             challengeModal.classList.add('opacity-0', 'pointer-events-none');
             modalContent.classList.add('-translate-y-full');
+            showingSolvers = false; // Reset state when closing modal
+            challengeContent.classList.remove('hidden'); // Ensure challenge content is visible
+            solversContent.classList.add('hidden'); // Hide solvers content
+            if (viewSolversBtn) {
+                viewSolversBtn.textContent = 'View Solvers'; // Reset button text
+            }
         });
     });
 
@@ -253,6 +300,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target === challengeModal) {
             challengeModal.classList.add('opacity-0', 'pointer-events-none');
             modalContent.classList.add('-translate-y-full');
+            showingSolvers = false; // Reset state when closing modal
+            challengeContent.classList.remove('hidden'); // Ensure challenge content is visible
+            solversContent.classList.add('hidden'); // Hide solvers content
+            if (viewSolversBtn) {
+                viewSolversBtn.textContent = 'View Solvers'; // Reset button text
+            }
         }
     });
 
