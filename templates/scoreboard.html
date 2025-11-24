@@ -4,15 +4,9 @@
 {% block content %}
     <h1 class="theme-page-title text-3xl font-bold mb-6">Scoreboard</h1>
 
-    {% if config['ENABLE_LIVE_SCORE_GRAPH'] %}
     <div class="theme-chart-container p-6 mb-8 h-96">
         <canvas id="scoreboardChart"></canvas>
     </div>
-    {% else %}
-    <div class="theme-chart-container p-6 mb-8 h-96 flex items-center justify-center">
-        <p class="text-xl theme-no-data-text">Live Score Graph is disabled by administrator.</p>
-    </div>
-    {% endif %}
 
     <div class="theme-chart-container p-6">
         <h2 class="theme-category-title text-2xl font-semibold mb-4">All Players Ranked</h2>
