@@ -82,11 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         display: false, // Remove the chart title
                     },
                     legend: {
-                        display: true, // Display legend to show player names and colors
-                        position: 'top',
-                        labels: {
-                            color: computedStyle.getPropertyValue('--text-color-primary').trim(), // Use theme text color
-                        }
+                        display: false, // Do not display legend for users
                     },
                     tooltip: {
                         mode: 'index',
@@ -132,15 +128,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         },
                         title: {
-                            display: true,
-                            text: 'Time',
-                            color: computedStyle.getPropertyValue('--text-color-primary').trim(),
+                            display: false, // Do not display X-axis title (Time)
                         },
                         ticks: {
-                            color: computedStyle.getPropertyValue('--text-color-secondary').trim(),
-                        },
-                        grid: {
-                            color: computedStyle.getPropertyValue('--chart-grid-color').trim(),
+                            display: false, // Do not display X-axis ticks/labels
                         }
                     },
                     y: {
