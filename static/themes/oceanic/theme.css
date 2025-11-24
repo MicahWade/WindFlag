@@ -12,7 +12,7 @@ body.theme-oceanic {
     --radius: 16px;
     --card-border: 1px solid rgba(33, 158, 188, 0.3);
     --card-shadow: 0 0 15px rgba(33, 158, 188, 0.2);
-    font-family: 'Raleway', sans-serif;
+    font-family: 'Quicksand', sans-serif; /* Changed to Quicksand */
     backdrop-filter: blur(5px);
     background-color: var(--bg-main); /* This will be transparent */
     color: var(--text-main);
@@ -33,7 +33,7 @@ body.theme-oceanic {
     --chart-color-10: #4B0082; /* Indigo - deep sea purple */
 
     --text-info: var(--text-main); /* Using text-main color for info */
-    --chart-label-color: var(--primary); /* Primary cyan for chart labels */
+    --chart-label-color: var(--text-main); /* Very Light Blue for chart labels */
     --bg-admin-badge: #e53e3e;
     --text-admin-badge: white;
     --bg-hidden-badge: #718096;
@@ -57,6 +57,7 @@ body.theme-oceanic h1,
 body.theme-oceanic h2,
 body.theme-oceanic h3 {
     color: var(--text-header);
+    font-family: 'Raleway', sans-serif; /* Added Raleway for headings */
 }
 
 body.theme-oceanic a {

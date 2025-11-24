@@ -32,6 +32,7 @@ body.theme-canberra {
     --chart-color-10: #F45B69;
     
     --text-info: #63b3ed;
+    --chart-label-color: var(--text-main); /* Dark gray for chart labels */
     --bg-admin-badge: #e53e3e;
     --text-admin-badge: white;
     --bg-hidden-badge: #718096;

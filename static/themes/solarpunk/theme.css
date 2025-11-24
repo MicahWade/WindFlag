@@ -11,7 +11,7 @@ body.theme-solarpunk {
     --radius: 20px 20px 0 0; /* Arch shape */
     --card-border: 2px solid #F6AD55;
     --card-shadow: 0 10px 15px -3px rgba(47, 133, 90, 0.2);
-    font-family: 'Josefin Sans', sans-serif;
+    font-family: 'Lato', sans-serif; /* Changed to Lato */
     background-color: var(--bg-main);
     color: var(--text-main);
     line-height: 1.5;
@@ -31,6 +31,7 @@ body.theme-solarpunk {
     --chart-color-10: #F45B69;
 
     --text-info: #F6E05E; /* Using primary color for info */
+    --chart-label-color: var(--text-main); /* Dark blue for chart labels */
     --bg-admin-badge: #e53e3e;
     --text-admin-badge: white;
     --bg-hidden-badge: #718096;
@@ -54,6 +55,7 @@ body.theme-solarpunk h1,
 body.theme-solarpunk h2,
 body.theme-solarpunk h3 {
     color: var(--text-header);
+    font-family: 'Josefin Sans', sans-serif; /* Added Josefin Sans for headings */
 }
 
 body.theme-solarpunk a {

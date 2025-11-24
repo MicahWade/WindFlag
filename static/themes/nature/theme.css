@@ -32,6 +32,7 @@ body.theme-nature {
     --chart-color-10: #F45B69;
 
     --text-info: #859900; /* Using primary color for info */
+    --chart-label-color: var(--text-main); /* Dark brown for chart labels */
     --bg-admin-badge: #e53e3e;
     --text-admin-badge: white;
     --bg-hidden-badge: #718096;
@@ -55,6 +56,7 @@ body.theme-nature h1,
 body.theme-nature h2,
 body.theme-nature h3 {
     color: var(--text-header);
+    font-family: 'Josefin Sans', sans-serif; /* Added Josefin Sans for headings */
 }
 
 body.theme-nature a {
@@ -265,14 +267,6 @@ body.theme-nature .theme-table-body-cell {
     border-bottom: 1px solid var(--border-color);
 }
 
-body.theme-nature .theme-table-row-even {
-    background-color: var(--bg-surface);
-}
-
-body.theme-nature .theme-table-row-odd {
-    background-color: var(--bg-surface);
-}
-
 body.theme-nature .theme-link {
     color: var(--primary);
     text-decoration: none;
@@ -303,33 +297,4 @@ body.theme-nature .theme-profile-badge.admin {
 body.theme-nature .theme-profile-badge.hidden {
     background-color: var(--bg-hidden-badge);
     color: var(--text-hidden-badge);
-}
-
-/* Also add general theme-modal-input and theme-modal-button-primary styles for the give award modal */
-body.theme-nature .theme-modal-input {
-    background-color: var(--bg-input);
-    color: var(--text-main);
-    border-color: var(--border-color);
-}
-
-body.theme-nature .theme-modal-button-primary {
-    background-color: var(--primary);
-    color: white;
-}
-
-body.theme-nature .theme-modal-button-secondary {
-    background-color: var(--bg-input);
-    color: var(--text-main);
-}
-
-body.theme-nature .theme-modal-card {
-    background-color: var(--bg-surface);
-    border: var(--card-border);
-    border-radius: var(--radius);
-    box-shadow: var(--card-shadow);
-}
-
-/* Modal Overlay */
-body.theme-nature .modal-overlay {
-    background-color: rgba(45, 55, 72, 0.8); /* gray-800 with 80% opacity */
 }

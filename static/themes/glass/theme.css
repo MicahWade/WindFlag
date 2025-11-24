@@ -12,7 +12,7 @@ body.theme-glass {
     --radius: 20px;
     --card-border: 1px solid rgba(255, 255, 255, 0.2);
     --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); /* Soft diffuse shadow */
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', sans-serif; /* Already correct */
     background-color: var(--bg-main); /* This will be transparent */
     color: var(--text-main);
     line-height: 1.5;
@@ -32,6 +32,7 @@ body.theme-glass {
     --chart-color-10: #F45B69;
 
     --text-info: #FFFFFF;
+    --chart-label-color: var(--text-main); /* Light gray for chart labels */
     --bg-admin-badge: #e53e3e;
     --text-admin-badge: white;
     --bg-hidden-badge: #718096;
@@ -120,6 +121,7 @@ body.theme-glass .theme-accordion-item {
     background-color: var(--bg-surface);
     border-radius: var(--radius);
     box-shadow: var(--card-shadow);
+    border: var(--card-border);
 }
 
 body.theme-glass .theme-accordion-header {
@@ -275,14 +277,6 @@ body.theme-glass .theme-table-body-cell {
     border-bottom: 1px solid var(--border-color);
 }
 
-body.theme-glass .theme-table-row-even {
-    background-color: var(--bg-surface);
-}
-
-body.theme-glass .theme-table-row-odd {
-    background-color: var(--bg-surface);
-}
-
 body.theme-glass .theme-link {
     color: var(--primary);
     text-decoration: none;
@@ -313,33 +307,4 @@ body.theme-glass .theme-profile-badge.admin {
 body.theme-glass .theme-profile-badge.hidden {
     background-color: var(--bg-hidden-badge);
     color: var(--text-hidden-badge);
-}
-
-/* Also add general theme-modal-input and theme-modal-button-primary styles for the give award modal */
-body.theme-glass .theme-modal-input {
-    background-color: var(--bg-input);
-    color: var(--text-main);
-    border-color: var(--border-color);
-}
-
-body.theme-glass .theme-modal-button-primary {
-    background-color: var(--primary);
-    color: white;
-}
-
-body.theme-glass .theme-modal-button-secondary {
-    background-color: var(--bg-input);
-    color: var(--text-main);
-}
-
-body.theme-glass .theme-modal-card {
-    background-color: var(--bg-surface);
-    border: var(--card-border);
-    border-radius: var(--radius);
-    box-shadow: var(--card-shadow);
-}
-
-/* Modal Overlay */
-body.theme-glass .modal-overlay {
-    background-color: rgba(45, 55, 72, 0.8); /* gray-800 with 80% opacity */
 }

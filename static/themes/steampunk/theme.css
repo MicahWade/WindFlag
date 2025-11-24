@@ -33,6 +33,7 @@ body.theme-steampunk {
     --chart-color-10: #F45B69;
 
     --text-info: #CD7F32; /* Using header color for info */
+    --chart-label-color: var(--text-main); /* Light brown/gold for chart labels */
     --bg-admin-badge: #e53e3e;
     --text-admin-badge: white;
     --bg-hidden-badge: #718096;

@@ -11,7 +11,7 @@ body.theme-noir {
     --radius: 2px;
     --card-border: 3px solid var(--border-color);
     --card-shadow: 10px 10px 0px #000000; /* Shadow remains black */
-    font-family: 'Special Elite', serif;
+    font-family: 'Courier Prime', monospace; /* Changed to Courier Prime */
     filter: grayscale(100%) contrast(120%);
     background-color: var(--bg-main);
     color: var(--text-main); /* Default body text is white on dark background */
@@ -32,6 +32,7 @@ body.theme-noir {
     --chart-color-10: #F45B69;
 
     --text-info: #FFFFFF; /* Info text on dark backgrounds */
+    --chart-label-color: var(--text-main); /* White for chart labels */
     --bg-admin-badge: #e53e3e; /* Admin badge background (red) */
     --text-admin-badge: white;
     --bg-hidden-badge: #718096; /* Hidden badge background (gray) */
@@ -55,6 +56,7 @@ body.theme-noir h1,
 body.theme-noir h2,
 body.theme-noir h3 {
     color: var(--text-header);
+    font-family: 'Special Elite', serif; /* Added Special Elite for headings */
 }
 
 body.theme-noir a {

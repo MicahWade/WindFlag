@@ -37,4 +37,4 @@ class TestConfig(Config):
 
 
 
-ACTIVE_THEME = 'oceanic'
+ACTIVE_THEME = 'blueprint'

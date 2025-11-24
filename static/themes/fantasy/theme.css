@@ -11,7 +11,7 @@ body.theme-fantasy {
     --radius: 2px;
     --card-border: 1px solid #D7CCC8;
     --card-shadow: 1px 1px 5px rgba(0,0,0,0.5);
-    font-family: 'Crimson Text', serif;
+    font-family: 'Crimson Text', serif; /* Already correct */
 
     /* Repeating linear gradient for stripes */
     background-image: repeating-linear-gradient(45deg, var(--bg-main) 0, var(--bg-main) 10px, #A07D2C 10px, #A07D2C 12px);
@@ -34,6 +34,7 @@ body.theme-fantasy {
     --chart-color-10: #F45B69;
 
     --text-info: var(--primary); /* Using primary color for info */
+    --chart-label-color: var(--text-main); /* Dark brown for chart labels */
     --bg-admin-badge: #e53e3e;
     --text-admin-badge: white;
     --bg-hidden-badge: #718096;
@@ -49,7 +50,7 @@ body.theme-fantasy {
     --chart-color-challenges-complete: rgb(75, 192, 192);
 }
 body.theme-fantasy h1 {
-    font-family: 'Cinzel', serif;
+    font-family: 'Cinzel', serif; /* Added Cinzel for headings */
     color: var(--text-header);
 }
 

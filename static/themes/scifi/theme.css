@@ -1,4 +1,5 @@
 body.theme-scifi {
+    background: linear-gradient(180deg, #020204 0%, #000000 100%) fixed;
     --bg-main: #020204;
     --bg-surface: rgba(0, 20, 40, 0.6);
     --bg-input: rgba(0, 0, 0, 0.8);
@@ -11,7 +12,7 @@ body.theme-scifi {
     --radius: 0px;
     --card-border: 1px solid #FF9900;
     --card-shadow: inset 0 0 20px rgba(255, 153, 0, 0.1);
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Rajdhani', sans-serif; /* Already correct */
     background-color: var(--bg-main);
     color: var(--text-main);
     line-height: 1.5;
@@ -31,6 +32,7 @@ body.theme-scifi {
     --chart-color-10: #F45B69;
 
     --text-info: #87CEFA; /* Using text-main color for info */
+    --chart-label-color: var(--text-main); /* Light Sky Blue for chart labels */
     --bg-admin-badge: #e53e3e;
     --text-admin-badge: white;
     --bg-hidden-badge: #718096;
@@ -63,6 +65,7 @@ body.theme-scifi h1,
 body.theme-scifi h2,
 body.theme-scifi h3 {
     color: var(--text-header);
+    font-family: 'Orbitron', sans-serif; /* Added Orbitron for headings */
 }
 
 body.theme-scifi a {
@@ -100,7 +103,7 @@ body.theme-scifi button:hover {
 
 /* Theme-specific classes for base.html header */
 body.theme-scifi .theme-header {
-    background-color: var(--bg-main);
+    background-color: var(--bg-main); /* transparent */
     color: var(--text-header);
 }
 

@@ -11,7 +11,7 @@ body.theme-2010s {
     --radius: 4px;
     --card-border: none;
     --card-shadow: 0 2px 0 #BDC3C7; /* Solid shadow, no blur */
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Open Sans', sans-serif; /* Already correct */
     background-color: var(--bg-main);
     color: var(--text-main);
     line-height: 1.5;
@@ -31,6 +31,7 @@ body.theme-2010s {
     --chart-color-10: #F45B69;
 
     --text-info: #E74C3C; /* Using primary color for info */
+    --chart-label-color: var(--text-main); /* Gray for chart labels */
     --bg-admin-badge: #e53e3e;
     --text-admin-badge: white;
     --bg-hidden-badge: #718096;
@@ -264,14 +265,6 @@ body.theme-2010s .theme-table-body-cell {
     border-bottom: 1px solid var(--border-color);
 }
 
-body.theme-2010s .theme-table-row-even {
-    background-color: var(--bg-surface);
-}
-
-body.theme-2010s .theme-table-row-odd {
-    background-color: var(--bg-surface);
-}
-
 body.theme-2010s .theme-link {
     color: var(--primary);
     text-decoration: none;
@@ -302,33 +295,4 @@ body.theme-2010s .theme-profile-badge.admin {
 body.theme-2010s .theme-profile-badge.hidden {
     background-color: var(--bg-hidden-badge);
     color: var(--text-hidden-badge);
-}
-
-/* Also add general theme-modal-input and theme-modal-button-primary styles for the give award modal */
-body.theme-2010s .theme-modal-input {
-    background-color: var(--bg-input);
-    color: var(--text-main);
-    border-color: var(--border-color);
-}
-
-body.theme-2010s .theme-modal-button-primary {
-    background-color: var(--primary);
-    color: white;
-}
-
-body.theme-2010s .theme-modal-button-secondary {
-    background-color: var(--bg-input);
-    color: var(--text-main);
-}
-
-body.theme-2010s .theme-modal-card {
-    background-color: var(--bg-surface);
-    border: var(--card-border);
-    border-radius: var(--radius);
-    box-shadow: var(--card-shadow);
-}
-
-/* Modal Overlay */
-body.theme-2010s .modal-overlay {
-    background-color: rgba(45, 55, 72, 0.8); /* gray-800 with 80% opacity */
 }

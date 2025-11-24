@@ -11,7 +11,7 @@ body.theme-2000s {
     --radius: 25px;
     --card-border: 1px solid #FFFFFF;
     --card-shadow: 5px 5px 15px rgba(0, 150, 255, 0.2), inset 0 0 10px rgba(255,255,255,0.8); /* Inner glow + Outer shadow */
-    font-family: 'Trebuchet MS', sans-serif;
+    font-family: 'Trebuchet MS', sans-serif; /* Already correct */
 
     background: radial-gradient(circle at top left, #F0F0F0 0%, #C0E7FA 100%);
     background-color: var(--bg-main);
@@ -33,6 +33,7 @@ body.theme-2000s {
     --chart-color-10: #F45B69;
 
     --text-info: #0044CC; /* Using header color for info */
+    --chart-label-color: var(--text-main); /* Dark gray for chart labels */
     --bg-admin-badge: #e53e3e;
     --text-admin-badge: white;
     --bg-hidden-badge: #718096;
@@ -266,14 +267,6 @@ body.theme-2000s .theme-table-body-cell {
     border-bottom: 1px solid var(--border-color);
 }
 
-body.theme-2000s .theme-table-row-even {
-    background-color: var(--bg-surface);
-}
-
-body.theme-2000s .theme-table-row-odd {
-    background-color: var(--bg-surface);
-}
-
 body.theme-2000s .theme-link {
     color: var(--primary);
     text-decoration: none;
@@ -304,33 +297,4 @@ body.theme-2000s .theme-profile-badge.admin {
 body.theme-2000s .theme-profile-badge.hidden {
     background-color: var(--bg-hidden-badge);
     color: var(--text-hidden-badge);
-}
-
-/* Also add general theme-modal-input and theme-modal-button-primary styles for the give award modal */
-body.theme-2000s .theme-modal-input {
-    background-color: var(--bg-input);
-    color: var(--text-main);
-    border-color: var(--border-color);
-}
-
-body.theme-2000s .theme-modal-button-primary {
-    background-color: var(--primary);
-    color: white;
-}
-
-body.theme-2000s .theme-modal-button-secondary {
-    background-color: var(--bg-input);
-    color: var(--text-main);
-}
-
-body.theme-2000s .theme-modal-card {
-    background-color: var(--bg-surface);
-    border: var(--card-border);
-    border-radius: var(--radius);
-    box-shadow: var(--card-shadow);
-}
-
-/* Modal Overlay */
-body.theme-2000s .modal-overlay {
-    background-color: rgba(45, 55, 72, 0.8); /* gray-800 with 80% opacity */
 }

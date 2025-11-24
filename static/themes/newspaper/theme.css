@@ -11,7 +11,7 @@ body.theme-newspaper {
     --radius: 0px;
     --card-border: 1px solid var(--border-color);
     --card-shadow: none;
-    font-family: 'Georgia', serif;
+    font-family: 'Georgia', serif; /* Already correct */
     background-color: var(--bg-main);
     color: var(--text-main);
     line-height: 1.5;
@@ -31,6 +31,7 @@ body.theme-newspaper {
     --chart-color-10: #F45B69;
 
     --text-info: var(--primary); /* Using primary color for info */
+    --chart-label-color: var(--text-main); /* Dark brown for chart labels */
     --bg-admin-badge: #e53e3e;
     --text-admin-badge: white;
     --bg-hidden-badge: #718096;
@@ -46,7 +47,7 @@ body.theme-newspaper {
     --chart-color-challenges-complete: rgb(75, 192, 192);
 }
 body.theme-newspaper h1 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Playfair Display', serif; /* Already correct */
     border-bottom: 3px double var(--border-color);
 }
 

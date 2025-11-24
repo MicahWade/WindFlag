@@ -11,7 +11,7 @@ body.theme-blueprint {
     --radius: 0px;
     --card-border: 2px solid #FFFFFF;
     --card-shadow: none;
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier Prime', monospace; /* Already correct */
 
     /* Grid Lines */
     background-image:
@@ -37,6 +37,7 @@ body.theme-blueprint {
     --chart-color-10: #F45B69;
 
     --text-info: #FFFFFF; /* Using primary color for info */
+    --chart-label-color: var(--text-main); /* Light Steel Blue for chart labels */
     --bg-admin-badge: #e53e3e;
     --text-admin-badge: white;
     --bg-hidden-badge: #718096;
@@ -270,14 +271,6 @@ body.theme-blueprint .theme-table-body-cell {
     border-bottom: 1px solid var(--border-color);
 }
 
-body.theme-blueprint .theme-table-row-even {
-    background-color: var(--bg-surface);
-}
-
-body.theme-blueprint .theme-table-row-odd {
-    background-color: var(--bg-surface);
-}
-
 body.theme-blueprint .theme-link {
     color: var(--primary);
     text-decoration: none;
@@ -308,33 +301,4 @@ body.theme-blueprint .theme-profile-badge.admin {
 body.theme-blueprint .theme-profile-badge.hidden {
     background-color: var(--bg-hidden-badge);
     color: var(--text-hidden-badge);
-}
-
-/* Also add general theme-modal-input and theme-modal-button-primary styles for the give award modal */
-body.theme-blueprint .theme-modal-input {
-    background-color: var(--bg-input);
-    color: var(--text-main);
-    border-color: var(--border-color);
-}
-
-body.theme-blueprint .theme-modal-button-primary {
-    background-color: var(--primary);
-    color: var(--bg-main);
-}
-
-body.theme-blueprint .theme-modal-button-secondary {
-    background-color: var(--bg-input);
-    color: var(--text-main);
-}
-
-body.theme-blueprint .theme-modal-card {
-    background-color: var(--bg-surface);
-    border: var(--card-border);
-    border-radius: var(--radius);
-    box-shadow: var(--card-shadow);
-}
-
-/* Modal Overlay */
-body.theme-blueprint .modal-overlay {
-    background-color: rgba(45, 55, 72, 0.8); /* gray-800 with 80% opacity */
 }

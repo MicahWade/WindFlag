@@ -31,6 +31,7 @@ body.theme-linux {
     --chart-color-10: #F45B69;
 
     --text-info: #BD93F9; /* Using primary color for info */
+    --chart-label-color: var(--text-main); /* White for chart labels */
     --bg-admin-badge: #e53e3e;
     --text-admin-badge: white;
     --bg-hidden-badge: #718096;
@@ -108,6 +109,7 @@ body.theme-linux .theme-accordion-item {
     background-color: var(--bg-surface);
     border-radius: var(--radius);
     box-shadow: var(--card-shadow);
+    border: var(--card-border);
 }
 
 body.theme-linux .theme-accordion-header {
@@ -188,6 +190,7 @@ body.theme-linux .theme-modal-button-secondary {
 body.theme-linux .theme-code-block {
     background-color: var(--bg-input);
     color: var(--text-main);
+    font-family: 'Inconsolata', monospace;
 }
 
 /* General table styling */
@@ -261,14 +264,6 @@ body.theme-linux .theme-table-body-cell {
     background-color: var(--bg-surface);
     color: var(--text-main);
     border-bottom: 1px solid var(--border-color);
-}
-
-body.theme-linux .theme-table-row-even {
-    background-color: var(--bg-surface);
-}
-
-body.theme-linux .theme-table-row-odd {
-    background-color: var(--bg-surface);
 }
 
 body.theme-linux .theme-link {

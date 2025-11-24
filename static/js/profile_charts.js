@@ -224,7 +224,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         },
                         title: {
                             display: true,
-                            text: 'Date'
+                            text: 'Date',
+                            color: chartTextColor
+                        },
+                        ticks: {
+                            color: chartTextColor
                         }
                     },
                     y: {
@@ -232,7 +236,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         min: 0, // Ensure the y-axis always starts at 0
                         title: {
                             display: true,
-                            text: 'Score'
+                            text: 'Score',
+                            color: chartTextColor
+                        },
+                        ticks: {
+                            color: chartTextColor
                         }
                     }
                 },
@@ -291,11 +299,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         chartColorSucceeds || 'rgb(75, 192, 75)', // Succeeds (Green)
                         chartColorFails || 'rgb(255, 99, 132)' // Fails (Red)
                     ],
-                    hoverOffset: 4
-                }]
+                }] // Added missing closing bracket here
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: chartTextColor
+                        }
+                    }
+                }
             });
         } else {
             document.getElementById('failsVsSucceedsChartContainer').innerHTML = '<p class="theme-profile-text-muted text-center">No flag attempts yet to display fails vs. succeeds.</p>';
@@ -326,6 +340,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: chartTextColor
+                        }
+                    }
+                }
             });
         } else {
             document.getElementById('categoriesPerScoreChartContainer').innerHTML = '<p class="theme-profile-text-muted text-center">No solved challenges yet to display points per category.</p>';
@@ -362,17 +383,23 @@ document.addEventListener('DOMContentLoaded', function() {
                         },
                         title: {
                             display: true,
-                            text: 'Date'
+                            text: 'Date',
+                            color: chartTextColor
+                        },
+                        ticks: {
+                            color: chartTextColor
                         }
                     },
                     y: {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Number of Challenges'
+                            text: 'Number of Challenges',
+                            color: chartTextColor
                         },
                         ticks: {
-                            stepSize: 1 // Ensure integer ticks for challenge count
+                            stepSize: 1, // Ensure integer ticks for challenge count
+                            color: chartTextColor
                         }
                     }
                 }

@@ -31,6 +31,7 @@ body.theme-8bit {
     --chart-color-10: #F45B69;
 
     --text-info: var(--primary); /* Using primary color for info */
+    --chart-label-color: var(--bg-input); /* Medium Green for chart labels */
     --chart-label-color: #C0DCC0; /* Very Light Green for chart labels */
     --bg-admin-badge: #e53e3e;
     --text-admin-badge: white;

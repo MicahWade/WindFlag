@@ -31,7 +31,8 @@ body.theme-90s {
     --chart-color-9: #1982C4;                                                                                                                                                             
     --chart-color-10: #F45B69;                                                                                                                                                            
                                                                                                                                                                                           
-    --text-info: #000080; /* Using primary color for info */                                                                                                                              
+    --text-info: #000080; /* Using primary color for info */
+    --chart-label-color: var(--text-main); /* Black for chart labels */                                                                                                                              
     --bg-admin-badge: #e53e3e;                                                                                                                                                            
     --text-admin-badge: white;                                                                                                                                                            
     --bg-hidden-badge: #718096;                                                                                                                                                           
