@@ -8,7 +8,7 @@ and scoreboard display. It also includes utility functions for data export/impor
 and admin user creation.
 """
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, current_app
-from flask_login import login_user, current_user, logout_user
+from flask_login import login_user, current_user, logout_user, login_required
 from flask_socketio import SocketIO, emit # New: Import SocketIO and emit, login_required
 from scripts.config import Config
 from scripts.forms import RegistrationForm, LoginForm, FlagSubmissionForm, InlineGiveAwardForm

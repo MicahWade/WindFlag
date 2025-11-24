@@ -21,12 +21,12 @@ def _delete_db_file():
 # Function to run the Flask app for demo mode
 def run_demo_server(port, debug_mode, time_duration=None):
     _delete_db_file() # Ensure clean database for demo
-    app = create_app(config_class=TestConfig)
+    app, socketio = create_app(config_class=TestConfig)
     with app.app_context():
         db.create_all()
         seed_database() # Seed database for demo mode
     
-    server_process = multiprocessing.Process(target=app.run, kwargs={'debug': debug_mode, 'host': '0.0.0.0', 'port': port, 'use_reloader': False})
+    server_process = multiprocessing.Process(target=socketio.run, kwargs={'app': app, 'debug': debug_mode, 'host': '0.0.0.0', 'port': port, 'allow_unsafe_werkzeug': True})
     server_process.start()
 
     if time_duration:
