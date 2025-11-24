@@ -49,6 +49,43 @@ Administrators can directly influence challenge visibility and unlock conditions
     *   **Prerequisite Values**: Set `prerequisite_percentage_value`, `prerequisite_count_value`, `prerequisite_challenge_names`, or `unlock_date_time` as appropriate for the chosen `unlock_type`.
     *   **Save Changes**: Always remember to save your changes to apply the new settings.
 
+### Managing Coding Challenges
+
+Coding challenges are a special type of challenge where users submit code that is executed in a sandboxed environment. This type of challenge requires specific configuration and benefits from enhanced security measures.
+
+#### Configuration for Coding Challenges
+
+When creating or editing a challenge, set its `multi_flag_type` to `CODING`. This will reveal additional fields:
+
+*   **`language`**: (Required) Select the programming language in which the user is expected to write their solution. Supported languages include `python3`, `nodejs`, `php`, `bash`, `dart`, and `haskell`. This choice determines the runtime environment used in the sandbox and the specific static analysis rules applied.
+*   **`starter_code`**: (Optional) Provide pre-filled code that will appear in the user's code editor when they open the challenge. This can include function stubs, necessary imports, or example input/output structures.
+*   **`expected_output`**: (Required) The exact string output (stdout) that the user's code must produce to successfully solve the challenge.
+*   **`setup_code`**: (Optional) A bash script that will be executed inside the sandbox *before* the user's code. This can be used to set up files, create directories, or prepare the environment for the user's code.
+*   **`test_case_input`**: (Optional) Input that will be fed to the user's code via `stdin`.
+
+#### Static Code Analysis (Security Measures)
+
+To mitigate risks associated with executing untrusted user code, WindFlag employs a multi-layered static code analysis system on both the client and server sides. This analysis checks for potentially malicious patterns and forbidden operations.
+
+1.  **Client-Side (User Interface)**:
+    *   **Purpose**: Provides immediate feedback to the user, preventing obviously unsafe code from being submitted and reducing server load.
+    *   **Mechanism**: JavaScript code in the browser checks the user's submitted code against a predefined blacklist of keywords, function calls, and regular expressions specific to the selected programming language.
+    *   **Examples of Banned Patterns**: Common system-level imports (e.g., `import os` in Python, `require('fs')` in Node.js), commands for file system manipulation (e.g., `rm`, `sudo` in Bash), or network access functions.
+    *   **User Feedback**: If a forbidden pattern is detected, the user receives an alert directly in their browser, prompting them to revise their code.
+
+2.  **Server-Side (Pre-Execution)**:
+    *   **Purpose**: Acts as the primary security gate, ensuring no malicious code reaches the execution sandbox. This is a more comprehensive and robust check.
+    *   **Mechanism**: Before passing the user's code to the `bwrap` sandbox for execution, the server-side Python code performs a static analysis using a stricter and more extensive set of blacklists (keywords, regex patterns, and module imports) tailored for each programming language.
+    *   **Examples of Banned Patterns**: This includes, but is not limited to, system calls, network operations, file I/O (unless explicitly allowed by the challenge setup), dynamic code execution functions (e.g., `eval`, `exec`), and process manipulation.
+    *   **Execution Prevention**: If any blacklisted pattern is found, the code execution is immediately halted, and an error message is returned to the user.
+
+#### Best Practices for Administering Coding Challenges
+
+*   **Sanitize Challenge Data**: Always ensure that `setup_code`, `expected_output`, and `test_case_input` are safe and do not inadvertently introduce vulnerabilities.
+*   **Test Thoroughly**: Test coding challenges with both correct and intentionally malicious code to ensure the sandboxing and static analysis are effective.
+*   **Monitor Logs**: Regularly check server logs for any unusual activity or failed code executions that might indicate attempted exploits.
+*   **Keep Runtimes Minimal**: Ensure that the language runtimes and libraries available in the `bwrap` sandbox are as minimal as possible to reduce the attack surface.
+
 ## Dynamic Flags
 
 The WindFlag platform offers robust support for dynamic flags, a powerful feature that enhances challenge security and fairness by providing a unique flag to each user. This mechanism prevents flag sharing and ensures that every participant must genuinely solve the challenge to obtain their individual flag.

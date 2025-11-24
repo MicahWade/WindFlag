@@ -31,6 +31,119 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let currentChallengeId = null;
     let currentChallengeType = null; // New: Store current challenge type
+    let currentChallengeLanguage = null; // New: Store current challenge language
+
+    // Language-specific blacklists for client-side static code analysis
+    // These are patterns or keywords that indicate potentially dangerous operations
+    // Less strict than server-side, for immediate user feedback.
+    const LANGUAGE_BLACKLISTS_JS = {
+        'python': {
+            'forbidden_keywords': [
+                'import os', 'import subprocess', 'import sys', 'import socket', 'import shutil',
+                'eval(', 'exec(', 'open(', 'system(', 'popen(', '__import__('
+            ],
+            'forbidden_regex': [
+                /while\s*True:/, // Python infinite loop
+                /subprocess\.(run|call|check_call|check_output)/,
+                /os\.(system|popen|fork|kill|rmdir|remove|unlink|mkdir|makedirs)/,
+                /sys\.exit/, /sys\.modules/,
+                /\bfile\s*\(/
+            ]
+        },
+        'javascript': { // Corresponds to 'nodejs' on backend
+            'forbidden_keywords': [
+                'require(', 'import(', 'child_process', 'fs.', 'net.', 'http.', 'https.',
+                'eval(', 'new Function(', 'process.exit('
+            ],
+            'forbidden_regex': [
+                /while\s*\(\s*true\s*\)/, /for\s*\(\s*;\s*;\s*\)/, // JS infinite loops
+                /require\s*\([\'"].*[\'"]\)/,
+                /import\s+[\'"].*[\'"]/,
+                /process\.stdout/, /process\.stderr/, // Corrected JS regex patterns
+                /fs\.[a-zA-Z]+Sync/, // Synchronous file system operations
+                /child_process\.(spawn|exec|fork)/,
+                /new\s+Function\s*\(/ // Dynamic code execution
+            ]
+        },
+        'php': {
+            'forbidden_keywords': [
+                'exec(', 'shell_exec(', 'system(', 'passthru(', 'proc_open(', 'popen(',
+                'eval(', 'assert(', 'include(', 'require(', 'file_get_contents(',
+                'file_put_contents(', 'unlink(', 'rmdir(', 'mkdir(', 'chmod(', 'chown(',
+                'curl_exec(', 'phpinfo(', 'die(', 'exit('
+            ],
+            'forbidden_regex': [
+                /while\s*\(\s*true\s*\)/, /for\s*\(\s*;\s*;\s*\)/, // PHP infinite loops
+                /include\s+[\'"].*[\'"]/,
+                /require\s+[\'"].*[\'"]/,
+                /\$_GET/, /\$_POST/, /\$_REQUEST/, /\$_FILES/, /\$_SERVER/ // External input access
+            ]
+        },
+        'bash': {
+            'forbidden_keywords': [
+                'rm ', 'sudo ', 'chown ', 'chmod ', 'ssh ', 'scp ', 'wget ', 'curl ',
+                'nc ', 'netcat ', 'nmap ', 'apt-get ', 'yum ', 'kill ', 'pkill ',
+                'halt ', 'reboot ', 'shutdown ', 'dd ', 'mkfs ', 'fdisk ', 'parted ',
+                'while true', 'for ((;;))' // Bash infinite loops
+            ],
+            'forbidden_regex': [
+                /`.*`/, /\$\(.*\)/, // Command substitution
+                /&&\s*/, /\|\|\s*/, /;\s*/, // Command chaining
+                /\bcat\s+\/etc\/(passwd|shadow)\b/, // Specific file access
+                /\/\w+\/\w+/ // Absolute paths
+            ]
+        },
+        'dart': {
+            'forbidden_keywords': [
+                'dart:io', 'dart:cli', 'dart:developer', 'dart:ffi', 'dart:isolate',
+                'Process.run(', 'Process.start(', 'File(', 'Directory(', 'Socket(', 'HttpServer(', 'exit('
+            ],
+            'forbidden_regex': [
+                /while\s*\(\s*true\s*\)/, /for\s*\(\s*;\s*;\s*\)/, // Dart infinite loops
+                /import\s+['"]dart:io['"]/,
+                /import\s+['"]package:.*['"]/,
+                /new\s+File\s*\(/
+            ]
+        },
+        'haskell': {
+            'forbidden_keywords': [
+                'System.IO', 'System.Process', 'Network.Socket', 'System.Directory',
+                'unsafePerformIO', 'System.cmd', 'System.rawSystem', 'System.process',
+                'openFile', 'readFile', 'writeFile', 'exitWith'
+            ],
+            'forbidden_regex': [
+                /import\s+System\./,
+                /import\s+Network\./,
+                /import\s+Foreign\./,
+                /import\s+GHC\./
+            ]
+        }
+    };
+
+    function _staticCodeAnalysisJS(language, code) {
+        const blacklist = LANGUAGE_BLACKLISTS_JS[language];
+        if (!blacklist) {
+            return {is_safe: true, message: "OK"};
+        }
+
+        const codeLower = code.toLowerCase(); // For case-insensitive keyword checking
+
+        // Check for forbidden keywords (case-insensitive)
+        for (const keyword of blacklist.forbidden_keywords || []) {
+            if (codeLower.includes(keyword.toLowerCase())) {
+                return {is_safe: false, message: `Detected disallowed keyword: "${keyword}". Please remove it.`};
+            }
+        }
+
+        // Check for forbidden regex patterns
+        for (const regexPattern of blacklist.forbidden_regex || []) {
+            if (regexPattern.test(code)) {
+                return {is_safe: false, message: `Detected disallowed code pattern: "${regexPattern.source}". Please remove it.`};
+            }
+        }
+
+        return {is_safe: true, message: "OK"};
+    }
 
     // Function to get a color based on percentage
     function getColorForPercentage(percentage) {
@@ -106,6 +219,13 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch(`/api/challenge_details/${currentChallengeId}`)
                 .then(response => response.json())
                 .then(data => {
+                    if (data.success === false) { // Handle server-side errors
+                        showFlashMessage(data.message, 'danger');
+                        challengeModal.classList.add('opacity-0', 'pointer-events-none');
+                        modalContent.classList.add('-translate-y-full');
+                        return;
+                    }
+
                     modalChallengeName.textContent = data.name;
                     // Safely parse markdown description using marked, with fallback
                     if (typeof marked !== 'undefined' && marked.parse) {
@@ -136,14 +256,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (currentChallengeType === 'CODING') {
                         flagSubmissionSection.classList.add('hidden');
                         codeSubmissionSection.classList.remove('hidden');
-                        const challengeLanguage = this.dataset.challengeLanguage || 'python'; // Get language from data attribute, default to python
-                        editor.setOption('mode', challengeLanguage); // Set CodeMirror mode
+                        currentChallengeLanguage = data.language || 'python'; // Set currentChallengeLanguage
+                        editor.setOption('mode', currentChallengeLanguage); // Set CodeMirror mode
                         editor.setValue(data.starter_code || ''); // Load starter code into CodeMirror
                         if (isCompleted) {
                             editor.setOption('readOnly', true);
                             modalRunCodeButton.disabled = true;
                             modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
-                            modalChallengeStatus.textContent = 'You have already completed this challenge!';
+                            modalChallengeStatus.textContent = 'You have already completed this coding challenge!';
                             modalChallengeStatus.classList.remove('hidden');
                         } else {
                             editor.setOption('readOnly', false);
@@ -160,7 +280,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             flagInput.disabled = true;
                             submitButton.disabled = true;
                             submitButton.classList.add('opacity-50', 'cursor-not-allowed');
-                        } else {
+                        }
+                        else {
                             flagInput.disabled = false;
                             submitButton.disabled = false;
                             submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -408,6 +529,13 @@ document.addEventListener('DOMContentLoaded', function() {
     modalRunCodeButton.addEventListener('click', function() {
         const code = editor.getValue(); // Get code from CodeMirror instance
         const challengeId = currentChallengeId;
+
+        // Perform client-side static analysis
+        const {is_safe, message} = _staticCodeAnalysisJS(currentChallengeLanguage, code);
+        if (!is_safe) {
+            showFlashMessage(`Client-side security check failed: ${message}`, 'danger');
+            return; // Prevent submission
+        }
 
         codeResult.classList.add('hidden'); // Hide previous result
         codeResult.textContent = '';

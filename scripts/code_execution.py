@@ -1,3 +1,4 @@
+import re # Added for regex matching in static analysis
 import subprocess
 import tempfile
 import os
@@ -18,6 +19,9 @@ BWRAP_COMMON_ARGS = [
     # Removed --rlimit-as, --rlimit-cpu, --rlimit-fsize as they are not supported by some bwrap versions.
     # Proper resource limiting should be handled via cgroups or a bwrap version that supports these flags.
 ]
+
+# Max output size for stdout/stderr
+MAX_OUTPUT_SIZE_BYTES = 10 * 1024 # 10 KB
 
 # Language-specific configurations
 # Tuple: (runtime_path, file_extension, execute_command_template, bind_args)
@@ -72,6 +76,168 @@ LANGUAGE_CONFIGS = {
     )
 }
 
+# Language-specific blacklists for static code analysis
+# These are patterns or keywords that indicate potentially dangerous operations
+LANGUAGE_BLACKLISTS = {
+    'python3': {
+        'forbidden_imports': [
+            'os', 'subprocess', 'sys', 'socket', 'shutil', 'fcntl', 'resource',
+            'ctypes', 'gc', 'mmap', 'multiprocessing', 'threading', 'signal',
+            'urllib', 'requests', 'pathlib', 'glob', 'zipfile', 'tarfile', 'sqlite3',
+            'pickle', 'marshal', 'http', 'ftplib', 'smtplib', 'poplib', 'imaplib',
+            'xml', 'csv', 'json', 'yaml', 'configparser', 'logging', 'argparse',
+            'getpass', 'pwd', 'grp', 'spwd', 'crypt', 'hashlib', 'hmac', 'ssl',
+            'paramiko', 'fabric', 'pexpect', 'select', 'selectors'
+        ],
+        'forbidden_keywords': [
+            'eval(', 'exec(', 'open(', 'compile(', '__import__', 'getattr(',
+            'setattr(', 'delattr(', 'breakpoint(', 'input(', 'exit(', 'quit(',
+            'system(', 'popen(', 'chmod(', 'chown(', 'rmdir(', 'removedirs(',
+            'mkdir(', 'makedirs(', 'rename(', 'replace(', 'link(', 'symlink(',
+            'walk(', 'fork(', 'kill(', 'alarm(', 'pause(', 'getuid(', 'setuid(',
+            'geteuid(', 'seteuid(', 'getgid(', 'setgid(', 'getegid(', 'setegid(',
+            'getgroups(', 'setgroups(', 'getresuid(', 'setresuid(', 'getresgid(',
+            'setresgid(', 'umask(', 'getpgrp(', 'setpgrp(', 'getsid(', 'setsid(',
+            'getpid(', 'getppid(', 'getpgid(', 'setpgid(', 'getsid(', 'setsid(',
+            'nice(', 'sched_yield(', 'sched_getaffinity(', 'sched_setaffinity(',
+            'sched_getparam(', 'sched_setparam(', 'sched_getscheduler(', 'sched_setscheduler(',
+            'sched_rr_get_interval(', 'sched_getcpu(', 'lockf(', 'flock(', 'memlock(', 'memunlock(',
+            'mmap(', 'munmap(', 'madvise(', 'mlock(', 'munlock(', 'msync(', 'getpriority(', 'setpriority(',
+            'sched_get_priority_min(', 'sched_get_priority_max(', 'acct(', 'adjtime(', 'chroot(', 'fchdir(',
+            'fchmod(', 'fchown(', 'fdatasync(', 'fgetxattr(', 'flistxattr(', 'fremovexattr(', 'fsetxattr(',
+            'fsync(', 'getxattr(', 'listxattr(', 'removexattr(', 'setxattr(', 'lgetxattr(', 'llistxattr(',
+            'lremovexattr(', 'lsetxattr(', 'sendfile(', 'statvfs(', 'fstatvfs(', 'sync()', 'syscall(',
+            'socket.socket', 'socket.bind', 'socket.listen', 'socket.connect', 'socket.send', 'socket.recv',
+            'http.client', 'urllib.request', 'requests.get', 'requests.post',
+        ],
+        'forbidden_regex': [
+            r'import\s+[a-zA-Z_][a-zA-Z0-9_]*', # Catches general imports
+            r'from\s+[a-zA-Z_][a-zA-Z0-9_]*\s+import', # Catches from ... import
+            r'__builtins__\s*\[', # Accessing builtins directly
+            r'subprocess\.run', r'os\.system', r'os\.popen', r'shutil\.', # Common dangerous calls
+            r'while\s*True\s*:', # Catch infinite Python loops
+        ]
+    },
+    'nodejs': {
+        'forbidden_imports': [
+            'child_process', 'fs', 'net', 'http', 'https', 'tls', 'dgram', 'dns',
+            'os', 'path', 'url', 'process', 'crypto', 'vm', 'cluster', 'worker_threads'
+        ],
+        'forbidden_keywords': [
+            'eval(', 'require(', 'import(', 'spawn(', 'exec(', 'fork(', 'system(',
+            'setTimeout(', 'setInterval(', 'setImmediate(', 'process.exit(', 'console.log(' # Limit logging potentially
+        ],
+        'forbidden_regex': [
+            r'require\s*\([\'"].*[\'"]\)',
+            r'import\s+[\'"].*[\'"]',
+            r'process\.stdout', r'process\.stderr',
+            r'fs\.[a-zA-Z]+Sync', # Catches synchronous file system operations
+            r'new\s+Function\s*\(' # Dynamic code execution
+        ]
+    },
+    'php': {
+        'forbidden_imports': [], # PHP doesn't have explicit "imports" in the same way
+        'forbidden_keywords': [
+            'exec(', 'shell_exec(', 'system(', 'passthru(', 'proc_open(', 'popen(',
+            'eval(', 'assert(', 'include(', 'require(', 'file_get_contents(',
+            'file_put_contents(', 'unlink(', 'rmdir(', 'mkdir(', 'chmod(',
+            'chown(', 'chgrp(', 'symlink(', 'readfile(', 'fopen(', 'fsockopen(',
+            'socket_create(', 'stream_socket_client(', 'curl_exec(',
+            'phpinfo(', 'die(', 'exit(',
+        ],
+        'forbidden_regex': [
+            r'include\s+[\'"].*[\'"]',
+            r'require\s+[\'"].*[\'"]',
+            r'\$\_GET', r'\$\_POST', r'\$\_REQUEST', r'\$\_FILES', r'\$\_SERVER', # Prevent external input
+            r'new\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(\s*[\'"]ReflectionClass[\'"]', # Reflection attacks
+        ]
+    },
+    'bash': {
+        'forbidden_imports': [],
+        'forbidden_keywords': [
+            'rm ', 'sudo ', 'chown ', 'chmod ', 'ssh ', 'scp ', 'wget ', 'curl ',
+            'nc ', 'netcat ', 'nmap ', 'apt-get ', 'yum ', 'dnf ', 'pacman ',
+            'ifconfig ', 'ip addr ', 'route ', 'mount ', 'umount ', 'crontab ',
+            'service ', 'systemctl ', 'kill ', 'pkill ', 'halt ', 'reboot ',
+            'shutdown ', 'dd ', 'mkfs ', 'fdisk ', 'parted ', 'useradd ', 'userdel ',
+            'groupadd ', 'groupdel ', 'passwd ', 'visudo ',
+            'echo .* > ', 'echo .* >> ', # Redirects that write to files
+            '> ', '>> ',
+            '/', './', # Any path traversal or local execution attempt
+        ],
+        'forbidden_regex': [
+            r'`.*`', # Command substitution
+            r'\$\(.*\)', # Command substitution
+            r'&&\s*', r'\|\|\s*', r';\s*', # Command chaining
+            r'\bcat\s+/etc/passwd\b', # Specific file access
+            r'\bcat\s+/etc/shadow\b',
+            r'\bcat\s+/proc/self/cmdline\b',
+            r'\/\w+\/\w+', # Absolute paths
+        ]
+    },
+    'dart': {
+        'forbidden_imports': [
+            'dart:io', 'dart:cli', 'dart:developer', 'dart:ffi', 'dart:isolate',
+            'package:http', 'package:path', 'package:shelf'
+        ],
+        'forbidden_keywords': [
+            'Process.run(', 'Process.start(', 'File(', 'Directory(', 'Socket(', 'HttpServer(',
+            'RawSocket(', 'Link(', 'Platform.environment', 'exit(',
+        ],
+        'forbidden_regex': [
+            r'import\s+[\'"]dart:io[\'"]',
+            r'import\s+[\'"]package:.*[\'"]',
+            r'new\s+File\s*\('
+        ]
+    },
+    'haskell': {
+        'forbidden_imports': [
+            'System.IO', 'System.Process', 'Network.Socket', 'System.Directory',
+            'System.FilePath', 'GHC.IO', 'Control.Concurrent', 'Foreign.C', 'Foreign.Ptr'
+        ],
+        'forbidden_keywords': [
+            'unsafePerformIO', 'System.cmd', 'System.rawSystem', 'System.process',
+            'openFile', 'readFile', 'writeFile', 'appendFile', 'removeFile',
+            'getContents', 'interact', 'hPutStrLn', 'hGetContents', 'exitWith',
+            'socket', 'bind', 'listen', 'connect', 'send', 'recv', 'forkIO',
+            'System.getEnv', 'System.setEnv', 'System.getArgs'
+        ],
+        'forbidden_regex': [
+            r'import\s+System\.',
+            r'import\s+Network\.',
+            r'import\s+Foreign\.',
+            r'import\s+GHC\.',
+        ]
+    }
+}
+
+def _static_code_analysis(language, code):
+    """
+    Performs static analysis on the submitted code to check for blacklisted patterns.
+    Returns (True, "OK") if safe, or (False, "Error Message") if unsafe.
+    """
+    if language not in LANGUAGE_BLACKLISTS:
+        return True, "OK" # No specific blacklist for this language, proceed with caution.
+
+    blacklist = LANGUAGE_BLACKLISTS[language]
+
+    # Check for forbidden imports
+    for forbidden_import in blacklist.get('forbidden_imports', []):
+        if forbidden_import in code:
+            return False, f"Forbidden import '{forbidden_import}' detected in code. This is not allowed for security reasons."
+        
+    # Check for forbidden keywords (exact string match)
+    for forbidden_keyword in blacklist.get('forbidden_keywords', []):
+        if forbidden_keyword in code:
+            return False, f"Forbidden keyword '{forbidden_keyword}' detected in code. This operation is not allowed."
+
+    # Check for forbidden regex patterns
+    for forbidden_regex_pattern in blacklist.get('forbidden_regex', []):
+        if re.search(forbidden_regex_pattern, code, re.IGNORECASE | re.DOTALL): # Case-insensitive and dotall for multiline
+            return False, f"Forbidden code pattern '{forbidden_regex_pattern}' detected. This operation is not allowed."
+            
+    return True, "OK"
+
 class CodeExecutionResult:
     def __init__(self, success, stdout, stderr, error_message, is_timeout=False):
         self.success = success
@@ -100,6 +266,11 @@ def execute_code_in_sandbox(language, code, expected_output, setup_code=None, te
 
     if language not in LANGUAGE_CONFIGS:
         return CodeExecutionResult(False, "", "", f"Unsupported language: {language}")
+
+    # Perform static code analysis before even writing to file or sandboxing
+    is_safe, static_analysis_message = _static_code_analysis(language, code)
+    if not is_safe:
+        return CodeExecutionResult(False, "", "", f"Security check failed: {static_analysis_message}")
 
     if len(code.encode('utf-8')) > CODE_SIZE_LIMIT_BYTES:
         return CodeExecutionResult(False, "", "", f"Submitted code exceeds the size limit of {CODE_SIZE_LIMIT_BYTES / 1024} KB.")
@@ -185,6 +356,13 @@ def execute_code_in_sandbox(language, code, expected_output, setup_code=None, te
             stdout = process.stdout.strip()
             stderr = process.stderr.strip()
 
+            # Truncate output if it exceeds the limit
+            if len(stdout) > MAX_OUTPUT_SIZE_BYTES:
+                stdout = stdout[:MAX_OUTPUT_SIZE_BYTES] + f"\n... (output truncated to {MAX_OUTPUT_SIZE_BYTES} bytes)"
+            if len(stderr) > MAX_OUTPUT_SIZE_BYTES:
+                stderr = stderr[:MAX_OUTPUT_SIZE_BYTES] + f"\n... (output truncated to {MAX_OUTPUT_SIZE_BYTES} bytes)"
+
+
             if process.returncode != 0:
                 error_message = f"Execution failed with exit code {process.returncode}."
                 if stderr:
@@ -227,6 +405,16 @@ if __name__ == '__main__':
     python_code_error = "raise Exception('Test Error')"
     python_result_error = execute_code_in_sandbox('python3', python_code_error, python_expected, timeout=5)
     print(f"Success: {python_result_error.success}, Stdout: '{python_result_error.stdout}', Stderr: '{python_result_error.stderr}', Error: '{python_result_error.error_message}'")
+
+    print("\n--- Python Malicious Code Test (Server-Side) ---")
+    python_malicious_code = "import os; print(os.listdir('/'))"
+    python_malicious_result = execute_code_in_sandbox('python3', python_malicious_code, "Expected", timeout=5)
+    print(f"Success: {python_malicious_result.success}, Error: '{python_malicious_result.error_message}'") # Should be False with a security error
+
+    print("\n--- Python Infinite Loop Malicious Code Test (Server-Side) ---")
+    python_infinite_loop_code = "while True:\n\tprint('i')"
+    python_infinite_loop_result = execute_code_in_sandbox('python3', python_infinite_loop_code, "Expected", timeout=5)
+    print(f"Success: {python_infinite_loop_result.success}, Error: '{python_infinite_loop_result.error_message}'") # Should be False with a security error
 
     print("\n--- Bash Test ---")
     bash_code = "echo 'Hello, Bash!'"

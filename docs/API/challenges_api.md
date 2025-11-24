@@ -435,17 +435,18 @@ Deletes a specific challenge from the platform.
 
 ## 6. POST /api/challenges/<int:challenge_id>/submit
 
-Allows an authenticated user to submit a flag for a challenge.
+Allows an authenticated user to submit a flag or code for a challenge.
 
-*   **Description**: This is the primary endpoint for users to attempt solving a challenge. The submitted flag is validated against the challenge's configured flags, and the user's score is updated accordingly if the submission is correct. This endpoint also handles cooldowns and rate limiting for submissions.
+*   **Description**: This is the primary endpoint for users to attempt solving a challenge, whether it's a traditional flag submission or a coding challenge. For coding challenges, the submitted code undergoes rigorous server-side static analysis to detect and prevent malicious patterns or forbidden operations before execution. The submitted flag/code is then validated, and the user's score is updated accordingly if the submission is correct. This endpoint also handles cooldowns and rate limiting for submissions.
 *   **Method**: `POST`
 *   **URL**: `/api/challenges/{challenge_id}/submit`
 *   **Authentication**: `X-API-KEY` header (required, any authenticated user)
 *   **Path Parameters**:
     *   `challenge_id` (integer, required): The unique ID of the challenge to submit a flag for.
 *   **Request Body**: `application/json`
-    *   **`flag`** (string, required): The flag string submitted by the user.
-*   **Example Request**:
+    *   **`flag`** (string, required): The flag string submitted by the user (for traditional challenges).
+    *   **`code`** (string, required): The code submitted by the user (for coding challenges). This field should be used when `challenge.challenge_type` is 'CODING'.
+*   **Example Request (Traditional Flag)**:
     ```http
     POST /api/challenges/101/submit HTTP/1.1
     Host: your-ctf-platform.com
@@ -456,31 +457,55 @@ Allows an authenticated user to submit a flag for a challenge.
         "flag": "flag{api_web_challenge_success}"
     }
     ```
-*   **Example Response (Success - 200 OK - Correct Flag)**:
+*   **Example Request (Coding Challenge)**:
+    ```http
+    POST /api/challenges/102/submit HTTP/1.1
+    Host: your-ctf-platform.com
+    X-API-KEY: YOUR_USER_API_KEY
+    Content-Type: application/json
+
+    {
+        "code": "print('Hello, world!')"
+    }
+    ```
+*   **Example Response (Success - 200 OK - Correct Flag/Code)**:
     ```json
     {
         "message": "Flag submitted successfully! Challenge solved!",
         "is_correct": true,
         "new_score": 1500,
-        "points_earned": 230
+        "points_earned": 230,
+        "stdout": "Hello, world!",
+        "stderr": ""
     }
     ```
     *   `message`: A message indicating the result of the submission.
-    *   `is_correct` (boolean): `true` if the flag was correct, `false` otherwise.
+    *   `is_correct` (boolean): `true` if the flag/code was correct, `false` otherwise.
     *   `new_score` (integer): The user's updated total score after the submission.
-    *   `points_earned` (integer): The points gained from this particular submission (relevant for correct flags).
-*   **Example Response (Success - 200 OK - Incorrect Flag)**:
+    *   `points_earned` (integer): The points gained from this particular submission (relevant for correct flags/code).
+    *   `stdout` (string, optional): The standard output of the executed code (for coding challenges).
+    *   `stderr` (string, optional): The standard error of the executed code (for coding challenges).
+*   **Example Response (Success - 200 OK - Incorrect Flag/Code)**:
     ```json
     {
         "message": "Incorrect flag. Try again!",
-        "is_correct": false
+        "is_correct": false,
+        "stdout": "Your code produced incorrect output.",
+        "stderr": ""
     }
     ```
-*   **Example Response (Error - 400 Bad Request)**:
+*   **Example Response (Error - 400 Bad Request - Missing fields)**:
     ```json
     {
-        "message": "Request body must be JSON and include 'flag'.",
+        "message": "Request body must be JSON and include 'flag' or 'code'.",
         "code": "BAD_REQUEST_MISSING_FIELD"
+    }
+    ```
+*   **Example Response (Error - 400 Bad Request - Static Analysis Failure)**:
+    ```json
+    {
+        "message": "Security check failed: Forbidden import 'os' detected in code. This is not allowed for security reasons.",
+        "code": "STATIC_ANALYSIS_FAILED"
     }
     ```
 *   **Example Response (Error - 401 Unauthorized)**:

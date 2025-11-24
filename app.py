@@ -77,7 +77,6 @@ def create_app(config_class=Config):
     load_dotenv(os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), '.env'))
     app.config.from_object(config_class)
     app.config['APP_NAME'] = os.getenv('APP_NAME', 'WindFlag')
-    app.config['ACTIVE_THEME'] = get_active_theme() # Retrieve active theme from DB
     
     oauth = OAuth(app) # Initialize OAuth here
     
@@ -94,11 +93,21 @@ def create_app(config_class=Config):
             client_kwargs={'scope': 'user:email'},
         )
     
+    # Initialize extensions with the app instance *before* entering app context
+    # if those extensions are used within that context.
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.unauthorized_handler(lambda: redirect(url_for('home')))
     bcrypt.init_app(app)
 
+    # Create database tables if they don't exist, within an application context
+    with app.app_context():
+        db.create_all()
+
+    # Now, establish app context for operations that need database access
+    with app.app_context():
+        app.config['ACTIVE_THEME'] = get_active_theme()
+    
     # Initialize Flask-Limiter
     limiter = Limiter(
         get_remote_address,
@@ -583,21 +592,9 @@ def create_app(config_class=Config):
                 user_code = submitted_flag_content
                 
                 # --- Static Analysis for malicious patterns ---
-                MALICIOUS_PATTERNS = [
-                    "while True", "for (;;)", "loop do", # Infinite loops
-                    "import os", "import subprocess", "import sys", "import shutil", # System access
-                    "open(", "file(", # File system access
-                    "socket(", "requests.", "urllib.", # Network access
-                    "eval(", "exec(", # Dangerous functions
-                    "__import__(" # Obfuscated import
-                ]
-                
-                # Convert code to lowercase for case-insensitive matching of patterns
-                user_code_lower = user_code.lower()
-
-                for pattern in MALICIOUS_PATTERNS:
-                    if pattern.lower() in user_code_lower:
-                        return jsonify({'success': False, 'message': f'Detected disallowed code pattern: "{pattern}". Please remove it.'})
+                is_safe, static_analysis_message = execute_code_in_sandbox._static_code_analysis(challenge.language, user_code)
+                if not is_safe:
+                    return jsonify({'success': False, 'message': f'Security check failed: {static_analysis_message}'})
                 # --- End Static Analysis ---
                 
                 execution_result = execute_code_in_sandbox(
