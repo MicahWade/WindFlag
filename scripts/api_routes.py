@@ -94,6 +94,44 @@ def create_challenge():
     }), 201
 
 
+@api_bp.route('/public/challenges', methods=['GET'])
+@login_required
+def get_public_challenges():
+    """
+    Gets a list of all challenges for the public API.
+    """
+    categories = Category.query.order_by(Category.name).all()
+    solved_challenges = {sub.challenge_id for sub in current_user.submissions}
+    
+    # Pre-fetch all submissions to optimize
+    all_submissions = Submission.query.all()
+    solves_per_challenge = {}
+    for sub in all_submissions:
+        solves_per_challenge[sub.challenge_id] = solves_per_challenge.get(sub.challenge_id, 0) + 1
+
+    category_data = []
+    for category in categories:
+        challenges_data = []
+        for challenge in category.challenges:
+            if not challenge.is_hidden:
+                challenges_data.append({
+                    'id': challenge.id,
+                    'name': challenge.name,
+                    'points': challenge.points,
+                    'description': challenge.description,
+                    'solved': challenge.id in solved_challenges,
+                    'solves': solves_per_challenge.get(challenge.id, 0),
+                    'category': category.name
+                })
+        if challenges_data:
+            category_data.append({
+                'name': category.name,
+                'challenges': challenges_data
+            })
+    
+    return jsonify(category_data)
+
+
 @api_bp.route('/challenges', methods=['GET'])
 @admin_api_required
 def get_challenges():
