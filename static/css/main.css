@@ -59,3 +59,8 @@
 .completed-challenge-line {
     border-left: 4px solid #10B981; /* Tailwind green-500 */
 }
+
+/* Override chart label color for all themes */
+:root {
+    --chart-label-color: hsl(0, 0%, 90%); /* Light grey for chart labels */
+}
