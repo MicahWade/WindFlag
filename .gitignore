@@ -1,3 +1,12 @@
+# Ignore all themes by default
+static/themes/*
+
+# Un-ignore the default theme
+!static/themes/default/
+
+# Keep the .gitkeep file
+!static/themes/.gitkeep
+
 # Local Files
 TODO
 .env
@@ -212,8 +221,3 @@ __marimo__/
 
 app.db
 package-lock.json
-
-# Theming System
-/static/themes/*
-!/static/themes/default/
-!/static/themes/learning/

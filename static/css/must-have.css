@@ -1,0 +1,66 @@
+/* Modal */
+.modal-overlay {
+    background-color: rgba(0, 0, 0, 0.5); /* Default overlay */
+}
+
+.theme-modal-card {
+    background-color: var(--bg-surface);
+    border: var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+}
+
+/* Challenge Card */
+.theme-challenge-card {
+    background-color: var(--bg-surface);
+    border: var(--card-border);
+    border-radius: var(--radius);
+    transition: transform 0.2s ease-in-out;
+}
+
+.theme-challenge-card:hover {
+    transform: translateY(-2px);
+}
+
+.theme-completed-challenge {
+    background-color: var(--text-muted);
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--primary);
+    color: var(--bg-main);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius);
+    position: relative;
+    top: 0;
+    box-shadow: 0 2px 0 var(--text-muted);
+    transition: all 0.1s ease-in-out;
+}
+
+.btn-primary:hover {
+    background-color: var(--bg-main);
+    color: var(--primary);
+}
+
+.btn-primary:active {
+    top: 1px;
+    box-shadow: 0 0 0 var(--text-muted);
+}
+
+/* Navbar */
+.navbar {
+    border-bottom: 2px solid var(--border-color);
+}
+
+/* Form Elements */
+input,
+button,
+select,
+textarea {
+    border-radius: var(--radius);
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}

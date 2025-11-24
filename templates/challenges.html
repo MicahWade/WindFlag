@@ -64,14 +64,16 @@
                                          data-challenge-language="{{ challenge.language | default('python') }}"> {# New data attribute for language #}
                                         
                                         {# Challenge Stripes #}
-                                        {% if challenge.computed_red_stripe %}
-                                            <div class="admin-stripe admin-stripe-red">Locked</div>
-                                        {% elif challenge.computed_orange_stripe %}
-                                            <div class="admin-stripe admin-stripe-orange">Unlockable (No Solves)</div>
-                                        {% elif challenge.computed_yellow_stripe %}
-                                            <div class="admin-stripe admin-stripe-yellow">Unlocked (0-50%)</div>
-                                        {% elif challenge.computed_blue_stripe %}
-                                            <div class="admin-stripe admin-stripe-blue">Rarely Unlocked (50-90%)</div>
+                                        {% if current_user.is_admin %}
+                                            {% if challenge.computed_red_stripe %}
+                                                <div class="admin-stripe admin-stripe-red">Locked</div>
+                                            {% elif challenge.computed_orange_stripe %}
+                                                <div class="admin-stripe admin-stripe-orange">Unlockable (No Solves)</div>
+                                            {% elif challenge.computed_yellow_stripe %}
+                                                <div class="admin-stripe admin-stripe-yellow">Unlocked (0-50%)</div>
+                                            {% elif challenge.computed_blue_stripe %}
+                                                <div class="admin-stripe admin-stripe-blue">Rarely Unlocked (50-90%)</div>
+                                            {% endif %}
                                         {% endif %}
 
                                         <h5 class="theme-challenge-title text-xl font-bold mb-2">{{ challenge.name }}</h5>
@@ -112,14 +114,18 @@
                                         
                                         <div class="flex items-center">
                                             {# Optional: Challenge Stripes as small dots/indicators #}
-                                            {% if challenge.computed_red_stripe %}
-                                                <span class="w-2 h-2 rounded-full bg-red-500 mr-2" title="Locked"></span>
-                                            {% elif challenge.computed_orange_stripe %}
-                                                <span class="w-2 h-2 rounded-full bg-orange-500 mr-2" title="Unlockable (No Solves)"></span>
-                                            {% elif challenge.computed_yellow_stripe %}
-                                                <span class="w-2 h-2 rounded-full bg-yellow-500 mr-2" title="Unlocked (0-50%)"></span>
-                                            {% elif challenge.computed_blue_stripe %}
-                                                <span class="w-2 h-2 rounded-full bg-blue-500 mr-2" title="Rarely Unlocked (50-90%)"></span>
+                                            {% if current_user.is_admin %}
+                                                {% if challenge.computed_red_stripe %}
+                                                    <span class="w-2 h-2 rounded-full bg-red-500 mr-2" title="Locked"></span>
+                                                {% elif challenge.computed_orange_stripe %}
+                                                    <span class="w-2 h-2 rounded-full bg-orange-500 mr-2" title="Unlockable (No Solves)"></span>
+                                                {% elif challenge.computed_yellow_stripe %}
+                                                    <span class="w-2 h-2 rounded-full bg-yellow-500 mr-2" title="Unlocked (0-50%)"></span>
+                                                {% elif challenge.computed_blue_stripe %}
+                                                    <span class="w-2 h-2 rounded-full bg-blue-500 mr-2" title="Rarely Unlocked (50-90%)"></span>
+                                                {% else %}
+                                                    <span class="w-2 h-2 rounded-full bg-transparent mr-2"></span> {# Placeholder for alignment #}
+                                                {% endif %}
                                             {% else %}
                                                 <span class="w-2 h-2 rounded-full bg-transparent mr-2"></span> {# Placeholder for alignment #}
                                             {% endif %}
@@ -162,7 +168,7 @@
         {% endfor %}
 
     <!-- Challenge Modal -->
-    <div id="challengeModal" class="fixed inset-0 flex items-center justify-center overflow-y-auto h-full w-full opacity-0 pointer-events-none transition-opacity duration-300 z-50">
+    <div id="challengeModal" class="fixed inset-0 flex items-center justify-center overflow-y-auto h-full w-full opacity-0 pointer-events-none transition-opacity duration-300 z-50 modal-overlay">
         <div class="relative p-5 w-96 theme-modal-card transform -translate-y-full transition-transform duration-300 ease-out">
             <div class="flex justify-between items-center pb-3">
                 <h3 class="theme-modal-title text-2xl leading-6 font-medium" id="modalChallengeName"></h3>

@@ -2,6 +2,21 @@ function getCssVariable(variableName) {
     return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
 }
 
+function getChartColors() {
+    return [
+        getCssVariable('--chart-color-1'),
+        getCssVariable('--chart-color-2'),
+        getCssVariable('--chart-color-3'),
+        getCssVariable('--chart-color-4'),
+        getCssVariable('--chart-color-5'),
+        getCssVariable('--chart-color-6'),
+        getCssVariable('--chart-color-7'),
+        getCssVariable('--chart-color-8'),
+        getCssVariable('--chart-color-9'),
+        getCssVariable('--chart-color-10'),
+    ];
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const chartTextColor = getCssVariable('--text-main');
     // Data for Category Points Chart
@@ -16,10 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: categoryLabels,
             datasets: [{
                 data: categoryValues,
-                backgroundColor: [
-                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
-                    '#E7E9ED', '#8AC926', '#FFCA3A', '#1982C4', '#6A4C93', '#F45B69'
-                ],
+                backgroundColor: getChartColors(),
                 hoverOffset: 4
             }]
         },
@@ -47,10 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: userLabels,
             datasets: [{
                 data: userValues,
-                backgroundColor: [
-                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
-                    '#E7E9ED', '#8AC926', '#FFCA3A', '#1982C4', '#6A4C93', '#F45B69'
-                ],
+                backgroundColor: getChartColors(),
                 hoverOffset: 4
             }]
         },
@@ -77,18 +86,13 @@ document.addEventListener('DOMContentLoaded', function() {
             intersect: false, // Allow tooltip to activate when near a data point
             hitRadius: 20 // Increased hit radius for tooltip activation
         },
-        interaction: {
-            mode: 'nearest',
-            intersect: false, // Allow tooltip to activate when near a data point
-            hitRadius: 20 // Increased hit radius for tooltip activation
-        },
         data: {
             labels: solvedDates,
             datasets: [{
                 label: 'Challenges Solved',
                 data: solvedCounts,
-                borderColor: '#36A2EB',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: getCssVariable('--chart-color-2'),
+                backgroundColor: 'rgba(54, 162, 235, 0.2)', // This can be left as is, or also be a variable
                 fill: true,
                 tension: 0.4
             }]
@@ -146,8 +150,8 @@ document.addEventListener('DOMContentLoaded', function() {
             datasets: [{
                 data: failsSucceedsValues,
                 backgroundColor: [
-                    '#4CAF50', // Green for Succeeds
-                    '#F44336'  // Red for Fails
+                    getCssVariable('--chart-color-succeeds'),
+                    getCssVariable('--chart-color-fails')
                 ],
                 hoverOffset: 4
             }]
@@ -176,8 +180,8 @@ document.addEventListener('DOMContentLoaded', function() {
             datasets: [{
                 label: 'Times Solved',
                 data: challengeSolveValues,
-                backgroundColor: '#4BC0C0', // A distinct color
-                borderColor: '#4BC0C0',
+                backgroundColor: getCssVariable('--chart-color-4'),
+                borderColor: getCssVariable('--chart-color-4'),
                 borderWidth: 1
             }]
         },
@@ -228,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
         datasets.push({
             label: 'Global Average Score',
             data: globalStatsOverTime.map(d => ({ x: d.x, y: d.avg })),
-            borderColor: 'rgb(255, 0, 0)', // Red for average
+            borderColor: getCssVariable('--chart-color-average'),
             borderDash: [5, 5],
             tension: 0.1,
             fill: false,
@@ -238,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
         datasets.push({
             label: 'Global Max Score',
             data: globalStatsOverTime.map(d => ({ x: d.x, y: d.max })),
-            borderColor: 'rgb(0, 200, 0)', // Green for max
+            borderColor: getCssVariable('--chart-color-max'),
             borderDash: [2, 2],
             tension: 0.1,
             fill: false,
@@ -248,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function() {
         datasets.push({
             label: 'Global Min Score',
             data: globalStatsOverTime.map(d => ({ x: d.x, y: d.min })),
-            borderColor: 'rgb(200, 0, 0)', // Dark Red for min
+            borderColor: getCssVariable('--chart-color-min'),
             borderDash: [2, 2],
             tension: 0.1,
             fill: false,
@@ -258,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
         datasets.push({
             label: 'Global Q3 (75th Percentile)',
             data: globalStatsOverTime.map(d => ({ x: d.x, y: d.q3 })),
-            borderColor: 'rgb(128, 0, 128)', // Purple for IQR
+            borderColor: getCssVariable('--chart-color-iqr'),
             borderDash: [2, 2],
             tension: 0.1,
             fill: '+1', // Fill to Q1
@@ -268,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
         datasets.push({
             label: 'Global Q1 (25th Percentile)',
             data: globalStatsOverTime.map(d => ({ x: d.x, y: d.q1 })),
-            borderColor: 'rgb(128, 0, 128)', // Purple for IQR
+            borderColor: getCssVariable('--chart-color-iqr'),
             borderDash: [2, 2],
             tension: 0.1,
             fill: '-1', // Fill to the dataset below (nothing below, so fills to 0)
@@ -280,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         datasets.push({
             label: 'Global Avg +1 Std Dev',
             data: globalStatsOverTime.map(d => ({ x: d.x, y: d.avg + d.std_dev })),
-            borderColor: 'rgb(255, 165, 0)', // Orange for std dev
+            borderColor: getCssVariable('--chart-color-std-dev'),
             borderDash: [2, 2],
             tension: 0.1,
             fill: '+1', // Fill to the dataset below (average)
@@ -292,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
         datasets.push({
             label: 'Global Avg -1 Std Dev',
             data: globalStatsOverTime.map(d => ({ x: d.x, y: d.avg - d.std_dev })),
-            borderColor: 'rgb(255, 165, 0)', // Orange for std dev
+            borderColor: getCssVariable('--chart-color-std-dev'),
             borderDash: [2, 2],
             tension: 0.1,
             fill: '-1', // Fill to the dataset below (nothing below, so fills to 0)
@@ -301,10 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Add individual user scores
-        const userColors = [
-            '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
-            '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
-        ]; // A set of distinct colors
+        const userColors = getChartColors();
         let colorIndex = 0;
 
         for (const username in userScoresOverTime) {

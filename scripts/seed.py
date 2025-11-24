@@ -61,7 +61,7 @@ def seed_database():
         user = User(username=username, email=f"{username}_{i}@example.com", password_hash=user_password, is_admin=False, hidden=False, score=0)
         users.append(user)
     
-    # Add specific user "zen"
+    # Add specific user "zen" as a non-admin user
     zen_password = bcrypt.generate_password_hash("zen").decode('utf-8')
     zen_user = User(username="zen", email="zen@example.com", password_hash=zen_password, is_admin=False, hidden=False, score=0)
     users.append(zen_user)

@@ -16,6 +16,17 @@ body.theme-default {
     letter-spacing: 0em;
     --bg-completed: #047857; /* Tailwind green-700 for completed challenges */
     --bg-hover-surface: #374151; /* A slightly lighter gray for hover effect */
+
+    --chart-color-1: #FF6384;
+    --chart-color-2: #36A2EB;
+    --chart-color-3: #FFCE56;
+    --chart-color-4: #4BC0C0;
+    --chart-color-5: #9966FF;
+    --chart-color-6: #FF9F40;
+    --chart-color-7: #E7E9ED;
+    --chart-color-8: #8AC926;
+    --chart-color-9: #1982C4;
+    --chart-color-10: #F45B69;
 }
 
 body.theme-default p {
@@ -125,13 +136,6 @@ body.theme-default .theme-challenge-status-text:hover {
     background-color: transparent;
 }
 
-body.theme-default .theme-modal-card {
-    background-color: var(--bg-surface);
-    border: var(--card-border);
-    border-radius: var(--radius);
-    box-shadow: var(--card-shadow);
-}
-
 body.theme-default .theme-modal-title {
     color: var(--text-header);
 }
@@ -216,7 +220,7 @@ body.theme-default .theme-flash-danger { background-color: #EF4444; color: white
 
 /* Code Result */
 body.theme-default .theme-code-result-success { background-color: #065F46; color: white; } /* Tailwind green-800 */
-body.theme-default .theme-code-result-error { color: #EF4444; } /* Tailwind red-500 */
+body.theme-de-result-error { color: #EF4444; } /* Tailwind red-500 */
 
 /* Explicit SVG stroke for theme-challenge-status-text within buttons (modal close icon) */
 body.theme-default .theme-challenge-status-text svg {
@@ -319,37 +323,6 @@ body.theme-default .theme-modal-button-secondary {
     color: white;
 }
 
-/* Chart Colors (Default Theme) */
-body.theme-default {
-    --chart-color-1: rgb(255, 99, 132);   /* Red */
-    --chart-color-2: rgb(54, 162, 235);   /* Blue */
-    --chart-color-3: rgb(255, 206, 86);   /* Yellow */
-    --chart-color-4: rgb(75, 192, 192);   /* Green */
-    --chart-color-5: rgb(153, 102, 255);  /* Purple */
-    --chart-color-6: rgb(255, 159, 64);   /* Orange */
-    --chart-color-7: rgb(199, 199, 199);  /* Gray */
-    --chart-color-8: rgb(83, 102, 255);   /* Indigo */
-    --chart-color-9: rgb(40, 159, 64);    /* Dark Green */
-    --chart-color-10: rgb(210, 99, 132);  /* Pink */
-
-    /* Profile Page specific variables */
-    --text-info: #63b3ed; /* A default blue for info text */
-    --bg-admin-badge: #e53e3e; /* Red for admin badge */
-    --text-admin-badge: white;
-    --bg-hidden-badge: #718096; /* Gray for hidden badge */
-    --text-hidden-badge: white;
-
-    /* Chart Colors for Profile Charts */
-    --chart-color-succeeds: rgb(75, 192, 75); /* Green for succeeds */
-    --chart-color-fails: rgb(255, 99, 132); /* Red for fails */
-    --chart-color-average: rgb(255, 0, 0); /* Red for average */
-    --chart-color-max: rgb(0, 200, 0); /* Green for max */
-    --chart-color-min: rgb(200, 0, 0); /* Dark Red for min */
-    --chart-color-iqr: rgb(128, 0, 128); /* Purple for IQR */
-    --chart-color-std-dev: rgb(255, 165, 0); /* Orange for std dev */
-    --chart-color-challenges-complete: rgb(255, 159, 64); /* Orange for challenges complete line */
-}
-
 /* Profile Page Semantic Classes */
 body.theme-default .theme-profile-score-rank {
     color: var(--text-info);
@@ -384,4 +357,16 @@ body.theme-default .theme-modal-button-primary {
 body.theme-default .theme-modal-button-secondary {
     background-color: #4a5568;
     color: white;
+}
+
+body.theme-default .theme-modal-card {
+    background-color: var(--bg-surface);
+    border: var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+}
+
+/* Modal Overlay */
+body.theme-default .modal-overlay {
+    background-color: rgba(45, 55, 72, 0.8); /* gray-800 with 80% opacity */
 }
