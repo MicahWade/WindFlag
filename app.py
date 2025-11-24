@@ -20,6 +20,8 @@ from scripts.api_key_routes import api_key_bp # Import api_key_bp
 from scripts.api_routes import api_bp # Import api_bp
 from flask_restx import Api # Import Api from flask_restx
 
+from scripts.theme_utils import get_active_theme # New: Import theme_utils
+
 from scripts.chart_data_utils import get_profile_points_over_time_data, get_profile_fails_vs_succeeds_data, get_profile_categories_per_score_data, get_profile_challenges_complete_data, get_global_score_history_data
 import sys
 import argparse
@@ -69,7 +71,8 @@ def create_app(config_class=Config):
         Returns:
             A dictionary containing global configuration variables.
         """
-        return dict(disable_signup=app.config['DISABLE_SIGNUP'])
+        return dict(disable_signup=app.config['DISABLE_SIGNUP'],
+                    active_theme=get_active_theme())
 
     @app.route('/')
     @app.route('/home')

@@ -3,16 +3,16 @@
     {{ super() }}
 {% endblock %}
 {% block content %}
-    <h1 class="text-3xl font-bold mb-6 text-gray-100">Challenges</h1>
+    <h1 class="theme-page-title text-3xl font-bold mb-6">Challenges</h1>
         {% for category_data in categories %}
-        <div class="accordion-item bg-gray-800 rounded-lg shadow-lg mb-6">
+        <div class="accordion-item theme-accordion-item mb-6">
             <div class="accordion-header p-4 cursor-pointer flex justify-between items-center" data-category-id="{{ category_data.name | lower | replace(' ', '-') }}">
-                <h2 class="text-2xl font-semibold text-gray-200">{{ category_data.name }}
+                <h2 class="theme-category-title text-2xl font-semibold">{{ category_data.name }}
                     {% if category_data.visible_count is defined %}
-                        <span class="text-lg text-gray-400 ml-2">({{ category_data.solved_count }}/{{ category_data.visible_count }})</span>
+                        <span class="theme-category-stats text-lg ml-2">({{ category_data.solved_count }}/{{ category_data.visible_count }})</span>
                     {% endif %}
                 </h2>
-                <svg class="w-6 h-6 text-gray-400 transform transition-transform duration-200 accordion-icon rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg class="w-6 h-6 transform transition-transform duration-200 accordion-icon rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
             </div>
@@ -24,10 +24,10 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                             {% for challenge in category_data.challenges %}
                                 {% if challenge.is_locked %}
-                                    <div class="bg-gray-700 p-6 rounded-lg shadow-lg challenge-card locked-challenge border border-gray-600">
-                                        <h5 class="text-xl font-bold text-gray-400 mb-2">{{ challenge.name }}</h5>
-                                        <p class="text-gray-500">Locked</p>
-                                        <p class="text-gray-500 text-sm mt-2">
+                                    <div class="theme-challenge-card-locked p-6 challenge-card locked-challenge">
+                                        <h5 class="theme-challenge-title text-xl font-bold mb-2">{{ challenge.name }}</h5>
+                                        <p class="theme-challenge-status-text">Locked</p>
+                                        <p class="theme-challenge-status-text text-sm mt-2">
                                             {% if challenge.unlock_info.type == 'PREREQUISITE_PERCENTAGE' %}
                                                 Unlocks after completing {{ challenge.unlock_info.prerequisite_percentage_value }}% of challenges.
                                             {% elif challenge.unlock_info.type == 'PREREQUISITE_COUNT' %}
@@ -50,7 +50,7 @@
                                     {% elif challenge.total_flags > 0 %}
                                         {% set completion_percentage = (challenge.submitted_flags_count / challenge.total_flags * 100) | round(0, 'floor') %}
                                     {% endif %}
-                                    <div class="bg-gray-800 p-6 rounded-lg shadow-lg challenge-card cursor-pointer transform hover:scale-105 transition duration-300 ease-in-out {% if challenge.is_completed %}completed-challenge{% endif %} relative border border-gray-700" {# Added relative class and border #}
+                                    <div class="theme-challenge-card theme-hover-card p-6 challenge-card cursor-pointer transform hover:scale-105 transition duration-300 ease-in-out {% if challenge.is_completed %}theme-completed-challenge{% endif %} relative" {# Added relative class #}
                                          data-id="{{ challenge.id }}"
                                          data-name="{{ challenge.name }}"
                                          data-description="{{ challenge.description }}"
@@ -74,8 +74,8 @@
                                             <div class="admin-stripe admin-stripe-blue">Rarely Unlocked (50-90%)</div>
                                         {% endif %}
 
-                                        <h5 class="text-xl font-bold text-gray-100 mb-2">{{ challenge.name }}</h5>
-                                        <p class="text-gray-300">{{ challenge.display_points }} pts</p>
+                                        <h5 class="theme-challenge-title text-xl font-bold mb-2">{{ challenge.name }}</h5>
+                                        <p class="theme-challenge-points">{{ challenge.display_points }} pts</p>
                                         {# Removed: Flag progress display on card #}
                                     </div>
                                 {% endif %}
@@ -86,9 +86,9 @@
                         <div class="space-y-2 mb-8">
                             {% for challenge in category_data.challenges %}
                                 {% if challenge.is_locked %}
-                                    <div class="bg-gray-700 p-3 rounded-md flex justify-between items-center text-gray-500 border border-gray-600">
-                                        <h5 class="text-lg font-bold">{{ challenge.name }}</h5>
-                                        <p class="text-sm">Locked</p>
+                                    <div class="theme-challenge-card-locked p-3 flex justify-between items-center">
+                                        <h5 class="theme-challenge-title text-lg font-bold">{{ challenge.name }}</h5>
+                                        <p class="theme-challenge-status-text text-sm">Locked</p>
                                     </div>
                                 {% else %}
                                     {% set completion_percentage = 0 %}
@@ -97,7 +97,7 @@
                                     {% elif challenge.total_flags > 0 %}
                                         {% set completion_percentage = (challenge.submitted_flags_count / challenge.total_flags * 100) | round(0, 'floor') %}
                                     {% endif %}
-                                    <div class="bg-gray-800 p-3 rounded-md flex justify-between items-center challenge-card cursor-pointer hover:bg-gray-700 transition duration-150 ease-in-out {% if challenge.is_completed %}completed-challenge{% endif %} relative border border-gray-700"
+                                    <div class="theme-challenge-card theme-hover-card p-3 flex justify-between items-center challenge-card cursor-pointer transition duration-150 ease-in-out {% if challenge.is_completed %}theme-completed-challenge{% endif %} relative"
                                          data-id="{{ challenge.id }}"
                                          data-name="{{ challenge.name }}"
                                          data-description="{{ challenge.description }}"
@@ -123,23 +123,23 @@
                                             {% else %}
                                                 <span class="w-2 h-2 rounded-full bg-transparent mr-2"></span> {# Placeholder for alignment #}
                                             {% endif %}
-                                            <h5 class="text-lg font-bold text-gray-100">{{ challenge.name }}</h5>
+                                            <h5 class="theme-challenge-title text-lg font-bold">{{ challenge.name }}</h5>
                                         </div>
-                                        <p class="text-gray-300">{{ challenge.display_points }} pts</p>
+                                        <p class="theme-challenge-points">{{ challenge.display_points }} pts</p>
                                     </div>
                                 {% endif %}
                             {% endfor %}
                         </div>
                     {% endif %}
                 {% else %}
-                    <p class="text-gray-300 mb-8">No challenges in this category yet.</p>
+                    <p class="theme-empty-state-text mb-8">No challenges in this category yet.</p>
                 {% endif %}
             {% else %} {# Category is locked #}
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-gray-700 p-6 rounded-lg shadow-lg category-card locked-category border border-gray-600">
-                        <h5 class="text-xl font-bold text-gray-400 mb-2">{{ category_data.name }}</h5>
-                        <p class="text-gray-500">Category Locked</p>
-                        <p class="text-gray-500 text-sm mt-2">
+                    <div class="theme-challenge-card-locked p-6 category-card locked-category">
+                        <h5 class="theme-challenge-title text-xl font-bold mb-2">{{ category_data.name }}</h5>
+                        <p class="theme-challenge-status-text">Category Locked</p>
+                        <p class="theme-challenge-status-text text-sm mt-2">
                             {% if category_data.unlock_info.type == 'PREREQUISITE_PERCENTAGE' %}
                                 Unlocks after completing {{ category_data.unlock_info.prerequisite_percentage_value }}% of challenges.
                             {% elif category_data.unlock_info.type == 'PREREQUISITE_COUNT' %}
@@ -163,33 +163,33 @@
 
     <!-- Challenge Modal -->
     <div id="challengeModal" class="fixed inset-0 flex items-center justify-center overflow-y-auto h-full w-full opacity-0 pointer-events-none transition-opacity duration-300 z-50">
-        <div class="relative p-5 border border-gray-700 w-96 shadow-lg rounded-md bg-gray-800 transform -translate-y-full transition-transform duration-300 ease-out">
+        <div class="relative p-5 w-96 theme-modal-card transform -translate-y-full transition-transform duration-300 ease-out">
             <div class="flex justify-between items-center pb-3">
-                <h3 class="text-2xl leading-6 font-medium text-gray-100" id="modalChallengeName"></h3>
-                <button class="text-gray-500 hover:text-gray-400 close-modal">
+                <h3 class="theme-modal-title text-2xl leading-6 font-medium" id="modalChallengeName"></h3>
+                <button class="theme-challenge-status-text close-modal">
                     <span class="sr-only">Close</span>
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             <div class="mt-2 px-7 py-3">
                 <div id="challengeContent">
-                    <p class="text-sm text-gray-300" id="modalChallengeDescription"></p>
-                    <p class="text-lg font-bold text-gray-200 mt-4" id="modalChallengePoints"></p>
+                    <p class="theme-modal-description text-sm" id="modalChallengeDescription"></p>
+                    <p class="theme-modal-points text-lg font-bold mt-4" id="modalChallengePoints"></p>
                     <div id="modalChallengeStatus" class="mt-2 text-green-400 font-semibold hidden"></div>
-                    <div id="modalFlagProgress" class="mt-2 text-gray-400 text-sm hidden"></div>
+                    <div id="modalFlagProgress" class="mt-2 theme-challenge-status-text text-sm hidden"></div>
                     
-                    <div id="modalHintsSection" class="mt-4 border-t border-gray-700 pt-4">
-                        <h4 class="text-lg font-semibold text-gray-100 mb-2">Hints</h4>
+                    <div id="modalHintsSection" class="mt-4 pt-4" style="border-top: 1px solid var(--border-color);">
+                        <h4 class="theme-modal-title text-lg font-semibold mb-2">Hints</h4>
                         <div id="hintsList">
                             {# Hints will be dynamically added here by JavaScript #}
                             {# The structure below is a placeholder for what JS will generate #}
                             {#
-                            <div class="hint-item mb-2 p-3 bg-gray-700 rounded-md">
-                                <p class="text-gray-300">Hint content goes here.</p>
+                            <div class="hint-item mb-2 p-3 theme-modal-hint-item">
+                                <p class="theme-modal-description">Hint content goes here.</p>
                             </div>
-                            <div class="hint-item mb-2 p-3 bg-gray-700 rounded-md flex justify-between items-center">
-                                <span class="text-gray-300">Cost: 50 pts</span>
-                                <button class="reveal-hint-btn bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1 px-3 rounded text-xs" data-hint-id="1">Reveal Hint</button>
+                            <div class="hint-item mb-2 p-3 theme-modal-hint-item flex justify-between items-center">
+                                <span class="theme-modal-description">Cost: 50 pts</span>
+                                <button class="reveal-hint-btn theme-modal-button-primary font-bold py-1 px-3 rounded text-xs" data-hint-id="1">Reveal Hint</button>
                             </div>
                             #}
                         </div>
@@ -200,29 +200,29 @@
                         <form method="POST" action="" class="space-y-2 mt-4" id="modalFlagForm">
                             {{ flag_form.hidden_tag() }}
                             <div>
-                                {{ flag_form.flag(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline text-sm", placeholder="Enter flag", id="modalFlagInput") }}
+                                {{ flag_form.flag(class="theme-modal-input shadow appearance-none rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline text-sm", placeholder="Enter flag", id="modalFlagInput") }}
                             </div>
-                            {{ flag_form.submit(class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm shadow-md", id="modalSubmitButton") }}
+                            {{ flag_form.submit(class="theme-modal-button-primary font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm shadow-md", id="modalSubmitButton") }}
                         </form>
                     </div>
 
                     <div id="codeSubmissionSection" class="hidden">
-                        <label for="codeEditor" class="block text-gray-300 text-sm font-bold mb-2 mt-4">Your Code:</label>
-                        <textarea id="codeEditor" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline h-48 font-mono text-sm"></textarea>
-                        <button id="modalRunCodeButton" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm shadow-md mt-2">Run Code</button>
-                        <div id="codeResult" class="mt-4 p-3 rounded-md text-sm font-mono whitespace-pre-wrap bg-gray-900 text-gray-100 hidden"></div>
+                        <label for="codeEditor" class="theme-modal-description block text-sm font-bold mb-2 mt-4">Your Code:</label>
+                        <textarea id="codeEditor" class="theme-modal-input shadow appearance-none rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline h-48 font-mono text-sm"></textarea>
+                        <button id="modalRunCodeButton" class="theme-modal-button-primary font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm shadow-md mt-2">Run Code</button>
+                        <div id="codeResult" class="theme-code-block mt-4 p-3 rounded-md text-sm font-mono whitespace-pre-wrap hidden"></div>
                     </div>
 
                 </div>
                 <div id="solversContent" class="hidden">
-                    <h3 class="text-2xl leading-6 font-medium text-gray-100 mt-4">Solvers (<span id="solverCount">0</span>)</h3>
-                    <ul id="solversList" class="list-disc list-inside text-gray-300 mt-4">
+                    <h3 class="theme-modal-title text-2xl leading-6 font-medium mt-4">Solvers (<span id="solverCount">0</span>)</h3>
+                    <ul id="solversList" class="theme-modal-description list-disc list-inside mt-4">
                         <!-- Solvers will be dynamically added here -->
                     </ul>
                 </div>
             </div>
             <div class="mt-4">
-                <button id="viewSolversBtn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full text-sm shadow-md">
+                <button id="viewSolversBtn" class="theme-modal-button-secondary font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full text-sm shadow-md">
                     View Solvers
                 </button>
             </div>

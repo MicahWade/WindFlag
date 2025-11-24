@@ -35,17 +35,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to get a color based on percentage
     function getColorForPercentage(percentage) {
         if (percentage === 100) {
-            return 'bg-green-600'; // Completed
+            return 'theme-status-completed'; // Completed
         } else if (percentage >= 75) {
-            return 'bg-lime-600';
+            return 'theme-status-high-progress';
         } else if (percentage >= 50) {
-            return 'bg-yellow-500';
+            return 'theme-status-medium-progress';
         } else if (percentage >= 25) {
-            return 'bg-orange-500';
+            return 'theme-status-low-progress';
         } else if (percentage > 0) {
-            return 'bg-red-600';
+            return 'theme-status-very-low-progress';
         } else {
-            return 'bg-gray-800'; // Default for 0% or not started
+            return 'theme-status-no-progress'; // Default for 0% or not started
         }
     }
 
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const alertDiv = document.createElement('div');
-        alertDiv.className = `p-3 mb-3 rounded-md text-sm ${category === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
+        alertDiv.className = `p-3 mb-3 rounded-md text-sm ${category === 'success' ? 'theme-flash-success' : 'theme-flash-danger'}`;
         alertDiv.textContent = message;
         flashContainer.appendChild(alertDiv);
 
@@ -74,9 +74,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const isCompleted = card.dataset.completed === 'true';
         const isLocked = card.classList.contains('locked-challenge'); // Check if the card is locked
 
+        // Get the computed value of --card-border from the body (or any element where it's defined)
+        const computedStyle = getComputedStyle(document.body);
+        const cardBorder = computedStyle.getPropertyValue('--card-border');
+        const cardRadius = computedStyle.getPropertyValue('--radius'); // New: Get --radius
+
+        // Apply border and border-radius to the card
+        if (cardBorder) {
+            card.style.border = cardBorder;
+        }
+        if (cardRadius) { // New: Apply border-radius
+            card.style.borderRadius = cardRadius;
+        }
+
         // Apply initial background color based on completion percentage for unlocked challenges
         if (!isCompleted && !isLocked) {
-            card.classList.remove('bg-gray-800'); // Remove default background
             card.classList.add(getColorForPercentage(completionPercentage));
         }
 
@@ -165,14 +177,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('modalHintsSection').classList.remove('hidden'); // Show the section
                         data.hints.forEach(hint => {
                             const hintDiv = document.createElement('div');
-                            hintDiv.className = 'hint-item mb-2 p-3 bg-gray-700 rounded-md';
+                            hintDiv.className = 'hint-item mb-2 p-3 theme-modal-hint-item';
                             if (hint.is_revealed) {
-                                hintDiv.innerHTML = `<p class="text-gray-300">${hint.content}</p>`;
+                                hintDiv.innerHTML = `<p>${hint.content}</p>`;
                             } else {
                                 hintDiv.className += ' flex justify-between items-center';
                                 hintDiv.innerHTML = `
-                                    <span class="text-gray-300">${hint.title} (Cost: ${hint.cost} pts)</span>
-                                    <button class="reveal-hint-btn bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1 px-3 rounded text-xs" data-hint-id="${hint.id}" data-hint-cost="${hint.cost}">Reveal Hint</button>
+                                    <span>${hint.title} (Cost: ${hint.cost} pts)</span>
+                                    <button class="reveal-hint-btn theme-modal-button-primary font-bold py-1 px-3 text-xs" data-hint-id="${hint.id}" data-hint-cost="${hint.cost}">Reveal Hint</button>
                                 `;
                             }
                             hintsList.appendChild(hintDiv);
@@ -417,8 +429,8 @@ document.addEventListener('DOMContentLoaded', function() {
             codeResult.classList.remove('hidden');
             if (data.correct) {
                 showFlashMessage(data.message, 'success');
-                codeResult.classList.remove('bg-gray-900', 'text-gray-100', 'text-red-400');
-                codeResult.classList.add('bg-green-800', 'text-white');
+                codeResult.classList.remove('bg-gray-900', 'text-gray-100', 'text-red-400'); // Remove previous states
+                codeResult.classList.add('theme-code-result-success');
                 codeResult.textContent = 'Correct! Challenge Solved.';
                 
                 // Update challenge card status
@@ -437,8 +449,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             } else {
                 showFlashMessage(data.message, 'danger');
-                codeResult.classList.remove('bg-gray-900', 'text-gray-100', 'bg-green-800');
-                codeResult.classList.add('text-red-400');
+                codeResult.classList.remove('bg-gray-900', 'text-gray-100', 'bg-green-800'); // Remove previous states
+                codeResult.classList.add('theme-code-result-error');
                 let output = '';
                 if (data.stdout) output += `STDOUT:\n${data.stdout}\n\n`;
                 if (data.stderr) output += `STDERR:\n${data.stderr}\n\n`;

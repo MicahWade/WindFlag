@@ -1,72 +1,72 @@
 {% extends "base.html" %}
 {% block content %}
-    <div class="max-w-md mx-auto bg-gray-800 p-8 rounded-lg shadow-lg">
-        <h1 class="text-3xl font-bold text-gray-100 mb-6">Admin Settings</h1>
+    <div class="max-w-md mx-auto theme-card p-8 rounded-lg shadow-lg">
+        <h1 class="theme-page-title text-3xl font-bold mb-6">Admin Settings</h1>
         <form method="POST" action="" class="space-y-4">
             {{ form.hidden_tag() }}
             <div class="mb-4">
-                {{ form.top_x_scoreboard.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                {{ form.top_x_scoreboard.label(class="block theme-form-label text-sm font-bold mb-2") }}
                 {% if form.top_x_scoreboard.errors %}
-                    {{ form.top_x_scoreboard(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                    <p class="text-red-400 text-xs italic">
+                    {{ form.top_x_scoreboard(class="theme-modal-input shadow appearance-none border border-red-500 rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline") }}
+                    <p class="theme-text-error text-xs italic">
                         {% for error in form.top_x_scoreboard.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </p>
                 {% else %}
-                    {{ form.top_x_scoreboard(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                    {{ form.top_x_scoreboard(class="theme-modal-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline") }}
                 {% endif %}
             </div>
             <div class="mb-4">
-                {{ form.scoreboard_graph_type.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                {{ form.scoreboard_graph_type.label(class="block theme-form-label text-sm font-bold mb-2") }}
                 {% if form.scoreboard_graph_type.errors %}
-                    {{ form.scoreboard_graph_type(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                    <p class="text-red-400 text-xs italic">
+                    {{ form.scoreboard_graph_type(class="theme-modal-input shadow appearance-none border border-red-500 rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline") }}
+                    <p class="theme-text-error text-xs italic">
                         {% for error in form.scoreboard_graph_type.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </p>
                 {% else %}
-                    {{ form.scoreboard_graph_type(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                    {{ form.scoreboard_graph_type(class="theme-modal-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline") }}
                 {% endif %}
             </div>
 
-            <h2 class="text-xl font-bold text-gray-100 mb-4 mt-6">Profile Page Chart Settings</h2>
+            <h2 class="theme-card-title text-xl font-bold mb-4 mt-6">Profile Page Chart Settings</h2>
 
             <div class="mb-4 flex items-center">
-                {{ form.profile_points_over_time_chart_enabled(class="form-checkbox h-5 w-5 text-blue-600") }}
-                {{ form.profile_points_over_time_chart_enabled.label(class="ml-2 block text-gray-300 text-sm font-bold") }}
+                {{ form.profile_points_over_time_chart_enabled(class="theme-checkbox h-5 w-5") }}
+                {{ form.profile_points_over_time_chart_enabled.label(class="ml-2 block theme-form-label text-sm font-bold") }}
             </div>
             <div class="mb-4 flex items-center">
-                {{ form.profile_fails_vs_succeeds_chart_enabled(class="form-checkbox h-5 w-5 text-blue-600") }}
-                {{ form.profile_fails_vs_succeeds_chart_enabled.label(class="ml-2 block text-gray-300 text-sm font-bold") }}
+                {{ form.profile_fails_vs_succeeds_chart_enabled(class="theme-checkbox h-5 w-5") }}
+                {{ form.profile_fails_vs_succeeds_chart_enabled.label(class="ml-2 block theme-form-label text-sm font-bold") }}
             </div>
             <div class="mb-4 flex items-center">
-                {{ form.profile_categories_per_score_chart_enabled(class="form-checkbox h-5 w-5 text-blue-600") }}
-                {{ form.profile_categories_per_score_chart_enabled.label(class="ml-2 block text-gray-300 text-sm font-bold") }}
+                {{ form.profile_categories_per_score_chart_enabled(class="theme-checkbox h-5 w-5") }}
+                {{ form.profile_categories_per_score_chart_enabled.label(class="ml-2 block theme-form-label text-sm font-bold") }}
             </div>
             <div class="mb-4 flex items-center">
-                {{ form.profile_challenges_complete_chart_enabled(class="form-checkbox h-5 w-5 text-blue-600") }}
-                {{ form.profile_challenges_complete_chart_enabled.label(class="ml-2 block text-gray-300 text-sm font-bold") }}
+                {{ form.profile_challenges_complete_chart_enabled(class="theme-checkbox h-5 w-5") }}
+                {{ form.profile_challenges_complete_chart_enabled.label(class="ml-2 block theme-form-label text-sm font-bold") }}
             </div>
 
-            <h2 class="text-xl font-bold text-gray-100 mb-4 mt-6">Challenge Display Settings</h2>
+            <h2 class="theme-card-title text-xl font-bold mb-4 mt-6">Challenge Display Settings</h2>
             <div class="mb-4">
-                {{ form.accordion_display_style.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                {{ form.accordion_display_style.label(class="block theme-form-label text-sm font-bold mb-2") }}
                 {% if form.accordion_display_style.errors %}
-                    {{ form.accordion_display_style(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                    <p class="text-red-400 text-xs italic">
+                    {{ form.accordion_display_style(class="theme-modal-input shadow appearance-none border border-red-500 rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline") }}
+                    <p class="theme-text-error text-xs italic">
                         {% for error in form.accordion_display_style.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </p>
                 {% else %}
-                    {{ form.accordion_display_style(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                    {{ form.accordion_display_style(class="theme-modal-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline") }}
                 {% endif %}
             </div>
 
             <div class="mb-4">
-                {{ form.timezone.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                {{ form.timezone.label(class="block theme-form-label text-sm font-bold mb-2") }}
                 <div class="relative">
                     {# Hidden select element for form submission #}
                     <select id="timezone_select_hidden" name="{{ form.timezone.name }}" class="hidden">
@@ -77,7 +77,7 @@
 
                     {# Search input field #}
                     <input type="text" id="timezone_search_input" placeholder="Search timezone..."
-                           class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline"
+                           class="theme-modal-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
                            value="{{ form.timezone.data if form.timezone.data else '' }}">
 
                     {# Dropdown for search results #}
@@ -85,7 +85,7 @@
                          class="absolute z-10 w-full bg-gray-700 border border-gray-600 rounded mt-1 max-h-60 overflow-y-auto hidden"></div>
                 </div>
                 {% if form.timezone.errors %}
-                    <p class="text-red-400 text-xs italic">
+                    <p class="theme-text-error text-xs italic">
                         {% for error in form.timezone.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
@@ -94,7 +94,7 @@
             </div>
 
             <div class="flex items-center justify-between">
-                {{ form.submit(class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline shadow-md transform hover:scale-105 transition duration-300 ease-in-out") }}
+                {{ form.submit(class="theme-modal-button-primary font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline shadow-md transform hover:scale-105 transition duration-300 ease-in-out") }}
             </div>
         </form>
     </div>

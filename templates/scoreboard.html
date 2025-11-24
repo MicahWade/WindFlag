@@ -2,23 +2,23 @@
 {% block head %}
 {% endblock %}
 {% block content %}
-    <h1 class="text-3xl font-bold mb-6 text-gray-100">Scoreboard</h1>
+    <h1 class="theme-page-title text-3xl font-bold mb-6">Scoreboard</h1>
 
-    <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8 h-96">
+    <div class="theme-chart-container p-6 mb-8 h-96">
         <canvas id="scoreboardChart"></canvas>
     </div>
 
-    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h2 class="text-2xl font-semibold mb-4 text-gray-200">All Players Ranked</h2>
-        <table class="min-w-full divide-y divide-gray-700" id="playerRankings">
-            <thead class="bg-gray-700">
+    <div class="theme-chart-container p-6">
+        <h2 class="theme-category-title text-2xl font-semibold mb-4">All Players Ranked</h2>
+        <table class="min-w-full theme-table" id="playerRankings">
+            <thead class="theme-table-header">
                 <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Rank</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Username</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Score</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider theme-table-header-cell">Rank</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider theme-table-header-cell">Username</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider theme-table-header-cell">Score</th>
                 </tr>
             </thead>
-            <tbody class="bg-gray-800 divide-y divide-gray-700">
+            <tbody class="theme-table-body">
                 <!-- Player rows will be inserted here by JavaScript -->
             </tbody>
         </table>

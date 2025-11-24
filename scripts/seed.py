@@ -44,7 +44,6 @@ def seed_database():
     admin2 = User(username="admin2", email="admin2@example.com", password_hash=admin_password, is_admin=True, hidden=True, score=0)
     
     test_admin_password = bcrypt.generate_password_hash("test").decode('utf-8')
-    test_admin_password = bcrypt.generate_password_hash("test").decode('utf-8')
     test_admin = User(username="test", email="test@example.com", password_hash=test_admin_password, is_admin=True, is_super_admin=True, hidden=True, score=0)
 
     db.session.add_all([admin1, admin2, test_admin])
@@ -58,8 +57,8 @@ def seed_database():
     generated_usernames = generate_usernames()
     user_password = bcrypt.generate_password_hash("userpass").decode('utf-8')
 
-    for username in generated_usernames:
-        user = User(username=username, email=f"{username}@example.com", password_hash=user_password, is_admin=False, hidden=False, score=0)
+    for i, username in enumerate(generated_usernames):
+        user = User(username=username, email=f"{username}_{i}@example.com", password_hash=user_password, is_admin=False, hidden=False, score=0)
         users.append(user)
     
     # Add specific user "zen"

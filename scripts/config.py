@@ -24,6 +24,7 @@ class Config:
     USERNAME_ADD_NUMBER = os.environ.get('USERNAME_ADD_NUMBER', 'True').lower() == 'true'
     PRESET_USER_COUNT = 50
     WORDS_FILE_PATH = os.environ.get('WORDS_FILE_PATH', 'words.text')
+    ACTIVE_THEME = os.environ.get('ACTIVE_THEME', 'default')
 
 class TestConfig(Config):
     """
@@ -33,3 +34,7 @@ class TestConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///test.db' # Dedicated database for test mode
     WTF_CSRF_ENABLED = False
     DISABLE_SIGNUP = False # Allow signup in test mode for demo purposes
+
+
+
+ACTIVE_THEME = 'default'

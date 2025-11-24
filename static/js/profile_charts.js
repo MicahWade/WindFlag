@@ -1,4 +1,36 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const computedStyle = getComputedStyle(document.body);
+
+    // Fetch CSS variables for chart colors
+    const chartColors = [];
+    for (let i = 1; i <= 10; i++) {
+        const color = computedStyle.getPropertyValue(`--chart-color-${i}`).trim();
+        if (color) chartColors.push(color);
+    }
+    // Fetch CSS variables for specific chart elements
+    const chartColorSucceeds = computedStyle.getPropertyValue('--chart-color-succeeds').trim();
+    const chartColorFails = computedStyle.getPropertyValue('--chart-color-fails').trim();
+    const chartColorAverage = computedStyle.getPropertyValue('--chart-color-average').trim();
+    const chartColorMax = computedStyle.getPropertyValue('--chart-color-max').trim();
+    const chartColorMin = computedStyle.getPropertyValue('--chart-color-min').trim();
+    const chartColorIqr = computedStyle.getPropertyValue('--chart-color-iqr').trim();
+    const chartColorStdDev = computedStyle.getPropertyValue('--chart-color-std-dev').trim();
+    const chartColorChallengesComplete = computedStyle.getPropertyValue('--chart-color-challenges-complete').trim();
+
+    // Fetch CSS variables for category colors
+    const categoryColorStart = computedStyle.getPropertyValue('--category-color-start').trim();
+    const categoryColorGeneralSkills = computedStyle.getPropertyValue('--category-color-general-skills').trim();
+    const categoryColorWebExploitation = computedStyle.getPropertyValue('--category-color-web-exploitation').trim();
+    const categoryColorCryptography = computedStyle.getPropertyValue('--category-color-cryptography').trim();
+    const categoryColorReverseEngineering = computedStyle.getPropertyValue('--category-color-reverse-engineering').trim();
+    const categoryColorForensics = computedStyle.getPropertyValue('--category-color-forensics').trim();
+    const categoryColorPwn = computedStyle.getPropertyValue('--category-color-pwn').trim();
+    const categoryColorMiscellaneous = computedStyle.getPropertyValue('--category-color-miscellaneous').trim();
+    const categoryColorUncategorized = computedStyle.getPropertyValue('--category-color-uncategorized').trim();
+
+    // Fetch CSS variables for text colors
+    const textMuted = computedStyle.getPropertyValue('--text-muted').trim();
+
     // Function to create a line/bar chart
     function createChart(ctx, type, data, options) {
         // Destroy existing chart instance if it exists
@@ -32,22 +64,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Define a color palette for categories (this part remains for the cumulative score line)
             const categoryColors = {
-                'Start': 'rgb(128, 128, 128)', // Grey for initial point
-                'General Skills': 'rgb(255, 99, 132)',
-                'Web Exploitation': 'rgb(54, 162, 235)',
-                'Cryptography': 'rgb(255, 205, 86)',
-                'Reverse Engineering': 'rgb(75, 192, 192)',
-                'Forensics': 'rgb(153, 102, 255)',
-                'Pwn': 'rgb(255, 159, 64)',
-                'Miscellaneous': 'rgb(201, 203, 207)',
-                'Uncategorized': 'rgb(100, 100, 100)'
+                'Start': categoryColorStart || 'rgb(128, 128, 128)', // Grey for initial point
+                'General Skills': categoryColorGeneralSkills || 'rgb(255, 99, 132)',
+                'Web Exploitation': categoryColorWebExploitation || 'rgb(54, 162, 235)',
+                'Cryptography': categoryColorCryptography || 'rgb(255, 205, 86)',
+                'Reverse Engineering': categoryColorReverseEngineering || 'rgb(75, 192, 192)',
+                'Forensics': categoryColorForensics || 'rgb(153, 102, 255)',
+                'Pwn': categoryColorPwn || 'rgb(255, 159, 64)',
+                'Miscellaneous': categoryColorMiscellaneous || 'rgb(201, 203, 207)',
+                'Uncategorized': categoryColorUncategorized || 'rgb(100, 100, 100)'
                 // Add more colors for other categories as needed
             };
 
             const datasets = [{
                 label: 'User Score',
                 data: targetUserScoreHistory,
-                borderColor: 'rgb(75, 192, 192)',
+                borderColor: chartColorChallengesComplete || 'rgb(75, 192, 192)', // Using challenges complete color for user score line
                 tension: 0.1,
                 fill: false,
                 pointBackgroundColor: targetUserScoreHistory.map(point => categoryColors[point.category] || 'rgb(0, 0, 0)'), // Color nodes by category
@@ -63,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         x: d.x,
                         y: d.avg
                     })),
-                    borderColor: 'rgb(255, 0, 0)', // Red for average
+                    borderColor: chartColorAverage || 'rgb(255, 0, 0)', // Red for average
                     borderDash: [5, 5],
                     tension: 0.1,
                     fill: false,
@@ -76,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         x: d.x,
                         y: d.max
                     })),
-                    borderColor: 'rgb(0, 200, 0)', // Green for max
+                    borderColor: chartColorMax || 'rgb(0, 200, 0)', // Green for max
                     borderDash: [2, 2],
                     tension: 0.1,
                     fill: false,
@@ -89,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         x: d.x,
                         y: d.min
                     })),
-                    borderColor: 'rgb(200, 0, 0)', // Dark Red for min
+                    borderColor: chartColorMin || 'rgb(200, 0, 0)', // Dark Red for min
                     borderDash: [2, 2],
                     tension: 0.1,
                     fill: false,
@@ -102,11 +134,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         x: d.x,
                         y: d.q3
                     })),
-                    borderColor: 'rgb(128, 0, 128)', // Purple for IQR
+                    borderColor: chartColorIqr || 'rgb(128, 0, 128)', // Purple for IQR
                     borderDash: [2, 2],
                     tension: 0.1,
                     fill: '+1', // Fill to Q1
-                    backgroundColor: 'rgba(128, 0, 128, 0.1)',
+                    backgroundColor: chartColorIqr ? chartColorIqr.replace('rgb(', 'rgba(').replace(')', `, 0.1)`) : 'rgba(128, 0, 128, 0.1)',
                     pointRadius: 0
                 });
 
@@ -116,11 +148,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         x: d.x,
                         y: d.q1
                     })),
-                    borderColor: 'rgb(128, 0, 128)', // Purple for IQR
+                    borderColor: chartColorIqr || 'rgb(128, 0, 128)', // Purple for IQR
                     borderDash: [2, 2],
                     tension: 0.1,
                     fill: '-1', // Fill to the dataset below (nothing below, so fills to 0)
-                    backgroundColor: 'rgba(128, 0, 128, 0.1)',
+                    backgroundColor: chartColorIqr ? chartColorIqr.replace('rgb(', 'rgba(').replace(')', `, 0.1)`) : 'rgba(128, 0, 128, 0.1)',
                     pointRadius: 0
                 });
 
@@ -131,11 +163,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         x: d.x,
                         y: d.avg + d.std_dev
                     })),
-                    borderColor: 'rgb(255, 165, 0)', // Orange for std dev
+                    borderColor: chartColorStdDev || 'rgb(255, 165, 0)', // Orange for std dev
                     borderDash: [2, 2],
                     tension: 0.1,
                     fill: '+1', // Fill to the dataset below (average)
-                    backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                    backgroundColor: chartColorStdDev ? chartColorStdDev.replace('rgb(', 'rgba(').replace(')', `, 0.1)`) : 'rgba(255, 165, 0, 0.1)',
                     pointRadius: 0
                 });
 
@@ -146,11 +178,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         x: d.x,
                         y: d.avg - d.std_dev
                     })),
-                    borderColor: 'rgb(255, 165, 0)', // Orange for std dev
+                    borderColor: chartColorStdDev || 'rgb(255, 165, 0)', // Orange for std dev
                     borderDash: [2, 2],
                     tension: 0.1,
                     fill: '-1', // Fill to the dataset below (nothing below, so fills to 0)
-                    backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                    backgroundColor: chartColorStdDev ? chartColorStdDev.replace('rgb(', 'rgba(').replace(')', `, 0.1)`) : 'rgba(255, 165, 0, 0.1)',
                     pointRadius: 0
                 });
             }
@@ -220,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: datasets
             }, chartOptions);
         } else {
-            document.getElementById('pointsOverTimeChartContainer').innerHTML = '<p class="text-gray-400 text-center">No submissions yet to display points over time.</p>';
+            document.getElementById('pointsOverTimeChartContainer').innerHTML = '<p class="theme-profile-text-muted text-center">No submissions yet to display points over time.</p>';
         }
     }
 
@@ -235,8 +267,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     data: failsVsSucceedsData.values,
                     backgroundColor: [
-                        'rgb(75, 192, 75)', // Succeeds (Green)
-                        'rgb(255, 99, 132)' // Fails (Red)
+                        chartColorSucceeds || 'rgb(75, 192, 75)', // Succeeds (Green)
+                        chartColorFails || 'rgb(255, 99, 132)' // Fails (Red)
                     ],
                     hoverOffset: 4
                 }]
@@ -245,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 maintainAspectRatio: false,
             });
         } else {
-            document.getElementById('failsVsSucceedsChartContainer').innerHTML = '<p class="text-gray-400 text-center">No flag attempts yet to display fails vs. succeeds.</p>';
+            document.getElementById('failsVsSucceedsChartContainer').innerHTML = '<p class="theme-profile-text-muted text-center">No flag attempts yet to display fails vs. succeeds.</p>';
         }
     }
 
@@ -260,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'Points per Category',
                     data: categoriesPerScoreData.values,
-                    backgroundColor: [ // Added colors for pie chart
+                    backgroundColor: chartColors.length > 0 ? chartColors.slice(0, categoriesPerScoreData.values.length) : [ // Added colors for pie chart
                         'rgb(255, 99, 132)',
                         'rgb(54, 162, 235)',
                         'rgb(255, 205, 86)',
@@ -275,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 maintainAspectRatio: false,
             });
         } else {
-            document.getElementById('categoriesPerScoreChartContainer').innerHTML = '<p class="text-gray-400 text-center">No solved challenges yet to display points per category.</p>';
+            document.getElementById('categoriesPerScoreChartContainer').innerHTML = '<p class="theme-profile-text-muted text-center">No solved challenges yet to display points per category.</p>';
         }
     }
 
@@ -289,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'Challenges Solved',
                     data: challengesCompleteData,
-                    borderColor: 'rgb(255, 159, 64)',
+                    borderColor: chartColorChallengesComplete || 'rgb(255, 159, 64)',
                     tension: 0.1,
                     fill: false
                 }]
@@ -325,7 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         } else {
-            document.getElementById('challengesCompleteChartContainer').innerHTML = '<p class="text-gray-400 text-center">No challenges solved yet to display challenges complete over time.</p>';
+            document.getElementById('challengesCompleteChartContainer').innerHTML = '<p class="theme-profile-text-muted text-center">No challenges solved yet to display challenges complete over time.</p>';
         }
     }
 });

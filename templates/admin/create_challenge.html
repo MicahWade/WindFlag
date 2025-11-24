@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
-    <div class="max-w-md mx-auto bg-gray-800 p-8 rounded-lg shadow-lg">
+    <div class="max-w-md mx-auto theme-card p-8 rounded-lg shadow-lg">
         <form method="POST" action="" class="space-y-4">
             {{ form.hidden_tag() }}
             {% if challenge %}
                 <input type="hidden" name="challenge_id" value="{{ challenge.id }}">
             {% endif %}
             <fieldset class="border-b border-gray-700 pb-4">
-                <legend class="text-2xl font-bold text-gray-100 mb-4">{{ title }}</legend>
+                <legend class="theme-card-title text-2xl font-bold mb-4">{{ title }}</legend>
                 <div class="mb-4">
                     {{ form.name.label(class="block text-gray-300 text-sm font-bold mb-2") }}
                     {% if form.name.errors %}

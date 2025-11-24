@@ -30,14 +30,19 @@ def generate_usernames():
     num_users = current_app.config.get('PRESET_USER_COUNT', 10)
 
     usernames = []
-    for _ in range(num_users):
+    generated_unique_usernames = set() 
+
+    while len(usernames) < num_users:
         username_words = random.choices(words, k=num_words)
-        username = "".join(word.capitalize() for word in username_words)
+        username_base = "".join(word.capitalize() for word in username_words)
         
+        final_username = username_base
         if add_number:
-            username += str(random.randint(10, 99))
+            final_username += str(random.randint(10, 99))
         
-        usernames.append(username)
+        if final_username not in generated_unique_usernames:
+            usernames.append(final_username)
+            generated_unique_usernames.add(final_username)
     
     return usernames
 
