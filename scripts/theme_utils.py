@@ -25,13 +25,12 @@ def scan_themes():
 def get_active_theme():
     """
     Retrieves the currently active theme from the database.
+    Assumes an application context is already active.
     """
-    # Use Flask's application context to access the database
     from flask import current_app
-    with current_app.app_context():
-        setting = Setting.query.filter_by(key='ACTIVE_THEME').first()
-        if setting:
-            return setting.value
+    setting = Setting.query.filter_by(key='ACTIVE_THEME').first()
+    if setting:
+        return setting.value
     return 'default' # Default theme if not found in DB
 
 def set_active_theme(theme_name):
