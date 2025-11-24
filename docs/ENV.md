@@ -1,23 +1,99 @@
 # Environment Variables
 
-This file documents the environment variables used by the WindFlag application.
+This document provides comprehensive details on the environment variables used by the WindFlag application, their purpose, and how to configure them effectively.
 
-## `.env` File
+## `.env` File Overview
 
-The application uses a `.env` file to manage environment variables. You can create a `.env` file in the root of the project and add the following variables:
+The WindFlag application leverages a `.env` file for managing configuration settings that can vary between deployment environments (e.g., development, staging, production). This approach keeps sensitive information and environment-specific settings out of version control, enhancing security and portability.
 
--   `APP_NAME`: The name of the application that will be displayed at the top of the screen and in the browser tab title. Defaults to "WindFlag".
--   `SECRET_KEY`: A secret key for the application. This is used to keep the client-side sessions secure.
--   `REQUIRE_JOIN_CODE`: Set to `True` to require a join code for new user registrations. Set to `False` (default) to allow anyone to register without a join code.
--   `JOIN_CODE`: The specific code that users must enter to register if `REQUIRE_JOIN_CODE` is set to `True`. This variable is ignored if `REQUIRE_JOIN_CODE` is `False`.
--   `REQUIRE_EMAIL`: Set to `False` to make the email field optional during user registration. Set to `True` (default) to make it a required field.
--   `BASIC_INDEX_PAGE`: Set to `true` to display a minimal home page containing only the welcome section. Set to `false` (default) or omit to display the full, expanded home page with additional content and graphics.
--   `DISABLE_SIGNUP`: Set to `True` to disable new user registrations. Set to `False` (default) to allow new user registrations.
--   `USERNAME_WORD_COUNT`: The number of words to use when generating usernames. Defaults to `2`.
--   `USERNAME_ADD_NUMBER`: Set to `True` to add a random two-digit number to the end of generated usernames. Defaults to `True`.
--   `PRESET_USER_COUNT`: The number of users to generate with the seed script. Defaults to `10`.
--   `WORDS_FILE_PATH`: The path to the file containing words to use for username generation. Defaults to `words.text`.
+To use environment variables, create a file named `.env` in the root directory of your project. Copy the contents from `.env.template` and populate the values.
 
-## `.env.template`
+## Application Settings
 
-A `.env.template` file is provided as a template for the `.env` file. You can copy this file to `.env` and fill in the values.
+These variables control general application behavior and display.
+
+*   `APP_NAME` (string): The name of the application displayed prominently in the web interface (e.g., page titles, headers).
+    *   **Default**: "WindFlag"
+    *   **Example**: `APP_NAME="My Awesome CTF"`
+
+*   `SECRET_KEY` (string): A strong, randomly generated secret key crucial for application security. It is used for cryptographic operations, including securing client-side sessions (Flask sessions). **This must be unique and kept confidential.**
+    *   **Recommendation**: Generate a long, random string.
+    *   **Example**: `SECRET_KEY="your_very_secret_and_long_random_key_here"`
+
+*   `BASIC_INDEX_PAGE` (boolean): Controls the appearance of the application's home page.
+    *   `true`: Displays a minimal home page with only the welcome section.
+    *   `false` (or omitted): Displays the full, expanded home page, which may include additional content, dynamic elements, and graphics.
+    *   **Default**: `false`
+    *   **Example**: `BASIC_INDEX_PAGE=true`
+
+*   `DISABLE_SIGNUP` (boolean): Determines whether new user registrations are permitted.
+    *   `true`: New user registrations are disabled. Only existing users can log in.
+    *   `false` (or omitted): New user registrations are allowed.
+    *   **Default**: `false`
+    *   **Example**: `DISABLE_SIGNUP=true`
+
+## User Management Settings
+
+These variables relate to user registration and authentication processes.
+
+*   `REQUIRE_JOIN_CODE` (boolean): If set to `true`, new users must enter a specific `JOIN_CODE` during registration.
+    *   `true`: A join code is required.
+    *   `false` (or omitted): No join code is needed for registration.
+    *   **Default**: `false`
+    *   **Example**: `REQUIRE_JOIN_CODE=true`
+
+*   `JOIN_CODE` (string): The specific code that new users must provide if `REQUIRE_JOIN_CODE` is set to `true`. This variable is ignored if `REQUIRE_JOIN_CODE` is `false`.
+    *   **Example**: `JOIN_CODE="secretctf2025"`
+
+*   `REQUIRE_EMAIL` (boolean): Controls whether the email field is mandatory during user registration.
+    *   `true` (or omitted): Email is a required field.
+    *   `false`: Email is an optional field.
+    *   **Default**: `true`
+    *   **Example**: `REQUIRE_EMAIL=false`
+
+*   `USERNAME_WORD_COUNT` (integer): Specifies the number of words to use when generating random usernames (e.g., for seeded users or if a feature for auto-generating usernames is enabled).
+    *   **Default**: `2`
+    *   **Example**: `USERNAME_WORD_COUNT=3` (e.g., "fast-blue-car")
+
+*   `USERNAME_ADD_NUMBER` (boolean): If `true`, a random two-digit number is appended to the end of automatically generated usernames.
+    *   **Default**: `true`
+    *   **Example**: `USERNAME_ADD_NUMBER=false` (generates "fast-blue-car" instead of "fast-blue-car-87")
+
+*   `PRESET_USER_COUNT` (integer): Used primarily by the seeding script (`scripts/seed.py`). Defines the number of dummy users to generate when seeding the database.
+    *   **Default**: `10`
+    *   **Example**: `PRESET_USER_COUNT=50`
+
+*   `WORDS_FILE_PATH` (string): The relative or absolute path to a text file containing a list of words. These words are used by the application for generating usernames when `USERNAME_WORD_COUNT` is active. Each word should be on a new line.
+    *   **Default**: `words.text` (located in the project root)
+    *   **Example**: `WORDS_FILE_PATH="data/custom_words.txt"`
+
+## Database Configuration
+
+While not explicitly in the `.env.template` by default (as WindFlag often uses SQLite for simplicity), the application can be configured to use external databases via environment variables.
+
+*   `DATABASE_URL` (string, optional): The SQLAlchemy database URI. If not set, WindFlag defaults to an SQLite database named `app.db` in the instance folder.
+    *   **Example for PostgreSQL**: `DATABASE_URL="postgresql://user:password@host:port/database_name"`
+    *   **Example for MySQL**: `DATABASE_URL="mysql+pymysql://user:password@host:port/database_name"`
+
+## Development & Debugging Settings
+
+These variables are typically used during development.
+
+*   `FLASK_ENV` (string): Sets the Flask environment.
+    *   `development`: Enables debugging, reloader, and potentially less strict error handling.
+    *   `production`: Optimizes for performance and security.
+    *   **Default**: (Usually inferred or set by how Flask is run)
+    *   **Example**: `FLASK_ENV=development`
+
+*   `FLASK_DEBUG` (boolean): Enables or disables Flask's debug mode.
+    *   `true`: Enables debug mode, providing detailed error messages in the browser and an interactive debugger. **Never use in production.**
+    *   `false`: Disables debug mode.
+    *   **Default**: (Inferred from `FLASK_ENV`)
+    *   **Example**: `FLASK_DEBUG=true`
+
+## Best Practices for `.env` Files
+
+1.  **Never Commit `.env` to Version Control**: The `.env` file should be listed in your `.gitignore` to prevent it from being accidentally committed to Git. It often contains sensitive information like `SECRET_KEY` and `JOIN_CODE`.
+2.  **Use `.env.template`**: Provide a `.env.template` (as WindFlag does) that outlines all possible environment variables without their values. This helps new developers or deployers understand what variables are needed.
+3.  **Secure Your `.env` File**: Ensure that the `.env` file on your server has restricted file system permissions to prevent unauthorized access.
+4.  **Restart Application on Changes**: Most applications (including Flask) require a restart to pick up changes made to the `.env` file.

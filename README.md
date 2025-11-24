@@ -5,17 +5,45 @@ WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwin
 ## Features
 
 *   **User Authentication**: Secure registration, login, and logout.
-*   **Challenge Management**: Create, update, and delete challenges with various flag types (single, any, all, N of M).
-*   **Category Management**: Organize challenges into categories.
-*   **Scoreboard**: Dynamic scoreboard with user rankings and points.
-*   **Configurable Point Decay**: Set challenges to have static, linear, or logarithmic point decay, with configurable minimum points and proactive decay options.
-*   **Admin Panel**: Comprehensive administration interface for managing users, challenges, categories, and settings.
-*   **Analytics Dashboard**: Visual analytics for category points, user points, challenges solved over time, fails vs. succeeds, and a user-challenge matrix.
-*   **Super Admin Role**: Granular permissions for super administrators, including managing other admin accounts.
-*   **Award System**: Admins can grant awards to users with customizable categories and points.
-*   **YAML Challenge Import/Export**: Easily import and export challenges, including associated hints, from a structured YAML file.
-*   **Responsive Design**: Built with Tailwind CSS for a modern and responsive user interface.
-*   **Code Editor (CodeMirror)**: Integrated a powerful in-browser code editor (CodeMirror) for coding challenges, featuring syntax highlighting for Bash, Dart, Haskell, JavaScript (Node), PHP, and Python, and themes.
+*   **Challenge Management**: Comprehensive tools to create, update, and delete challenges. Supports diverse flag configurations including:
+    *   **Single Flag**: A traditional CTF flag where one correct submission solves the challenge.
+    *   **Any Flag**: Multiple possible correct flags; any single correct submission solves the challenge. Ideal for challenges with several valid solutions.
+    *   **All Flags**: Requires submission of all predefined correct flags to solve the challenge. Useful for multi-part challenges.
+    *   **N of M Flags**: Configurable where 'N' out of 'M' possible flags must be submitted to solve the challenge. Offers flexibility for challenges with partial credit or multiple paths to completion.
+*   **Category Management**: Efficiently organize challenges into logical categories, improving navigation and user experience.
+*   **Scoreboard**: A dynamic, real-time scoreboard displaying user rankings, points, and solve progress, fostering competitive engagement.
+*   **Configurable Point Decay**: Advanced point decay models to make challenges more engaging and reward earlier solves:
+    *   **Static**: Challenge points remain constant regardless of solve time.
+    *   **Linear**: Points decrease linearly over time after the first solve, encouraging quick solutions.
+    *   **Logarithmic**: Points decrease logarithmically, offering a gentler decay curve that still rewards early solves but less severely than linear decay.
+    *   **Configurable Minimum Points**: Set a floor for challenge points, ensuring they never drop below a certain value.
+    *   **Proactive Decay Options**: Implement strategies to manage point distribution and challenge difficulty dynamically.
+*   **Admin Panel**: A powerful and intuitive administration interface providing granular control over the platform:
+    *   **User Management**: Create, edit, and delete user accounts; assign roles (e.g., admin, super admin).
+    *   **Challenge Management**: Full CRUD (Create, Read, Update, Delete) operations for challenges, including flag configuration, hints, and visibility settings.
+    *   **Category Management**: Organize, create, and modify challenge categories.
+    *   **Settings Management**: Configure global platform settings, themes, and system parameters.
+    *   **Award Management**: Define, assign, and manage awards given to users.
+*   **Analytics Dashboard**: Visual and data-driven insights into platform activity and user performance:
+    *   **Category Points Distribution**: See how points are distributed across different challenge categories.
+    *   **User Points Over Time**: Track individual user progress and point accumulation.
+    *   **Challenges Solved Over Time**: Monitor the rate at which challenges are being solved across the platform.
+    *   **Fails vs. Succeeds**: Analyze submission attempt statistics to gauge challenge difficulty.
+    *   **User-Challenge Matrix**: A comprehensive overview of which users have attempted and solved which challenges.
+*   **Super Admin Role**: Introduced for enhanced security and administrative hierarchy, allowing super administrators to manage other admin accounts and critical system configurations.
+*   **Award System**: A flexible system for recognizing user achievements:
+    *   Admins can grant custom awards to users.
+    *   Awards can be assigned to customizable categories (e.g., "First Blood," "Participation").
+    *   Awards can carry point values, contributing to a user's total score.
+*   **YAML Challenge Import/Export**: Streamlined process for managing challenges:
+    *   Easily import new challenges and their associated hints from a structured YAML file.
+    *   Export existing challenges to YAML for backup or migration.
+    *   Supports bulk operations, ideal for rapid challenge deployment.
+*   **Responsive Design**: Crafted with Tailwind CSS to ensure a modern, accessible, and adaptive user interface across all devices and screen sizes.
+*   **Code Editor (CodeMirror)**: An integrated, feature-rich in-browser code editor designed for coding challenges:
+    *   **Syntax Highlighting**: Supports a wide range of languages including Bash, Dart, Haskell, JavaScript (Node), PHP, and Python.
+    *   **Themes**: Customizable editor themes to suit user preferences.
+    *   **Interactive Coding**: Provides a comfortable environment for users to write and test code snippets directly within the platform.
 
 ## How to Run
 
@@ -79,6 +107,101 @@ For administrators, challenges on the `/challenges` page display colored stripes
 *   **No Stripe**:
     *   **Condition**: Not Red, Orange, Yellow, or Blue. This typically means the challenge is unlocked for more than 90% of eligible users, or it has no special unlock conditions and is generally available.
     *   **Meaning**: The challenge is widely accessible and/or commonly solved.
+
+## Project Structure
+
+The WindFlag project is organized into several key directories, each serving a specific purpose to maintain modularity and ease of development.
+
+*   **`app.py`**: The main application entry point, responsible for initializing the Flask app, database, and registering blueprints.
+*   **`config.py`**: Handles application configuration settings, including secret keys, database URI, and other environment-dependent variables.
+*   **`static/`**: Contains all static assets such as CSS stylesheets, JavaScript files, images, and fonts.
+    *   **`static/css/`**: Stores CSS files for styling the application.
+    *   **`static/js/`**: Houses JavaScript files for front-end interactivity.
+    *   **`static/icon/`**: Contains favicon and other site icons.
+    *   **`static/themes/`**: Directory for different UI themes, each with its own assets.
+*   **`templates/`**: Holds Jinja2 HTML templates used to render dynamic web pages.
+    *   **`templates/admin/`**: Templates specific to the administration panel.
+    *   **`templates/docs/`**: Templates for dynamically generated documentation or specialized content.
+*   **`scripts/`**: Contains Python scripts for various backend functionalities, API routes, and utility functions.
+    *   **`scripts/models.py`**: Defines the SQLAlchemy database models for the application's data structures.
+    *   **`scripts/routes.py`**: (Or similar, e.g., `api_routes.py`, `admin_routes.py`) Defines the URL routes and their corresponding view functions.
+    *   **`scripts/forms.py`**: Contains Flask-WTF form definitions for input validation.
+    *   **`scripts/utils.py`**: General utility functions used across the application.
+    *   **`scripts/extensions.py`**: Initializes and manages Flask extensions like SQLAlchemy, Bcrypt, etc.
+*   **`docs/`**: Markdown documentation files providing detailed information on various aspects of the platform.
+    *   **`docs/API/`**: Documentation specifically for the platform's API endpoints.
+*   **`.venv/`**: (Hidden) Virtual environment for Python dependencies.
+*   **`tests/`**: Contains unit and integration tests for the application.
+*   **`.env`**: (Hidden) Environment variables for local development (not committed to version control).
+*   **`.env.template`**: A template file for setting up `.env`.
+
+## Contribution Guidelines
+
+We welcome contributions to WindFlag! If you're looking to contribute, please follow these guidelines:
+
+### How to Contribute
+
+1.  **Fork the Repository**: Start by forking the WindFlag repository to your GitHub account.
+2.  **Clone Your Fork**: Clone your forked repository to your local machine.
+    ```bash
+    git clone https://github.com/your-username/WindFlag.git
+    cd WindFlag
+    ```
+3.  **Create a New Branch**: Create a new branch for your feature or bug fix.
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+    or
+    ```bash
+    git checkout -b bugfix/issue-description
+    ```
+4.  **Make Your Changes**: Implement your feature, fix the bug, or improve the documentation.
+    *   Adhere to the existing code style.
+    *   Write clear, concise, and well-commented code.
+    *   Add unit or integration tests for new features or bug fixes, if applicable.
+5.  **Test Your Changes**: Ensure that your changes do not introduce new bugs and that all existing tests pass.
+    ```bash
+    python run_tests.py
+    ```
+6.  **Commit Your Changes**: Write clear and descriptive commit messages.
+    ```bash
+    git commit -m "feat: Add new awesome feature"
+    ```
+    or
+    ```bash
+    git commit -m "fix: Resolve #123 - bug description"
+    ```
+7.  **Push to Your Fork**: Push your local branch to your forked repository on GitHub.
+    ```bash
+    git push origin feature/your-feature-name
+    ```
+8.  **Create a Pull Request (PR)**:
+    *   Go to the original WindFlag repository on GitHub.
+    *   You should see an option to create a new pull request from your recently pushed branch.
+    *   Provide a clear title and detailed description of your changes in the PR.
+    *   Reference any related issues.
+
+### Code Style
+
+*   Follow [PEP 8](https://www.python.org/dev/peps/pep-0008/) for Python code.
+*   For JavaScript, adhere to a consistent style, ideally similar to [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript).
+*   For CSS, try to follow a consistent, readable format.
+
+### Reporting Bugs
+
+If you find a bug, please open an issue on GitHub. Include:
+*   A clear and concise description of the bug.
+*   Steps to reproduce the behavior.
+*   Expected behavior.
+*   Screenshots or videos if applicable.
+*   Your operating system and browser.
+
+### Feature Requests
+
+For feature requests, open an issue on GitHub. Describe:
+*   The feature you'd like to see.
+*   Why it's important or useful.
+*   Any potential solutions or ideas you have.
 
 ## Testing
 
