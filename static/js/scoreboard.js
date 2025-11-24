@@ -6,82 +6,14 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('/api/scoreboard_data')
         .then(response => response.json())
         .then(data => {
-            if (ENABLE_LIVE_SCORE_GRAPH) { // Only render graph if enabled
-                renderScoreboardGraph(data.top_players_history, data.graph_type);
-            }
+            // Live score graph functionality is removed, so always try to render if data is available
+            renderScoreboardGraph(data.top_players_history, data.graph_type);
             populatePlayerRankings(data.all_players_ranked);
             allPlayersRanked = data.all_players_ranked; // Initialize the ranked players data
         })
         .catch(error => console.error('Error fetching scoreboard data:', error));
 
-    // Only connect to WebSocket and listen for live updates if ENABLE_LIVE_SCORE_GRAPH is true
-    if (ENABLE_LIVE_SCORE_GRAPH) {
-        // Connect to the Socket.IO server
-        const socket = io(); // Connects to the current host
-        
-        // Listen for score_update events from the server
-        socket.on('score_update', function(data) {
-            console.log('Score update received:', data);
-            
-            const username = data.username;
-            const newScore = data.score;
-            const timestamp = new Date().toISOString(); // Use current time for the new point
-
-            // Update the global user score display in the header
-            const userScoreDisplay = document.getElementById('userScoreDisplay');
-            if (userScoreDisplay && data.user_id == current_user_id) { // Assuming current_user_id is available in JS
-                userScoreDisplay.textContent = newScore;
-            }
-
-            // Update the chart data
-            if (scoreboardChart) {
-                let playerDataset = scoreboardChart.data.datasets.find(ds => ds.label === username);
-
-                if (playerDataset) {
-                    // Add new point to existing dataset
-                    playerDataset.data.push({ x: timestamp, y: newScore });
-                } else {
-                    // If this is a new player on the scoreboard or a player not yet charted
-                    // We'll need to re-fetch full scoreboard data to properly add them with history
-                    // For simplicity, for now, we'll just add a single point
-                    // A more robust solution would re-fetch the entire `top_players_history`
-                    const computedStyle = getComputedStyle(document.body);
-                    const colors = [];
-                    for (let i = 1; i <= 10; i++) {
-                        const color = computedStyle.getPropertyValue(`--chart-color-${i}`).trim();
-                        if (color) colors.push(color);
-                    }
-                    const newPlayerColor = colors[scoreboardChart.data.datasets.length % colors.length];
-
-                    scoreboardChart.data.datasets.push({
-                        label: username,
-                        data: [{ x: timestamp, y: newScore }],
-                        borderColor: newPlayerColor,
-                        backgroundColor: scoreboardChart.options.plugins.legend.labels.usePointStyle ? newPlayerColor : newPlayerColor.replace('rgb(', 'rgba(').replace(')', `, 0.25)`),
-                        fill: scoreboardChart.data.datasets[0]?.fill || false, // Match fill style of others
-                        tension: 0.1,
-                        spanGaps: true
-                    });
-                }
-                scoreboardChart.update(); // Redraw the chart
-            }
-
-            // Update the ranked players table
-            // This is a simplified update. For accurate rankings, we should re-fetch all_players_ranked
-            // or re-sort the existing array. For a quick live update, we'll adjust the score
-            // and re-sort a local copy, then repopulate.
-            let playerIndex = allPlayersRanked.findIndex(p => p.username === username);
-            if (playerIndex !== -1) {
-                allPlayersRanked[playerIndex].score = newScore;
-            } else {
-                // Add new player to the list (simple, might need more data from server for proper entry)
-                allPlayersRanked.push({ username: username, score: newScore });
-            }
-            // Sort by score descending and then populate
-            allPlayersRanked.sort((a, b) => b.score - a.score);
-            populatePlayerRankings(allPlayersRanked);
-        });
-    }
+    // Socket.IO integration removed. Live updates will no longer be handled client-side via websockets.
 
     function renderScoreboardGraph(topPlayersHistory, graphType) {
         const ctx = document.getElementById('scoreboardChart').getContext('2d');

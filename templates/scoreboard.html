@@ -32,8 +32,5 @@
         </div>
     </div>
 
-    <script>
-        const ENABLE_LIVE_SCORE_GRAPH = {{ config['ENABLE_LIVE_SCORE_GRAPH'] | tojson }};
-    </script>
     <script src="{{ url_for('static', filename='js/scoreboard.js') }}"></script>
 {% endblock content %}

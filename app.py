@@ -9,7 +9,6 @@ and admin user creation.
 """
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, current_app
 from flask_login import login_user, current_user, logout_user, login_required
-from flask_socketio import SocketIO, emit
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from scripts.config import Config
@@ -116,9 +115,6 @@ def create_app(config_class=Config):
         storage_uri="memory://", # Use in-memory storage for simplicity, can be Redis for production
         strategy="moving-window"
     )
-
-    # Initialize SocketIO
-    socketio = SocketIO(app)
 
     # Note: Flask-RESTX Api is initialized within scripts/api_routes.py
     # and its blueprint (api_bp) is registered here.
@@ -630,14 +626,6 @@ def create_app(config_class=Config):
                     db.session.commit()
 
                     challenge.update_stripe_status()
-                    emit('score_update', {
-                        'user_id': current_user.id,
-                        'username': current_user.username,
-                        'score': current_user.score,
-                        'challenge_id': challenge.id,
-                        'challenge_name': challenge.name,
-                        'points_awarded': points_awarded
-                    }, broadcast=True, namespace='/')
                     
                     return jsonify({'success': True, 'message': f'Coding challenge solved! You earned {points_awarded} points!', 'stdout': execution_result.stdout, 'stderr': execution_result.stderr})
                 else:
@@ -719,17 +707,6 @@ def create_app(config_class=Config):
                         # Recalculate stripe status for the solved challenge
                         challenge.update_stripe_status()
                         
-                        # Emit a SocketIO event for score update
-                        from flask_socketio import emit
-                        emit('score_update', {
-                            'user_id': current_user.id,
-                            'username': current_user.username,
-                            'score': current_user.score,
-                            'challenge_id': challenge.id,
-                            'challenge_name': challenge.name,
-                            'points_awarded': points_awarded
-                        }, broadcast=True, namespace='/')
-
                         return jsonify({'success': True, 'message': f'Correct Flag! Challenge Solved! You earned {points_awarded} points!'})
                     else:
                         # 7. Flag was correct, but challenge not fully solved yet
@@ -921,7 +898,7 @@ def create_app(config_class=Config):
         """
         return render_template('scoreboard.html', title='Scoreboard')
 
-    return app, socketio
+    return app
 
 def export_data_to_yaml(output_file_path, data_type='all'):
     """
@@ -1350,7 +1327,7 @@ if __name__ == '__main__':
         else:
             test_mode_timeout = args.test
     else:
-        app, socketio = create_app() # Unpack app and socketio
+        app = create_app() # Unpack app and socketio
         test_mode_timeout = None
 
     # Check if the database file exists, if not, create it
@@ -1390,9 +1367,9 @@ if __name__ == '__main__':
     elif args.recalculate_stripes:
         recalculate_all_challenge_stripes()
     else:
-        # Otherwise, run the Flask app with SocketIO
+        # Otherwise, run the Flask app directly
         if args.test is not None:
             print(f"Running in test mode: server will shut down in {test_mode_timeout} seconds.")
             timer = threading.Timer(test_mode_timeout, os._exit, args=[0])
             timer.start()
-        socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+        app.run(debug=True, host='0.0.0.0', port=5000)

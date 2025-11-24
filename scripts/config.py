@@ -26,9 +26,6 @@ class Config:
     WORDS_FILE_PATH = os.environ.get('WORDS_FILE_PATH', 'words.text')
     ACTIVE_THEME = os.environ.get('ACTIVE_THEME', 'default')
 
-    # New: Live Score Graph
-    ENABLE_LIVE_SCORE_GRAPH = os.environ.get('ENABLE_LIVE_SCORE_GRAPH', 'True').lower() == 'true'
-
     # Rate Limiting Configuration
     RATELIMIT_DEFAULT = os.environ.get('RATELIMIT_DEFAULT', '200 per day, 50 per hour')
     RATELIMIT_LOGIN = os.environ.get('RATELIMIT_LOGIN', '5 per minute')
