@@ -8,7 +8,8 @@ and scoreboard display. It also includes utility functions for data export/impor
 and admin user creation.
 """
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, current_app
-from flask_login import login_user, current_user, logout_user, login_required
+from flask_login import login_user, current_user, logout_user
+from flask_socketio import SocketIO, emit # New: Import SocketIO and emit, login_required
 from scripts.config import Config
 from scripts.forms import RegistrationForm, LoginForm, FlagSubmissionForm, InlineGiveAwardForm
 from datetime import datetime, UTC, timedelta
@@ -19,6 +20,30 @@ from scripts.admin_routes import admin_bp
 from scripts.api_key_routes import api_key_bp # Import api_key_bp
 from scripts.api_routes import api_bp # Import api_bp
 from flask_restx import Api # Import Api from flask_restx
+from authlib.integrations.flask_client import OAuth
+from scripts.config import Config # Import Config
+
+# ... existing code ...
+
+app = Flask(__name__)
+app.config.from_object(Config) # Load configuration
+
+# ... existing code ...
+
+oauth = OAuth(app)
+
+if app.config['ENABLE_GITHUB_SSO']:
+    oauth.register(
+        name='github',
+        client_id=app.config.get('GITHUB_CLIENT_ID'),
+        client_secret=app.config.get('GITHUB_CLIENT_SECRET'),
+        access_token_url='https://github.com/login/oauth/access_token',
+        access_token_params=None,
+        authorize_url='https://github.com/login/oauth/authorize',
+        authorize_params=None,
+        api_base_url='https://api.github.com/',
+        client_kwargs={'scope': 'user:email'},
+    )
 
 from scripts.theme_utils import get_active_theme # New: Import theme_utils
 
@@ -31,6 +56,7 @@ import json
 import yaml
 from dotenv import load_dotenv
 from scripts.utils import make_datetime_timezone_aware # New: For timezone handling
+import secrets # New: For generating random passwords for SSO users
 
 
 def create_app(config_class=Config):
@@ -49,10 +75,29 @@ def create_app(config_class=Config):
     load_dotenv(os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), '.env'))
     app.config.from_object(config_class)
     app.config['APP_NAME'] = os.getenv('APP_NAME', 'WindFlag')
+    
+    oauth = OAuth(app) # Initialize OAuth here
+    
+    if app.config['ENABLE_GITHUB_SSO']:
+        oauth.register(
+            name='github',
+            client_id=app.config.get('GITHUB_CLIENT_ID'),
+            client_secret=app.config.get('GITHUB_CLIENT_SECRET'),
+            access_token_url='https://github.com/login/oauth/access_token',
+            access_token_params=None,
+            authorize_url='https://github.com/login/oauth/authorize',
+            authorize_params=None,
+            api_base_url='https://api.github.com/',
+            client_kwargs={'scope': 'user:email'},
+        )
+    
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.unauthorized_handler(lambda: redirect(url_for('home')))
     bcrypt.init_app(app)
+
+    # Initialize SocketIO
+    socketio = SocketIO(app)
 
     # Note: Flask-RESTX Api is initialized within scripts/api_routes.py
     # and its blueprint (api_bp) is registered here.
@@ -140,6 +185,73 @@ def create_app(config_class=Config):
             else:
                 flash('Login Unsuccessful. Please check username and password', 'danger')
         return render_template('login.html', title='Login', form=form)
+
+    @app.route('/login/github')
+    def github_login():
+        if not app.config['ENABLE_GITHUB_SSO']:
+            flash('GitHub SSO is not enabled.', 'danger')
+            return redirect(url_for('login'))
+        if current_user.is_authenticated:
+            return redirect(url_for('home'))
+        redirect_uri = url_for('github_authorize', _external=True)
+        return oauth.github.authorize_redirect(redirect_uri)
+
+    @app.route('/login/github/authorized')
+    def github_authorize():
+        if not app.config['ENABLE_GITHUB_SSO']:
+            flash('GitHub SSO is not enabled.', 'danger')
+            return redirect(url_for('login'))
+        if current_user.is_authenticated:
+            return redirect(url_for('home'))
+
+        token = oauth.github.authorize_access_token()
+        resp = oauth.github.get('user', token=token)
+        profile = resp.json()
+
+        github_id = str(profile['id'])
+        github_username = profile.get('login')
+        github_email = profile.get('email') # GitHub email can be null if not public
+
+        user = User.query.filter_by(github_id=github_id).first()
+        if user:
+            login_user(user)
+            flash('Successfully logged in with GitHub!', 'success')
+            return redirect(url_for('home'))
+
+        # If user doesn't exist, try to find by email if available and verified
+        if github_email:
+            user = User.query.filter_by(email=github_email).first()
+            if user:
+                # Link existing account with GitHub ID
+                user.github_id = github_id
+                db.session.commit()
+                login_user(user)
+                flash('Successfully linked your existing account with GitHub and logged in!', 'success')
+                return redirect(url_for('home'))
+        
+        # If still no user, create a new one
+        # Generate a unique username if the GitHub username already exists
+        base_username = github_username or f"github_user_{github_id}"
+        username = base_username
+        counter = 1
+        while User.query.filter_by(username=username).first():
+            username = f"{base_username}_{counter}"
+            counter += 1
+            
+        new_user = User(
+            username=username,
+            email=github_email,
+            password_hash=bcrypt.generate_password_hash(secrets.token_urlsafe(16)).decode('utf-8'), # Generate a random password
+            github_id=github_id,
+            is_admin=False, # GitHub users are not admins by default
+            is_super_admin=False,
+            hidden=False # Make new users visible by default
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        login_user(new_user)
+        flash('Successfully created a new account with GitHub and logged in!', 'success')
+        return redirect(url_for('home'))
 
     @app.route('/logout')
     def logout():
@@ -537,6 +649,17 @@ def create_app(config_class=Config):
                     # Recalculate stripe status for the solved challenge
                     challenge.update_stripe_status()
                     
+                    # Emit a SocketIO event for score update
+                    from flask_socketio import SocketIO, emit
+                    emit('score_update', {
+                        'user_id': current_user.id,
+                        'username': current_user.username,
+                        'score': current_user.score,
+                        'challenge_id': challenge.id,
+                        'challenge_name': challenge.name,
+                        'points_awarded': points_awarded
+                    }, broadcast=True, namespace='/')
+
                     return jsonify({'success': True, 'message': f'Correct Flag! Challenge Solved! You earned {points_awarded} points!'})
                 else:
                     # 7. Flag was correct, but challenge not fully solved yet
@@ -728,7 +851,7 @@ def create_app(config_class=Config):
         """
         return render_template('scoreboard.html', title='Scoreboard')
 
-    return app
+    return app, socketio
 
 def export_data_to_yaml(output_file_path, data_type='all'):
     """
@@ -1157,7 +1280,7 @@ if __name__ == '__main__':
         else:
             test_mode_timeout = args.test
     else:
-        app = create_app()
+        app, socketio = create_app() # Unpack app and socketio
         test_mode_timeout = None
 
     # Check if the database file exists, if not, create it
@@ -1197,9 +1320,9 @@ if __name__ == '__main__':
     elif args.recalculate_stripes:
         recalculate_all_challenge_stripes()
     else:
-        # Otherwise, run the Flask app
+        # Otherwise, run the Flask app with SocketIO
         if args.test is not None:
             print(f"Running in test mode: server will shut down in {test_mode_timeout} seconds.")
             timer = threading.Timer(test_mode_timeout, os._exit, args=[0])
             timer.start()
-        app.run(debug=True, host='0.0.0.0', port=5000)
+        socketio.run(app, debug=True, host='0.0.0.0', port=5000)

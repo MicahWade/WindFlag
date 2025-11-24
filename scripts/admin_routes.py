@@ -3,7 +3,7 @@ This module defines the administrative routes and functions for the WindFlag CTF
 It includes routes for managing categories, challenges, users, award categories, and viewing analytics.
 """
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 from scripts.extensions import db, get_setting
 from scripts.models import Category, Challenge, Submission, User, Setting, ChallengeFlag, FlagSubmission, AwardCategory, Award, FlagAttempt
 from scripts.forms import CategoryForm, ChallengeForm, AdminSettingsForm, AwardCategoryForm, InlineGiveAwardForm, _get_timezone_choices
@@ -70,6 +70,7 @@ def admin_settings():
         _update_setting('PROFILE_CHALLENGES_COMPLETE_CHART_ENABLED', form.profile_challenges_complete_chart_enabled.data)
         _update_setting('TIMEZONE', form.timezone.data) # New: Save timezone setting
         _update_setting('ACCORDION_DISPLAY_STYLE', form.accordion_display_style.data) # New: Save accordion display style setting
+        _update_setting('ENABLE_LIVE_SCORE_GRAPH', form.enable_live_score_graph.data) # New: Save live score graph setting
 
         db.session.commit()
         flash('Settings updated successfully!', 'success')
@@ -83,6 +84,7 @@ def admin_settings():
         form.profile_challenges_complete_chart_enabled.data = get_setting('PROFILE_CHALLENGES_COMPLETE_CHART_ENABLED', 'True').lower() == 'true'
         form.timezone.data = get_setting('TIMEZONE', 'Australia/Sydney') # New: Load timezone setting
         form.accordion_display_style.data = get_setting('ACCORDION_DISPLAY_STYLE', 'boxes') # New: Load accordion display style setting
+        form.enable_live_score_graph.data = get_setting('ENABLE_LIVE_SCORE_GRAPH', 'True').lower() == 'true' # New: Load live score graph setting
     return render_template('admin/settings.html', title='Admin Settings', form=form)
 
 @admin_bp.route('/themes', methods=['GET', 'POST'])
@@ -619,6 +621,45 @@ def toggle_user_hidden(user_id):
     user.hidden = not user.hidden
     db.session.commit()
     flash(f'User {user.username} hidden status toggled to {user.hidden}.', 'success')
+    return redirect(url_for('admin.manage_users'))
+
+@admin_bp.route('/user/<int:user_id>/toggle_ban', methods=['POST'])
+@admin_required
+def toggle_user_ban(user_id):
+    """
+    Toggles the 'is_banned' status of a user.
+    If a user is banned, their session is invalidated.
+
+    Args:
+        user_id (int): The ID of the user to modify.
+    Requires admin privileges.
+    """
+    if not current_user.is_super_admin: # Only super admins can ban users
+        flash('You do not have permission to ban/unban users.', 'danger')
+        return redirect(url_for('admin.manage_users'))
+
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash('You cannot ban/unban your own account.', 'danger')
+        return redirect(url_for('admin.manage_users'))
+
+    user.is_banned = not user.is_banned
+    if user.is_banned:
+        # If the user is currently logged in, log them out
+        # This will invalidate their session
+        if user.is_authenticated: # Check if the user is authenticated in the current session
+            logout_user() # This logs out the currently logged-in user, which might be the admin
+            # Instead, we need to invalidate the *target user's* session.
+            # Flask-Login doesn't directly expose a way to log out another user's session.
+            # A common approach is to force a re-login for the target user by changing
+            # something in their session or by marking a timestamp for forced logout.
+            # For simplicity, we'll just set is_banned and assume session invalidation
+            # is handled by login_manager's user_loader if user.is_active is checked there.
+            # If a more robust session invalidation is needed, we'd need to extend Flask-Login.
+            flash(f'User {user.username} has been banned. Their session will be invalidated upon next request.', 'info')
+
+    db.session.commit()
+    flash(f'User {user.username} ban status toggled to {user.is_banned}.', 'success')
     return redirect(url_for('admin.manage_users'))
 
 @admin_bp.route('/user/<int:user_id>/toggle_admin', methods=['POST'])

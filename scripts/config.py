@@ -26,6 +26,14 @@ class Config:
     WORDS_FILE_PATH = os.environ.get('WORDS_FILE_PATH', 'words.text')
     ACTIVE_THEME = os.environ.get('ACTIVE_THEME', 'default')
 
+    # New: Live Score Graph
+    ENABLE_LIVE_SCORE_GRAPH = os.environ.get('ENABLE_LIVE_SCORE_GRAPH', 'True').lower() == 'true'
+
+    # GitHub SSO Configuration
+    ENABLE_GITHUB_SSO = os.environ.get('ENABLE_GITHUB_SSO', 'False').lower() == 'true'
+    GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID')
+    GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET')
+
 class TestConfig(Config):
     """
     Configuration class for testing environments.

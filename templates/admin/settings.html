@@ -31,6 +31,13 @@
                 {% endif %}
             </div>
 
+            <h2 class="theme-card-title text-xl font-bold mb-4 mt-6">Scoreboard Settings</h2>
+
+            <div class="mb-4 flex items-center">
+                {{ form.enable_live_score_graph(class="theme-checkbox h-5 w-5") }}
+                {{ form.enable_live_score_graph.label(class="ml-2 block theme-form-label text-sm font-bold") }}
+            </div>
+
             <h2 class="theme-card-title text-xl font-bold mb-4 mt-6">Profile Page Chart Settings</h2>
 
             <div class="mb-4 flex items-center">

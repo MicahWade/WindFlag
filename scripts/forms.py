@@ -347,6 +347,7 @@ class AdminSettingsForm(FlaskForm):
                                         choices=[('boxes', 'Boxes'), ('lines', 'Lines')],
                                         validators=[DataRequired()],
                                         default='boxes')
+    enable_live_score_graph = BooleanField('Enable Live Scoreboard Graph', default=True)
 
     submit = SubmitField('Save Settings')
 

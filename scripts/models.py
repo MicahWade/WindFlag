@@ -13,7 +13,10 @@ import secrets # Added for generating dynamic flag API keys
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    user = User.query.get(int(user_id))
+    if user and not user.is_banned:
+        return user
+    return None
 
 class User(db.Model, UserMixin):
     """
@@ -41,6 +44,8 @@ class User(db.Model, UserMixin):
     hidden = db.Column(db.Boolean, nullable=False, default=False)
     last_seen = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
     score = db.Column(db.Integer, nullable=False, default=0)
+    github_id = db.Column(db.String(50), unique=True, nullable=True) # New: GitHub ID for SSO
+    is_banned = db.Column(db.Boolean, nullable=False, default=False) # New: Field to ban/unban users
     submissions = db.relationship('Submission', backref='solver', lazy=True)
     # Modified: Use back_populates for clarity and to resolve SAWarning
     flag_submissions = db.relationship('FlagSubmission', back_populates='user_rel', lazy=True)

@@ -28,7 +28,7 @@
             </thead>
             <tbody>
                 {% for user in users %}
-                    <tr class="user-row cursor-pointer hover:bg-gray-700" data-user-id="{{ user.id }}" data-is-admin="{{ 'true' if user.is_admin else 'false' }}" data-is-super-admin="{{ 'true' if user.is_super_admin else 'false' }}" data-is-hidden="{{ 'true' if user.hidden else 'false' }}">
+                    <tr class="user-row cursor-pointer hover:bg-gray-700" data-user-id="{{ user.id }}" data-is-admin="{{ 'true' if user.is_admin else 'false' }}" data-is-super-admin="{{ 'true' if user.is_super_admin else 'false' }}" data-is-hidden="{{ 'true' if user.hidden else 'false' }}" data-is-banned="{{ 'true' if user.is_banned else 'false' }}">
                         <td class="px-5 py-5 text-sm theme-table-body-cell">
                             <p class="whitespace-no-wrap">{{ user.id }}</p>
                         </td>
@@ -64,6 +64,9 @@
     <div id="user-actions-dropdown" class="absolute z-10 bg-gray-700 rounded-md shadow-lg py-1 hidden">
         <form id="toggle-hidden-form" method="POST" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">
             <button type="submit" class="w-full text-left" id="toggle-hidden-button"></button>
+        </form>
+        <form id="toggle-ban-form" method="POST" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">
+            <button type="submit" class="w-full text-left" id="toggle-ban-button"></button>
         </form>
         <form id="toggle-admin-form" method="POST" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">
             <button type="submit" class="w-full text-left" id="toggle-admin-button"></button>

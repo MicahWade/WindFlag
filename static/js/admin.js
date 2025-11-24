@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleHiddenButton = document.getElementById('toggle-hidden-button');
     const toggleAdminForm = document.getElementById('toggle-admin-form');
     const toggleAdminButton = document.getElementById('toggle-admin-button');
+    const toggleBanForm = document.getElementById('toggle-ban-form'); // New
+    const toggleBanButton = document.getElementById('toggle-ban-button'); // New
     let currentUserId = null;
 
     // Pass current user's super admin status from Flask
@@ -21,10 +23,26 @@ document.addEventListener('DOMContentLoaded', function() {
             // Get target user's super admin status from the passed map
             const isTargetUserSuperAdmin = usersSuperAdminStatus[currentUserId];
             const isHidden = this.dataset.isHidden === 'true';
+            const isBanned = this.dataset.isBanned === 'true'; // New
 
             // Update hidden toggle button
             toggleHiddenForm.action = `/admin/user/${currentUserId}/toggle_hidden`;
             toggleHiddenButton.textContent = isHidden ? 'Unhide User' : 'Hide User';
+
+            // Update ban toggle button
+            toggleBanForm.action = `/admin/user/${currentUserId}/toggle_ban`;
+            toggleBanButton.textContent = isBanned ? 'Unban User' : 'Ban User';
+            
+            if (currentUserId == currentLoggedInUserId) { // Cannot ban/unban self
+                toggleBanButton.disabled = true;
+                toggleBanButton.classList.add('opacity-50', 'cursor-not-allowed');
+            } else if (!isCurrentUserSuperAdmin) { // Only super admins can ban/unban
+                toggleBanButton.disabled = true;
+                toggleBanButton.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                toggleBanButton.disabled = false;
+                toggleBanButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
 
             // Update admin toggle button
             toggleAdminForm.action = `/admin/user/${currentUserId}/toggle_admin`;

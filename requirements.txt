@@ -6,3 +6,7 @@ python-dotenv
 PyYAML
 SQLAlchemy
 Flask-RESTX
+Authlib
+Flask-SocketIO
+python-engineio
+python-socketio

@@ -1,49 +1,18 @@
-\### **Phase 1: The "Remove" (Preparation)**
-
-*Before building, ensure your core is clean.*
-
-- **[ ] Clean User Model:** Ensure `User` model has no residual "Team" or "Event" columns; it should be standalone.
-
-- **[ ] Clean Routes:** Remove any hardcoded checks for specific events or teams in your current views.
-
-- **[ ] Clean Dependencies:** Ensure `requirements.txt` only has what you are currently using (remove Celery/Authlib until needed).
+### **Phase 1: The "Clean" (Preparation)**
+* **[ ] Clean User Model:** Ensure the `User` model is standalone (remove any legacy "Team" or "Event" columns if they exist).
+* **[ ] Clean Routes:** Remove any hardcoded checks for specific legacy events in your current views.
+* **[ ] Clean Dependencies:** Audit `requirements.txt` and remove unused libraries (only keep what is currently running).
 
 ---
 
-### **Phase 2: The "Remake" (Implementation)**
+### **Phase 2: The "Upgrade" (Implementation)**
 
-*Implement these in order.*
+*Enhance the solo player experience and administration.*
 
-#### **Step 1: Remake Team Logic (Tier 2)**
+#### **Step 1: Authentication & Admin**
+* **[ ] Auth:** Install `Authlib` and implement **GitHub SSO** (allow users to log in with GitHub instead of email).
+* **[ ] Admin:** Implement a simple **"Ban User"** button in the Admin panel to invalidate a user's tokens/session.
 
-**Goal:** Allow users to group up.
-
-- **[ ] Database:** Create `Team` model and add a `team_id` foreign key to the `User` model.
-
-- **[ ] Logic:** Create a "Settings" toggle to enable/disable Team Mode.
-
-- **[ ] Features:** Implement **Create**, **Join**, and **Leave** team functions.
-
-- **[ ] Admin:** Add basic "Ban User" and "Delete Team" buttons in the Admin panel.
-
-- **[ ] UI:** Update Scoreboard to show Team names instead of Usernames when the setting is on.
-
-#### **Step 2: Remake Event Architecture (Tier 3)**
-
-**Goal:** Allow the platform to run multiple CTFs.
-
-- **[ ] Database:** Create an `Event` model.
-
-- **[ ] Refactor:** Update `User`, `Team`, `Challenge`, and `Submission` to link to a specific `Event ID`.
-
-- **[ ] Logic:** Update all database queries to filter by the *current* Event ID.
-
-- **[ ] Auth:** Install Authlib and implement GitHub SSO (toggleable via settings).
-
-- **[ ] Admin:** Differentiate roles: **Global Admin** (Makes events) vs **Event Admin** (Runs the event).
-
-#### **Step 3: Polish & Real-time (Frontend)**
-
-**Goal:** Make it look professional.
-
-- **[ ] Visuals:** Add a WebSocket graph for live score updates (**Make this a toggleable Setting**).
+#### **Step 2: Polish & Real-time (Frontend)**
+* **[ ] Visuals:** Add a **WebSocket graph** for live score updates on the scoreboard (users see their line go up in real-time).
+* **[ ] Settings:** Create a toggle in `config.py` or the Admin panel to enable/disable the Live Graph (for performance).
