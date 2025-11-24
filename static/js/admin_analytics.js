@@ -409,7 +409,5 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-    } else {
-        document.getElementById('challengePointsOverTimeChartContainer').innerHTML = '<p class="text-gray-400 text-center">No submissions yet to display global points over time.</p>';
     }
 });

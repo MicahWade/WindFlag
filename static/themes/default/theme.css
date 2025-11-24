@@ -1,0 +1,377 @@
+body.theme-default {
+    background-color: #1a202c; /* Equivalent to bg-gray-900 */
+    color: #e2e8f0;            /* Equivalent to text-gray-200 */
+    line-height: 1.5;          /* Equivalent to leading-normal */
+    letter-spacing: 0em;       /* Equivalent to tracking-normal */
+    /* Add any other base styles that were implicitly present or need to be overridden */
+    --bg-completed: #047857; /* Tailwind green-700 for completed challenges */
+    --bg-hover-surface: #374151; /* A slightly lighter gray for hover effect */
+}
+
+body.theme-default p {
+    color: var(--text-main);
+}
+
+body.theme-default h1,
+body.theme-default h2,
+body.theme-default h3 {
+    color: var(--text-header);
+}
+
+body.theme-default a {
+    color: #63b3ed; /* A default blue for links */
+    text-decoration: none;
+}
+
+body.theme-default a:hover {
+    text-decoration: underline;
+}
+
+/* Also ensure form inputs look correct in default theme */
+body.theme-default input,
+body.theme-default button,
+body.theme-default select,
+body.theme-default textarea {
+    border-radius: 0.25rem; /* Equivalent to Tailwind's default rounded */
+    padding: 10px 15px;
+    border: 1px solid #4a5568; /* A default border color */
+    background-color: #2d3748; /* A default input background */
+    color: #e2e8f0; /* Light text */
+}
+
+body.theme-default button {
+    background-color: #4299e1; /* Tailwind blue-500 */
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+body.theme-default button:hover {
+    background-color: #3182ce; /* Darker blue */
+}
+
+/* Theme-specific classes for base.html header */
+body.theme-default .theme-header {
+    background-color: #1a202c; /* Equivalent to bg-gray-950 or a dark header */
+    color: var(--text-header);
+}
+
+body.theme-default .theme-nav-item {
+    color: #cbd5e0; /* Equivalent to text-gray-300 */
+    /* hover:text-white will be handled by existing Tailwind or specific rules */
+}
+
+/* New Semantic Classes for Challenges Page and other elements */
+body.theme-default .theme-page-title {
+    color: var(--text-header);
+}
+
+body.theme-default .theme-accordion-item {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow); /* Assuming default theme has a subtle shadow */
+}
+
+body.theme-default .theme-accordion-header {
+    /* No specific background, will inherit from parent */
+}
+
+body.theme-default .theme-category-title {
+    color: var(--text-header);
+}
+
+body.theme-default .theme-category-stats {
+    color: var(--text-muted);
+}
+
+body.theme-default .theme-card { /* General card style, for challenge and category cards */
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow); /* Assuming default theme has a subtle shadow */
+    border: var(--card-border);
+}
+
+body.theme-default .theme-challenge-card-locked {
+    background-color: var(--bg-input); /* A slightly different background for locked cards */
+    color: var(--text-muted);
+    border: var(--card-border);
+}
+
+body.theme-default .theme-challenge-title {
+    color: var(--text-header);
+}
+
+body.theme-default .theme-challenge-points {
+    color: var(--text-main);
+}
+
+body.theme-default .theme-challenge-status-text { /* For "Locked", "Unlocks after..." text */
+    color: var(--text-muted);
+    background-color: transparent;
+}
+body.theme-default .theme-challenge-status-text:hover {
+    color: var(--text-header);
+    background-color: transparent;
+}
+
+body.theme-default .theme-modal-card {
+    background-color: var(--bg-surface);
+    border: var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+}
+
+body.theme-default .theme-modal-title {
+    color: var(--text-header);
+}
+
+body.theme-default .theme-modal-description {
+    color: var(--text-main);
+}
+
+body.theme-default .theme-modal-points {
+    color: var(--text-main);
+}
+
+body.theme-default .theme-modal-hint-item {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-default .theme-modal-input {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+body.theme-default .theme-modal-button-primary {
+    background-color: var(--primary);
+    color: white; /* Always white text on primary button */
+}
+
+body.theme-default .theme-modal-button-secondary {
+    background-color: #4a5568; /* A darker gray for secondary */
+    color: white;
+}
+
+body.theme-default .theme-code-block {
+    background-color: #2d3748; /* Darker background for code */
+    color: #e2e8f0; /* Light text for code */
+}
+
+/* General table styling */
+body.theme-default table.theme-table {
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+body.theme-default table.theme-table th {
+    background-color: var(--bg-input);
+    color: var(--text-header);
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-default table.theme-table td {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-default .theme-completed-challenge {
+    background-color: var(--bg-completed);
+}
+
+body.theme-default .theme-card.theme-hover-card:hover {
+    background-color: var(--bg-hover-surface);
+}
+
+body.theme-default .theme-empty-state-text {
+    color: var(--text-main);
+}
+
+/* New Semantic Classes for dynamic JS styling */
+/* Challenge Progress Status */
+body.theme-default .theme-status-completed { background-color: #047857; } /* Tailwind green-700 */
+body.theme-default .theme-status-high-progress { background-color: #65A30D; } /* Tailwind lime-700 */
+body.theme-default .theme-status-medium-progress { background-color: #EAB308; } /* Tailwind yellow-500 */
+body.theme-default .theme-status-low-progress { background-color: #EA580C; } /* Tailwind orange-600 */
+body.theme-default .theme-status-very-low-progress { background-color: #DC2626; } /* Tailwind red-600 */
+body.theme-default .theme-status-no-progress { background-color: var(--bg-surface); color: var(--text-main); } /* Default background or surface for no progress */
+
+/* Flash Messages */
+body.theme-default .theme-flash-success { background-color: #10B981; color: white; } /* Tailwind green-500 */
+body.theme-default .theme-flash-danger { background-color: #EF4444; color: white; } /* Tailwind red-500 */
+
+/* Code Result */
+body.theme-default .theme-code-result-success { background-color: #065F46; color: white; } /* Tailwind green-800 */
+body.theme-default .theme-code-result-error { color: #EF4444; } /* Tailwind red-500 */
+
+/* Explicit SVG stroke for theme-challenge-status-text within buttons (modal close icon) */
+body.theme-default .theme-challenge-status-text svg {
+    stroke: var(--text-main) !important;
+}
+
+/* New Semantic Classes for Scoreboard & Profile */
+body.theme-default .theme-chart-container {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-default .theme-table-header-cell {
+    background-color: var(--bg-input);
+    color: var(--text-header);
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-default .theme-table-body-cell {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-default .theme-table-row-even {
+    background-color: var(--bg-surface);
+}
+
+body.theme-default .theme-table-row-odd {
+    background-color: var(--bg-surface);
+}
+
+body.theme-default .theme-link {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+body.theme-default .theme-link:hover {
+    text-decoration: underline;
+}
+
+body.theme-default .theme-no-data-text {
+    color: var(--text-muted);
+}
+
+/* Profile Page specific variables */
+body.theme-default {
+    --text-info: #63b3ed; /* A default blue for info text */
+    --bg-admin-badge: #e53e3e; /* Red for admin badge */
+    --text-admin-badge: white;
+    --bg-hidden-badge: #718096; /* Gray for hidden badge */
+    --text-hidden-badge: white;
+
+    /* Chart Colors for Profile Charts */
+    --chart-color-succeeds: rgb(75, 192, 75); /* Green for succeeds */
+    --chart-color-fails: rgb(255, 99, 132); /* Red for fails */
+    --chart-color-average: rgb(255, 0, 0); /* Red for average */
+    --chart-color-max: rgb(0, 200, 0); /* Green for max */
+    --chart-color-min: rgb(200, 0, 0); /* Dark Red for min */
+    --chart-color-iqr: rgb(128, 0, 128); /* Purple for IQR */
+    --chart-color-std-dev: rgb(255, 165, 0); /* Orange for std dev */
+    --chart-color-challenges-complete: rgb(75, 192, 192); /* Green for challenges complete line */
+}
+
+/* Profile Page Semantic Classes */
+body.theme-default .theme-profile-score-rank {
+    color: var(--text-info);
+}
+
+body.theme-default .theme-profile-text-muted {
+    color: var(--text-muted);
+}
+
+body.theme-default .theme-profile-badge.admin {
+    background-color: var(--bg-admin-badge);
+    color: var(--text-admin-badge);
+}
+
+body.theme-default .theme-profile-badge.hidden {
+    background-color: var(--bg-hidden-badge);
+    color: var(--text-hidden-badge);
+}
+
+/* Also add general theme-modal-input and theme-modal-button-primary styles for the give award modal */
+body.theme-default .theme-modal-input {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+body.theme-default .theme-modal-button-primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+body.theme-default .theme-modal-button-secondary {
+    background-color: #4a5568;
+    color: white;
+}
+
+/* Chart Colors (Default Theme) */
+body.theme-default {
+    --chart-color-1: rgb(255, 99, 132);   /* Red */
+    --chart-color-2: rgb(54, 162, 235);   /* Blue */
+    --chart-color-3: rgb(255, 206, 86);   /* Yellow */
+    --chart-color-4: rgb(75, 192, 192);   /* Green */
+    --chart-color-5: rgb(153, 102, 255);  /* Purple */
+    --chart-color-6: rgb(255, 159, 64);   /* Orange */
+    --chart-color-7: rgb(199, 199, 199);  /* Gray */
+    --chart-color-8: rgb(83, 102, 255);   /* Indigo */
+    --chart-color-9: rgb(40, 159, 64);    /* Dark Green */
+    --chart-color-10: rgb(210, 99, 132);  /* Pink */
+
+    /* Profile Page specific variables */
+    --text-info: #63b3ed; /* A default blue for info text */
+    --bg-admin-badge: #e53e3e; /* Red for admin badge */
+    --text-admin-badge: white;
+    --bg-hidden-badge: #718096; /* Gray for hidden badge */
+    --text-hidden-badge: white;
+
+    /* Chart Colors for Profile Charts */
+    --chart-color-succeeds: rgb(75, 192, 75); /* Green for succeeds */
+    --chart-color-fails: rgb(255, 99, 132); /* Red for fails */
+    --chart-color-average: rgb(255, 0, 0); /* Red for average */
+    --chart-color-max: rgb(0, 200, 0); /* Green for max */
+    --chart-color-min: rgb(200, 0, 0); /* Dark Red for min */
+    --chart-color-iqr: rgb(128, 0, 128); /* Purple for IQR */
+    --chart-color-std-dev: rgb(255, 165, 0); /* Orange for std dev */
+    --chart-color-challenges-complete: rgb(255, 159, 64); /* Orange for challenges complete line */
+}
+
+/* Profile Page Semantic Classes */
+body.theme-default .theme-profile-score-rank {
+    color: var(--text-info);
+}
+
+body.theme-default .theme-profile-text-muted {
+    color: var(--text-muted);
+}
+
+body.theme-default .theme-profile-badge.admin {
+    background-color: var(--bg-admin-badge);
+    color: var(--text-admin-badge);
+}
+
+body.theme-default .theme-profile-badge.hidden {
+    background-color: var(--bg-hidden-badge);
+    color: var(--text-hidden-badge);
+}
+
+/* Also add general theme-modal-input and theme-modal-button-primary styles for the give award modal */
+body.theme-default .theme-modal-input {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+body.theme-default .theme-modal-button-primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+body.theme-default .theme-modal-button-secondary {
+    background-color: #4a5568;
+    color: white;
+}

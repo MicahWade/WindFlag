@@ -1,0 +1,420 @@
+body.theme-learning {
+   --bg-main: #F7F9FC;
+   --bg-surface: #FFFFFF;
+   --bg-input: #EDF2F7;
+   --text-header: #2D3748;
+   --text-main: #4A5568;
+   --text-muted: #718096;
+   --border-color: #E2E8F0;
+   --primary: #4A90E2;
+   --radius: 16px;
+   --card-border: 1px solid #E2E8F0;
+   --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+   --bg-completed: #10B981; /* A green for completed challenges */
+   --bg-hover-surface: #F0F4F8; /* A slightly darker background for hover */
+   font-family: 'Inter', sans-serif;
+}
+body.theme-learning h1, h2, h3 { font-family: 'Poppins', sans-serif; }
+
+/* General styles for approachability and cognitive load reduction */
+body.theme-learning {
+    line-height: 1.6;
+    color: var(--text-main);
+    background-color: var(--bg-main);
+}
+
+/* Card-based layout */
+body.theme-learning .card,
+body.theme-learning .box,
+body.theme-learning .form-container,
+body.theme-learning .panel {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    border: var(--card-border);
+    box-shadow: var(--card-shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+/* Rounded corners */
+body.theme-learning input,
+body.theme-learning button,
+body.theme-learning select,
+body.theme-learning textarea {
+    border-radius: var(--radius);
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-learning button {
+    background-color: var(--primary);
+    color: var(--bg-surface); /* White text on primary button */
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+body.theme-learning button:hover {
+    background-color: darken(var(--primary), 10%); /* This assumes a preprocessor or JS for darken */
+    /* For pure CSS, a fixed slightly darker color or a lighter color */
+    background-color: #3a7bd5; /* Example: slightly darker blue */
+}
+
+body.theme-learning a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+body.theme-learning a:hover {
+    text-decoration: underline;
+}
+
+/* Specific adjustments for input focus */
+body.theme-learning input:focus,
+body.theme-learning textarea:focus,
+body.theme-learning select:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2); /* Primary color with transparency */
+}
+
+/* Headers styling */
+body.theme-learning h1,
+body.theme-learning h2,
+body.theme-learning h3,
+body.theme-learning h4,
+body.theme-learning h5,
+body.theme-learning h6 {
+    color: var(--text-header);
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+/* Table styling */
+body.theme-learning table {
+    width: 100%;
+    border-collapse: separate; /* For rounded corners on cells */
+    border-spacing: 0;
+    margin-bottom: 20px;
+}
+
+body.theme-learning th,
+body.theme-learning td {
+    border: 1px solid var(--border-color);
+    padding: 12px 15px;
+    text-align: left;
+}
+
+body.theme-learning th {
+    background-color: var(--bg-input);
+    color: var(--text-header);
+    font-weight: bold;
+}
+
+body.theme-learning tr:first-child th:first-child { border-top-left-radius: var(--radius); }
+body.theme-learning tr:first-child th:last-child { border-top-right-radius: var(--radius); }
+body.theme-learning tr:last-child td:first-child { border-bottom-left-radius: var(--radius); }
+body.theme-learning tr:last-child td:last-child { border-bottom-right-radius: var(--radius); }
+body.theme-learning tbody tr:nth-child(even) {
+    background-color: rgba(var(--bg-input), 0.5); /* Slightly different background for even rows */
+}
+
+/* Utility classes or common elements that should respect theme */
+body.theme-learning .alert {
+    padding: 15px;
+    border-radius: var(--radius);
+    margin-bottom: 15px;
+}
+
+body.theme-learning .alert.alert-info { background-color: rgba(74, 144, 226, 0.1); border-color: var(--primary); color: var(--primary); }
+body.theme-learning .alert.alert-success { background-color: rgba(76, 175, 80, 0.1); border-color: #4CAF50; color: #4CAF50; }
+body.theme-learning .alert.alert-danger { background-color: rgba(244, 67, 54, 0.1); border-color: #F44336; color: #F44336; }
+
+/* Theme-specific classes for base.html header */
+body.theme-learning .theme-header {
+    background-color: var(--bg-surface); /* Header background for learning theme */
+    color: var(--text-header);
+}
+
+body.theme-learning .theme-nav-item {
+    color: var(--text-main);
+    /* hover styles can be handled by existing Tailwind or specific rules */
+}
+
+/* New Semantic Classes for Challenges Page and other elements */
+body.theme-learning .theme-page-title {
+    color: var(--text-header);
+}
+
+body.theme-learning .theme-accordion-item {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+}
+
+body.theme-learning .theme-accordion-header {
+    /* No specific background, will inherit from parent */
+}
+
+body.theme-learning .theme-category-title {
+    color: var(--text-header);
+}
+
+body.theme-learning .theme-category-stats {
+    color: var(--text-muted);
+}
+
+body.theme-learning .theme-card { /* General card style, for challenge and category cards */
+    background-color: var(--bg-surface) !important;
+    border-radius: var(--radius);
+    border: var(--card-border);
+    box-shadow: var(--card-shadow);
+}
+
+body.theme-learning .theme-challenge-card-locked {
+    background-color: var(--bg-input); /* A slightly different background for locked cards */
+    color: var(--text-muted);
+    border: var(--card-border);
+}
+
+body.theme-learning .theme-challenge-title {
+    color: var(--text-header);
+}
+
+body.theme-learning .theme-challenge-points {
+    color: var(--text-main);
+}
+
+body.theme-learning .theme-challenge-status-text { /* For "Locked", "Unlocks after..." text */
+    color: var(--text-muted);
+    background-color: transparent; /* Ensure button background is transparent */
+}
+body.theme-learning .theme-challenge-status-text:hover {
+    color: var(--text-header); /* Darker on hover for better contrast */
+    background-color: transparent; /* Maintain transparency on hover */
+}
+
+body.theme-learning .theme-modal-card {
+    background-color: var(--bg-surface);
+    border: var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+}
+
+body.theme-learning .theme-modal-title {
+    color: var(--text-header);
+}
+
+body.theme-learning .theme-modal-description {
+    color: var(--text-main);
+}
+
+body.theme-learning .theme-modal-points {
+    color: var(--text-main);
+}
+
+body.theme-learning .theme-modal-hint-item {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-radius: var(--radius); /* Apply radius from theme */
+}
+
+body.theme-learning .theme-modal-input {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--border-color);
+    border-radius: var(--radius); /* Apply radius from theme */
+}
+
+body.theme-learning .theme-modal-button-primary {
+    background-color: var(--primary);
+    color: var(--bg-surface); /* Text color for primary button */
+    border-radius: var(--radius); /* Apply radius from theme */
+}
+
+body.theme-learning .theme-modal-button-secondary {
+    background-color: var(--text-muted); /* A muted color for secondary */
+    color: var(--bg-surface);
+    border-radius: var(--radius); /* Apply radius from theme */
+}
+
+body.theme-learning .theme-code-block {
+    background-color: var(--bg-input); /* Code block background */
+    color: var(--text-main); /* Code text color */
+    border-radius: var(--radius); /* Apply radius from theme */
+}
+
+/* General table styling */
+body.theme-learning table.theme-table {
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+body.theme-learning table.theme-table th {
+    background-color: var(--bg-input);
+    color: var(--text-header);
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-learning table.theme-table td {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-learning .theme-completed-challenge {
+    background-color: var(--bg-completed);
+}
+
+body.theme-learning .theme-card.theme-hover-card:hover {
+    background-color: var(--bg-hover-surface);
+}
+
+body.theme-learning .theme-empty-state-text {
+    color: var(--text-main);
+}
+
+/* New Semantic Classes for dynamic JS styling */
+/* Challenge Progress Status */
+body.theme-learning .theme-status-completed { background-color: var(--bg-completed); }
+body.theme-learning .theme-status-high-progress { background-color: #A3D900; } /* Example green */
+body.theme-learning .theme-status-medium-progress { background-color: #FFC107; } /* Example amber */
+body.theme-learning .theme-status-low-progress { background-color: #FF9800; } /* Example orange */
+body.theme-learning .theme-status-very-low-progress { background-color: #F44336; } /* Example red */
+body.theme-learning .theme-status-no-progress { background-color: var(--bg-surface); color: var(--text-main); } /* Default background or surface for no progress */
+
+/* Flash Messages */
+body.theme-learning .theme-flash-success { background-color: #4CAF50; color: white; } /* Example green */
+body.theme-learning .theme-flash-danger { background-color: #F44336; color: white; } /* Example red */
+
+/* Code Result */
+body.theme-learning .theme-code-result-success { background-color: #388E3C; color: white; } /* Example dark green */
+body.theme-learning .theme-code-result-error { color: #F44336; } /* Example red */
+
+/* Explicit SVG stroke for theme-challenge-status-text within buttons (modal close icon) */
+body.theme-learning .theme-challenge-status-text svg {
+    stroke: var(--text-header) !important;
+}
+
+/* New Semantic Classes for Scoreboard & Profile */
+body.theme-learning .theme-chart-container {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-learning .theme-table-header-cell {
+    background-color: var(--bg-input);
+    color: var(--text-header);
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-learning .theme-table-body-cell {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-learning .theme-table-row-even {
+    background-color: var(--bg-surface);
+}
+
+body.theme-learning .theme-table-row-odd {
+    background-color: var(--bg-surface);
+}
+
+body.theme-learning .theme-link {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+body.theme-learning .theme-link:hover {
+    text-decoration: underline;
+}
+
+body.theme-learning .theme-no-data-text {
+    color: var(--text-muted);
+}
+
+/* Chart Colors (Learning Theme) */
+body.theme-learning {
+    --chart-color-1: rgb(74, 144, 226);   /* Primary blue */
+    --chart-color-2: rgb(135, 189, 250);  /* Lighter blue */
+    --chart-color-3: rgb(255, 179, 102);  /* Light orange */
+    --chart-color-4: rgb(153, 224, 137);  /* Light green */
+    --chart-color-5: rgb(204, 153, 255);  /* Light purple */
+    --chart-color-6: rgb(255, 204, 102);  /* Light gold */
+    --chart-color-7: rgb(189, 195, 199);  /* Light gray */
+    --chart-color-8: rgb(108, 117, 125);  /* Darker gray */
+    --chart-color-9: rgb(46, 204, 113);   /* Emerald green */
+    --chart-color-10: rgb(241, 148, 138); /* Light red */
+
+    /* Profile Page specific variables */
+    --text-info: var(--primary); /* Use primary for info text */
+    --bg-admin-badge: #EF4444; /* Red for admin badge */
+    --text-admin-badge: white;
+    --bg-hidden-badge: #6B7280; /* Gray for hidden badge */
+    --text-hidden-badge: white;
+}
+
+/* Also add general theme-modal-input and theme-modal-button-primary styles for the give award modal */
+body.theme-learning .theme-modal-input {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--border-color);
+    border-radius: var(--radius);
+}
+
+body.theme-learning .theme-modal-button-primary {
+    background-color: var(--primary);
+    color: var(--bg-surface);
+    border-radius: var(--radius);
+}
+
+body.theme-learning .theme-modal-button-secondary {
+    background-color: var(--text-muted);
+    color: var(--bg-surface);
+    border-radius: var(--radius);
+}
+
+/* Profile Page specific variables */
+body.theme-learning {
+    --text-info: var(--primary); /* Use primary for info text */
+    --bg-admin-badge: #EF4444; /* Red for admin badge */
+    --text-admin-badge: white;
+    --bg-hidden-badge: #6B7280; /* Gray for hidden badge */
+    --text-hidden-badge: white;
+
+    /* Chart Colors for Profile Charts */
+    --chart-color-succeeds: rgb(75, 192, 75); /* Green for succeeds */
+    --chart-color-fails: rgb(255, 99, 132); /* Red for fails */
+    --chart-color-average: rgb(255, 0, 0); /* Red for average */
+    --chart-color-max: rgb(0, 200, 0); /* Green for max */
+    --chart-color-min: rgb(200, 0, 0); /* Dark Red for min */
+    --chart-color-iqr: rgb(128, 0, 128); /* Purple for IQR */
+    --chart-color-std-dev: rgb(255, 165, 0); /* Orange for std dev */
+    --chart-color-challenges-complete: rgb(75, 192, 192); /* Green for challenges complete line */
+}
+
+/* Profile Page Semantic Classes */
+body.theme-learning .theme-profile-score-rank {
+    color: var(--text-info);
+}
+
+body.theme-learning .theme-profile-text-muted {
+    color: var(--text-muted);
+}
+
+body.theme-learning .theme-profile-badge.admin {
+    background-color: var(--bg-admin-badge);
+    color: var(--text-admin-badge);
+}
+
+body.theme-learning .theme-profile-badge.hidden {
+    background-color: var(--bg-hidden-badge);
+    color: var(--text-hidden-badge);
+}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="max-w-md mx-auto p-8 rounded-lg shadow-lg" style="background-color: var(--bg-surface);">
+        <h1 class="text-3xl font-bold mb-6" style="color: var(--text-header);">Manage Themes</h1>
+        
+        <form method="POST" action="{{ url_for('admin.manage_themes') }}" class="space-y-4 mb-8">
+            <div class="mb-4">
+                <label for="theme_name" class="block text-sm font-bold mb-2" style="color: var(--text-main);">Select Theme:</label>
+                <select name="theme_name" id="theme_name" class="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" style="background-color: var(--bg-input); color: var(--text-main); border-color: var(--border-color);">
+                    {% for theme in available_themes %}
+                        <option value="{{ theme }}" {% if theme == current_active_theme %}selected{% endif %}>{{ theme | capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline shadow-md transform hover:scale-105 transition duration-300 ease-in-out" style="background-color: var(--primary); color: var(--bg-surface);">Apply Theme</button>
+        </form>
+    </div>
+{% endblock content %}
