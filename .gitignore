@@ -3,6 +3,7 @@ static/themes/*
 
 # Un-ignore the default theme
 !static/themes/default/
+!static/themes/learning/
 
 # Keep the .gitkeep file
 !static/themes/.gitkeep
