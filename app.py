@@ -114,6 +114,7 @@ def create_app(config_class=Config):
     # and its blueprint (api_bp) is registered here.
 
     from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission, Award, AwardCategory, FlagAttempt, Hint, UserHint # Import FlagAttempt, Hint, UserHint
+from scripts.code_execution import execute_code_in_sandbox # New: Import for coding challenges
 
     app.register_blueprint(admin_bp) # Register admin blueprint
     app.register_blueprint(api_key_bp) # Register api_key blueprint
@@ -574,90 +575,45 @@ def create_app(config_class=Config):
                 return jsonify({'success': False, 'message': 'You have already solved this challenge!'})
 
             submitted_flag_content = form.flag.data
-            correct_flag_found = None # Will store the matching ChallengeFlag object
 
-            # 2. Find if the submitted flag matches any of the challenge's flags
-            for cf in challenge.flags:
-                if challenge.case_sensitive:
-                    if cf.flag_content == submitted_flag_content:
-                        correct_flag_found = cf
-                        break
-                else:
-                    if cf.flag_content.lower() == submitted_flag_content.lower():
-                        correct_flag_found = cf
-                        break
-            
-            # Record the attempt in FlagAttempt table
-            new_flag_attempt = FlagAttempt(
-                user_id=current_user.id,
-                challenge_id=challenge.id,
-                submitted_flag=submitted_flag_content,
-                is_correct=(correct_flag_found is not None),
-                timestamp=datetime.now(UTC)
-            )
-            db.session.add(new_flag_attempt)
-            db.session.commit() # Commit the attempt immediately
-
-            if correct_flag_found:
-                # 3. Check if this specific flag has already been submitted by the user (correctly)
-                if FlagSubmission.query.filter_by(user_id=current_user.id, challenge_flag_id=correct_flag_found.id).first():
-                    return jsonify({'success': False, 'message': 'You have already submitted this specific flag.'})
+            if challenge.challenge_type == 'CODING':
+                # Handle coding challenge submission
+                # The submitted "flag" is actually the user's code
+                user_code = submitted_flag_content
                 
-                # 4. Record the new flag submission in FlagSubmission table
-                new_flag_submission = FlagSubmission(
+                execution_result = execute_code_in_sandbox(
+                    challenge.language,
+                    user_code,
+                    challenge.expected_output,
+                    challenge.setup_code,
+                    challenge.test_case_input
+                )
+
+                # Record the attempt
+                new_flag_attempt = FlagAttempt(
                     user_id=current_user.id,
                     challenge_id=challenge.id,
-                    challenge_flag_id=correct_flag_found.id,
+                    submitted_flag=user_code, # Store the submitted code
+                    is_correct=execution_result.success,
                     timestamp=datetime.now(UTC)
                 )
-                db.session.add(new_flag_submission)
-                db.session.commit() # Commit to ensure the new flag submission is in the DB for counting
+                db.session.add(new_flag_attempt)
+                db.session.commit()
 
-                # 5. Re-evaluate if the challenge is now fully solved
-                is_challenge_solved = False
-                user_submitted_flags_for_challenge = FlagSubmission.query.filter_by(
-                    user_id=current_user.id,
-                    challenge_id=challenge.id
-                ).count()
-                
-                total_flags_for_challenge = len(challenge.flags)
-
-                if challenge.multi_flag_type == 'SINGLE' or challenge.multi_flag_type == 'ANY':
-                    is_challenge_solved = True # Any one correct flag solves it
-                elif challenge.multi_flag_type == 'ALL':
-                    if user_submitted_flags_for_challenge == total_flags_for_challenge:
-                        is_challenge_solved = True
-                elif challenge.multi_flag_type == 'N_OF_M':
-                    if challenge.multi_flag_threshold and user_submitted_flags_for_challenge >= challenge.multi_flag_threshold:
-                        is_challenge_solved = True
-                
-                if is_challenge_solved:
-                    # 6. Mark challenge as solved in Submission table
-                    # Use the calculated_points property from the model
-                    points_awarded = challenge.calculated_points
+                if execution_result.success:
+                    # Check if already solved
+                    if Submission.query.filter_by(user_id=current_user.id, challenge_id=challenge.id).first():
+                        return jsonify({'success': False, 'message': 'You have already solved this coding challenge!'})
                     
-                    # The proactive decay logic needs to be re-evaluated here.
-                    # If points are calculated dynamically, the 'old_points' concept might change.
-                    # For now, let's assume calculated_points already reflects the current value.
-                    # If proactive decay means reducing points for *all* previous solvers,
-                    # that would require iterating through past submissions and adjusting their scores.
-                    # This is a complex operation and might be better handled by a background task
-                    # or a more sophisticated scoring system.
-                    # For the current scope, I'll remove the proactive decay logic from here
-                    # and rely on `challenge.calculated_points` to give the current value.
-                    # If proactive decay is still desired, it needs a more robust implementation.
-
+                    # Mark challenge as solved
+                    points_awarded = challenge.calculated_points
                     new_submission = Submission(user_id=current_user.id, challenge_id=challenge.id, timestamp=datetime.now(UTC))
                     db.session.add(new_submission)
-                    current_user.score += points_awarded # Update user score
-                    new_submission.score_at_submission = current_user.score # Record score at this submission
+                    current_user.score += points_awarded
+                    new_submission.score_at_submission = current_user.score
                     db.session.commit()
 
-                    # Recalculate stripe status for the solved challenge
                     challenge.update_stripe_status()
-                    
-                    # Emit a SocketIO event for score update
-                    from flask_socketio import SocketIO, emit
                     emit('score_update', {
                         'user_id': current_user.id,
                         'username': current_user.username,
@@ -666,17 +622,108 @@ def create_app(config_class=Config):
                         'challenge_name': challenge.name,
                         'points_awarded': points_awarded
                     }, broadcast=True, namespace='/')
-
-                    return jsonify({'success': True, 'message': f'Correct Flag! Challenge Solved! You earned {points_awarded} points!'})
+                    
+                    return jsonify({'success': True, 'message': f'Coding challenge solved! You earned {points_awarded} points!', 'stdout': execution_result.stdout, 'stderr': execution_result.stderr})
                 else:
-                    # 7. Flag was correct, but challenge not fully solved yet
-                    return jsonify({
-                        'success': True,
-                        'message': f'Correct Flag! You have submitted {user_submitted_flags_for_challenge} of {total_flags_for_challenge} flags for this challenge.'
-                    })
+                    message = execution_result.error_message
+                    if execution_result.is_timeout:
+                        message = "Your code timed out. " + message
+                    return jsonify({'success': False, 'message': f'Coding challenge failed: {message}', 'stdout': execution_result.stdout, 'stderr': execution_result.stderr})
+
             else:
-                # 8. Incorrect Flag
-                return jsonify({'success': False, 'message': 'Incorrect Flag. Please try again.'})
+                # Existing logic for traditional flag challenges
+                correct_flag_found = None # Will store the matching ChallengeFlag object
+
+                # 2. Find if the submitted flag matches any of the challenge's flags
+                for cf in challenge.flags:
+                    if challenge.case_sensitive:
+                        if cf.flag_content == submitted_flag_content:
+                            correct_flag_found = cf
+                            break
+                    else:
+                        if cf.flag_content.lower() == submitted_flag_content.lower():
+                            correct_flag_found = cf
+                            break
+                
+                # Record the attempt in FlagAttempt table
+                new_flag_attempt = FlagAttempt(
+                    user_id=current_user.id,
+                    challenge_id=challenge.id,
+                    submitted_flag=submitted_flag_content,
+                    is_correct=(correct_flag_found is not None),
+                    timestamp=datetime.now(UTC)
+                )
+                db.session.add(new_flag_attempt)
+                db.session.commit() # Commit the attempt immediately
+
+                if correct_flag_found:
+                    # 3. Check if this specific flag has already been submitted by the user (correctly)
+                    if FlagSubmission.query.filter_by(user_id=current_user.id, challenge_flag_id=correct_flag_found.id).first():
+                        return jsonify({'success': False, 'message': 'You have already submitted this specific flag.'})
+                    
+                    # 4. Record the new flag submission in FlagSubmission table
+                    new_flag_submission = FlagSubmission(
+                        user_id=current_user.id,
+                        challenge_id=challenge.id,
+                        challenge_flag_id=correct_flag_found.id,
+                        timestamp=datetime.now(UTC)
+                    )
+                    db.session.add(new_flag_submission)
+                    db.session.commit() # Commit to ensure the new flag submission is in the DB for counting
+
+                    # 5. Re-evaluate if the challenge is now fully solved
+                    is_challenge_solved = False
+                    user_submitted_flags_for_challenge = FlagSubmission.query.filter_by(
+                        user_id=current_user.id,
+                        challenge_id=challenge.id
+                    ).count()
+                    
+                    total_flags_for_challenge = len(challenge.flags)
+
+                    if challenge.multi_flag_type == 'SINGLE' or challenge.multi_flag_type == 'ANY':
+                        is_challenge_solved = True # Any one correct flag solves it
+                    elif challenge.multi_flag_type == 'ALL':
+                        if user_submitted_flags_for_challenge == total_flags_for_challenge:
+                            is_challenge_solved = True
+                    elif challenge.multi_flag_type == 'N_OF_M':
+                        if challenge.multi_flag_threshold and user_submitted_flags_for_challenge >= challenge.multi_flag_threshold:
+                            is_challenge_solved = True
+                    
+                    if is_challenge_solved:
+                        # 6. Mark challenge as solved in Submission table
+                        # Use the calculated_points property from the model
+                        points_awarded = challenge.calculated_points
+                        
+                        new_submission = Submission(user_id=current_user.id, challenge_id=challenge.id, timestamp=datetime.now(UTC))
+                        db.session.add(new_submission)
+                        current_user.score += points_awarded # Update user score
+                        new_submission.score_at_submission = current_user.score # Record score at this submission
+                        db.session.commit()
+
+                        # Recalculate stripe status for the solved challenge
+                        challenge.update_stripe_status()
+                        
+                        # Emit a SocketIO event for score update
+                        from flask_socketio import emit
+                        emit('score_update', {
+                            'user_id': current_user.id,
+                            'username': current_user.username,
+                            'score': current_user.score,
+                            'challenge_id': challenge.id,
+                            'challenge_name': challenge.name,
+                            'points_awarded': points_awarded
+                        }, broadcast=True, namespace='/')
+
+                        return jsonify({'success': True, 'message': f'Correct Flag! Challenge Solved! You earned {points_awarded} points!'})
+                    else:
+                        # 7. Flag was correct, but challenge not fully solved yet
+                        return jsonify({
+                            'success': True,
+                            'message': f'Correct Flag! You have submitted {user_submitted_flags_for_challenge} of {total_flags_for_challenge} flags for this challenge.'
+                        })
+                else:
+                    # 8. Incorrect Flag
+                    return jsonify({'success': False, 'message': 'Incorrect Flag. Please try again.'})
         return jsonify({'success': False, 'message': 'Invalid form submission.'})
 
     @app.route('/reveal_hint/<int:hint_id>', methods=['POST'])
