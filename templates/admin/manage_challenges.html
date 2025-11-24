@@ -1,27 +1,27 @@
 {% extends "base.html" %}
 {% block content %}
-    <h1 class="text-3xl font-bold text-gray-100 mb-6">Manage Challenges</h1>
-    <p class="mb-4"><a href="{{ url_for('admin.new_challenge') }}" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-md">Create New Challenge</a></p>
-    <div class="overflow-x-auto bg-gray-800 shadow-lg rounded-lg">
-        <table class="min-w-full leading-normal">
+    <h1 class="theme-page-title text-3xl font-bold mb-6">Manage Challenges</h1>
+    <p class="mb-4"><a href="{{ url_for('admin.new_challenge') }}" class="theme-modal-button-primary font-bold py-2 px-4 rounded shadow-md">Create New Challenge</a></p>
+    <div class="overflow-x-auto theme-card">
+        <table class="min-w-full theme-table">
             <thead>
                 <tr>
-                    <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                    <th class="px-5 py-3 border-b-2 theme-table-header-cell text-left text-xs font-semibold uppercase tracking-wider">
                         ID
                     </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                    <th class="px-5 py-3 border-b-2 theme-table-header-cell text-left text-xs font-semibold uppercase tracking-wider">
                         Name
                     </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                    <th class="px-5 py-3 border-b-2 theme-table-header-cell text-left text-xs font-semibold uppercase tracking-wider">
                         Category
                     </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                    <th class="px-5 py-3 border-b-2 theme-table-header-cell text-left text-xs font-semibold uppercase tracking-wider">
                         Points
                     </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                    <th class="px-5 py-3 border-b-2 theme-table-header-cell text-left text-xs font-semibold uppercase tracking-wider">
                         Unlock
                     </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-600 bg-gray-700 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                    <th class="px-5 py-3 border-b-2 theme-table-header-cell text-left text-xs font-semibold uppercase tracking-wider">
                         Actions
                     </th>
                 </tr>
@@ -40,26 +40,26 @@
                         {% set row_class = 'bg-blue-900/50' %} {# Rarely Unlocked (50-90%) #}
                     {% endif %}
                     <tr class="{{ row_class }}">
-                        <td class="px-5 py-5 border-b border-gray-700 text-sm">
-                            <p class="text-gray-200 whitespace-no-wrap">{{ challenge.id }}</p>
+                        <td class="px-5 py-5 text-sm theme-table-body-cell">
+                            <p class="whitespace-no-wrap">{{ challenge.id }}</p>
                         </td>
-                        <td class="px-5 py-5 border-b border-gray-700 text-sm">
-                            <p class="text-gray-200 whitespace-no-wrap">{{ challenge.name }}
+                        <td class="px-5 py-5 text-sm theme-table-body-cell">
+                            <p class="whitespace-no-wrap">{{ challenge.name }}
                                 {% if challenge.has_dynamic_flag %}
                                     <span class="text-green-500">(Dynamic)</span>
                                 {% endif %}
                             </p>
                         </td>
-                        <td class="px-5 py-5 border-b border-gray-700 text-sm">
-                            <p class="text-gray-200 whitespace-no-wrap">{{ challenge.category.name }}</p>
+                        <td class="px-5 py-5 text-sm theme-table-body-cell">
+                            <p class="whitespace-no-wrap">{{ challenge.category.name }}</p>
                         </td>
-                        <td class="px-5 py-5 border-b border-gray-700 text-sm">
-                            <p class="text-gray-200 whitespace-no-wrap">{{ challenge.points }}</p>
+                        <td class="px-5 py-5 text-sm theme-table-body-cell">
+                            <p class="whitespace-no-wrap">{{ challenge.points }}</p>
                         </td>
-                        <td class="px-5 py-5 border-b border-gray-700 text-sm">
-                            <p class="text-gray-200 whitespace-no-wrap">{{ challenge.unlock_type }} ({{ "%.2f" | format(data.unlocked_percentage) }}%)</p>
+                        <td class="px-5 py-5 text-sm theme-table-body-cell">
+                            <p class="whitespace-no-wrap">{{ challenge.unlock_type }} ({{ "%.2f" | format(data.unlocked_percentage) }}%)</p>
                         </td>
-                        <td class="px-5 py-5 border-b border-gray-700 text-sm">
+                        <td class="px-5 py-5 text-sm theme-table-body-cell">
                             <a href="{{ url_for('admin.update_challenge', challenge_id=challenge.id) }}" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1 px-2 rounded text-xs shadow-md">Edit</a>
                             <form action="{{ url_for('admin.delete_challenge', challenge_id=challenge.id) }}" method="POST" class="inline-block">
                                 <button type="submit" class="bg-red-600 hover:bg-red-500 text-white font-bold py-1 px-2 rounded text-xs shadow-md" onclick="return confirm('Are you sure you want to delete this challenge?');">Delete</button>

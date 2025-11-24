@@ -1,4 +1,9 @@
+function getCssVariable(variableName) {
+    return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    const chartTextColor = getCssVariable('--text-main');
     // Data for Category Points Chart
     const categoryCanvas = document.getElementById('categoryPointsChart');
     const categoryLabels = flaskCategoryLabels; // Access global variable
@@ -23,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
             plugins: {
                 legend: {
                     labels: {
-                        color: 'white' // Set legend text color to white
+                        color: chartTextColor
                     }
                 }
             }
@@ -91,11 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
         options: {
             responsive: true,
             plugins: {
-                legend: {
-                    labels: {
-                        color: 'white'
-                    }
-                }
+                        color: chartTextColor
             },
             scales: {
                 x: {
@@ -110,11 +111,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     title: {
                         display: false, // Hide title
                         text: 'Date',
-                        color: 'white'
+                        color: chartTextColor
                     },
                     ticks: {
                         display: false, // Hide ticks
-                        color: 'white'
+                        color: chartTextColor
                     }
                 },
                 y: {
@@ -122,10 +123,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     title: {
                         display: true,
                         text: 'Number of Challenges Solved',
-                        color: 'white'
+                        color: chartTextColor
                     },
                     ticks: {
-                        color: 'white'
+                        color: chartTextColor
                     }
                 }
             }
@@ -153,14 +154,13 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         options: {
             responsive: true,
-            plugins: {
-                legend: {
-                    labels: {
-                        color: 'white'
-                    }
-                }
-            }
-        }
+                                plugins: {
+                                    legend: {
+                                        labels: {
+                                            color: chartTextColor
+                                        }
+                                    }
+                                }        }
     });
 
     // Data for Challenges Solved Count Bar Chart
@@ -195,20 +195,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     title: {
                         display: true,
                         text: 'Number of Times Solved',
-                        color: 'white'
+                        color: chartTextColor
                     },
                     ticks: {
-                        color: 'white'
+                        color: chartTextColor
                     }
                 },
                 y: {
                     title: {
                         display: true,
                         text: 'Challenge',
-                        color: 'white'
+                        color: chartTextColor
                     },
                     ticks: {
-                        color: 'white'
+                        color: chartTextColor
                     }
                 }
             }
@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 plugins: {
                     legend: {
                         labels: {
-                            color: 'white'
+                            color: chartTextColor
                         }
                     },
                     tooltip: {
@@ -389,10 +389,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         title: {
                             display: true,
                             text: 'Date',
-                            color: 'white'
+                            color: chartTextColor
                         },
                         ticks: {
-                            color: 'white'
+                            color: chartTextColor
                         }
                     },
                     y: {
@@ -400,10 +400,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         title: {
                             display: true,
                             text: 'Score',
-                            color: 'white'
+                            color: chartTextColor
                         },
                         ticks: {
-                            color: 'white'
+                            color: chartTextColor
                         }
                     }
                 }

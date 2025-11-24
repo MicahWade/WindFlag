@@ -15,6 +15,7 @@ from datetime import datetime, UTC # New: For datetime and UTC timezone
 from scripts.utils import make_datetime_timezone_aware
 import secrets # New: for generating API keys
 import hashlib # New: for hashing API keys
+from scripts.theme_utils import scan_themes, get_active_theme, set_active_theme # New: Import theme utilities
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -84,6 +85,29 @@ def admin_settings():
         form.accordion_display_style.data = get_setting('ACCORDION_DISPLAY_STYLE', 'boxes') # New: Load accordion display style setting
     return render_template('admin/settings.html', title='Admin Settings', form=form)
 
+@admin_bp.route('/themes', methods=['GET', 'POST'])
+@admin_required
+def manage_themes():
+    """
+    Handles the display and selection of themes.
+    Requires admin privileges.
+    """
+    available_themes = scan_themes()
+    current_active_theme = get_active_theme()
+    
+    if request.method == 'POST':
+        selected_theme = request.form.get('theme_name')
+        if selected_theme and selected_theme in available_themes:
+            set_active_theme(selected_theme)
+            flash(f'Theme changed to "{selected_theme}" successfully!', 'success')
+        else:
+            flash('Invalid theme selected.', 'danger')
+        return redirect(url_for('admin.manage_themes'))
+        
+    return render_template('admin/themes.html', 
+                           title='Manage Themes',
+                           available_themes=available_themes, 
+                           current_active_theme=current_active_theme)
 # Category CRUD
 @admin_bp.route('/categories')
 @admin_required
@@ -908,8 +932,8 @@ def analytics():
                            fails_succeeds_values=fails_succeeds_values,
                            challenge_solve_labels=challenge_solve_labels,
                            challenge_solve_values=challenge_solve_values,
-                           cumulative_points_dates=cumulative_points_dates,
-                           cumulative_points_values=cumulative_points_values,
+                           global_stats_over_time=global_stats_over_time,
+                           user_scores_over_time=user_scores_over_time,
                            all_users=all_users,
                            all_challenges=all_challenges,
                            user_challenge_status=user_challenge_status)
