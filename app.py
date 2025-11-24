@@ -581,6 +581,24 @@ def create_app(config_class=Config):
                 # The submitted "flag" is actually the user's code
                 user_code = submitted_flag_content
                 
+                # --- Static Analysis for malicious patterns ---
+                MALICIOUS_PATTERNS = [
+                    "while True", "for (;;)", "loop do", # Infinite loops
+                    "import os", "import subprocess", "import sys", "import shutil", # System access
+                    "open(", "file(", # File system access
+                    "socket(", "requests.", "urllib.", # Network access
+                    "eval(", "exec(", # Dangerous functions
+                    "__import__(" # Obfuscated import
+                ]
+                
+                # Convert code to lowercase for case-insensitive matching of patterns
+                user_code_lower = user_code.lower()
+
+                for pattern in MALICIOUS_PATTERNS:
+                    if pattern.lower() in user_code_lower:
+                        return jsonify({'success': False, 'message': f'Detected disallowed code pattern: "{pattern}". Please remove it.'})
+                # --- End Static Analysis ---
+                
                 execution_result = execute_code_in_sandbox(
                     challenge.language,
                     user_code,
