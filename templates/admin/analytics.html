@@ -17,18 +17,22 @@
 
 <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
     <div class="theme-card p-6 rounded-lg shadow-lg hover-expand-card">
-        <h2 class="theme-card-title text-xl font-semibold mb-4">Challenges Solved Over Time</h2>
-        <canvas id="challengesSolvedChart"></canvas>
+            <h2 class="theme-card-title text-xl font-semibold mb-4">Score from Challenges Over Time</h2>
+            <canvas id="challengesSolvedChart"></canvas>
+        </div>
+        {% if global_stats_over_time and global_stats_over_time|length > 0 %}
+        <div class="theme-card p-6 rounded-lg shadow-lg hover-expand-card">
+            <h2 class="theme-card-title text-xl font-semibold mt-8 mb-4">Score from Challenges Over Time</h2>
+            <div id="challengePointsOverTimeChartContainer">
+                <canvas id="challengePointsOverTimeChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
 
-                    <h2 class="theme-card-title text-xl font-semibold mt-8 mb-4">Score from Challenges Over Time</h2>
-                    <div id="challengePointsOverTimeChartContainer">
-                        <canvas id="challengePointsOverTimeChart"></canvas>
-                    </div>    </div>
-
-    <div class="theme-card p-6 rounded-lg shadow-lg hover-expand-card">
-        <h2 class="theme-card-title text-xl font-semibold mb-4">Fails vs Succeeds</h2>
-        <canvas id="failsSucceedsChart"></canvas>
-    </div>
+        <div class="theme-card p-6 rounded-lg shadow-lg hover-expand-card">
+            <h2 class="theme-card-title text-xl font-semibold mb-4">Fails vs Succeeds</h2>
+            <canvas id="failsSucceedsChart"></canvas>
+        </div>
 </div>
 
 <div class="mt-6 theme-card p-6 rounded-lg shadow-lg">
