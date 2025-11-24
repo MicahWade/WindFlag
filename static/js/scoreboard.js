@@ -85,26 +85,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         display: false, // Do not display legend for users
                     },
                     tooltip: {
-                        mode: 'index',
-                        intersect: false,
+                        mode: 'nearest', // Changed mode to 'nearest' as requested
+                        intersect: false, // Allows selecting points when hovering near the line
                         callbacks: {
-                            filter: function(tooltipItem) {
-                                // Only show tooltip items if the y-value is not null/undefined AND the dataset index is valid
-                                return tooltipItem.parsed.y !== null && tooltipItem.parsed.y !== undefined && tooltipItem.datasetIndex !== undefined;
-                            },
                             title: function(context) {
-                                if (!context || context.length === 0 || !context[0].parsed || context[0].parsed.y === null || context[0].parsed.y === undefined) {
-                                    return '';
-                                }
-                                if (context[0].parsed.x) {
-                                    const date = new Date(context[0].parsed.x);
-                                    // Use toLocaleString for flexible date/time formatting
-                                    return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
-                                }
-                                return '';
+                                return ''; // Do not display time
                             },
                             label: function(context) {
-                                let label = context.dataset.label || '';
+                                let label = context.dataset.label; // Get the user's label
                                 if (label) {
                                     label += ': ';
                                 }
