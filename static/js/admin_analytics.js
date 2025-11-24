@@ -1,5 +1,5 @@
 function getCssVariable(variableName) {
-    return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+    return getComputedStyle(document.body).getPropertyValue(variableName).trim();
 }
 
 function getChartColors() {
@@ -18,7 +18,8 @@ function getChartColors() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const chartTextColor = getCssVariable('--text-main');
+    const chartTextColor = getCssVariable('--chart-label-color');
+    Chart.defaults.color = chartTextColor;
     // Data for Category Points Chart
     const categoryCanvas = document.getElementById('categoryPointsChart');
     const categoryLabels = flaskCategoryLabels; // Access global variable

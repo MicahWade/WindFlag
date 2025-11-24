@@ -1,4 +1,25 @@
+function getCssVariable(variableName) {
+    return getComputedStyle(document.body).getPropertyValue(variableName).trim();
+}
+
+function getChartColors() {
+    return [
+        getCssVariable('--chart-color-1'),
+        getCssVariable('--chart-color-2'),
+        getCssVariable('--chart-color-3'),
+        getCssVariable('--chart-color-4'),
+        getCssVariable('--chart-color-5'),
+        getCssVariable('--chart-color-6'),
+        getCssVariable('--chart-color-7'),
+        getCssVariable('--chart-color-8'),
+        getCssVariable('--chart-color-9'),
+        getCssVariable('--chart-color-10'),
+    ];
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    const chartTextColor = getCssVariable('--chart-label-color');
+    Chart.defaults.color = chartTextColor;
     const computedStyle = getComputedStyle(document.body);
 
     // Fetch CSS variables for chart colors

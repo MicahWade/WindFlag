@@ -1,0 +1,298 @@
+body.theme-8bit {
+    --bg-main: #0F380F; /* Darkest Green */
+    --bg-surface: #306230; /* Darker Green */
+    --bg-input: #8BAC0F; /* Medium Green */
+    --text-header: #8BAC0F; /* Medium Green */
+    --text-main: #0F380F; /* Darkest Green */
+    --text-muted: #0F380F; /* Darkest Green */
+    --border-color: #0F380F; /* Darkest Green */
+    --primary: #8BAC0F; /* Medium Green */
+
+    --radius: 0px;
+    --card-border: 4px solid var(--border-color);
+    --card-shadow: 4px 4px 0px var(--primary);
+    font-family: 'Press Start 2P', cursive;
+    line-height: 1.5;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    letter-spacing: 0em;
+    --bg-completed: #047857; /* Tailwind green-700 for completed challenges */
+    --bg-hover-surface: #1E4A1E; /* A slightly lighter green for hover effect */
+
+    --chart-color-1: #FF6384;
+    --chart-color-2: #36A2EB;
+    --chart-color-3: #FFCE56;
+    --chart-color-4: #4BC0C0;
+    --chart-color-5: #9966FF;
+    --chart-color-6: #FF9F40;
+    --chart-color-7: #E7E9ED;
+    --chart-color-8: #8AC926;
+    --chart-color-9: #1982C4;
+    --chart-color-10: #F45B69;
+
+    --text-info: var(--primary); /* Using primary color for info */
+    --chart-label-color: #C0DCC0; /* Very Light Green for chart labels */
+    --bg-admin-badge: #e53e3e;
+    --text-admin-badge: white;
+    --bg-hidden-badge: #718096;
+    --text-hidden-badge: white;
+
+    --chart-color-succeeds: rgb(75, 192, 75);
+    --chart-color-fails: rgb(255, 99, 132);
+    --chart-color-average: rgb(255, 0, 0);
+    --chart-color-max: rgb(0, 200, 0);
+    --chart-color-min: rgb(200, 0, 0);
+    --chart-color-iqr: rgb(128, 0, 128);
+    --chart-color-std-dev: rgb(255, 165, 0);
+    --chart-color-challenges-complete: rgb(75, 192, 192);
+}
+
+body.theme-8bit p {
+    color: var(--text-main);
+}
+
+body.theme-8bit h1,
+body.theme-8bit h2,
+body.theme-8bit h3 {
+    color: var(--text-header);
+}
+
+body.theme-8bit a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+body.theme-8bit a:hover {
+    text-decoration: underline;
+}
+
+/* Also ensure form inputs look correct in 8bit theme */
+body.theme-8bit input,
+body.theme-8bit button,
+body.theme-8bit select,
+body.theme-8bit textarea {
+    border-radius: var(--radius);
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-8bit button {
+    background-color: var(--primary);
+    color: var(--text-main); /* Text on primary buttons should be darkest green */
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+body.theme-8bit button:hover {
+    filter: brightness(1.2);
+}
+
+/* Theme-specific classes for base.html header */
+body.theme-8bit .theme-header {
+    background-color: var(--bg-main);
+    color: var(--text-header);
+}
+
+body.theme-8bit .theme-nav-item {
+    color: var(--text-header);
+}
+
+/* New Semantic Classes for Challenges Page and other elements */
+body.theme-8bit .theme-page-title {
+    color: var(--text-header);
+}
+
+body.theme-8bit .theme-accordion-item {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-8bit .theme-accordion-header {
+    /* No specific background, will inherit from parent */
+}
+
+body.theme-8bit .theme-category-title {
+    color: var(--text-header);
+}
+
+body.theme-8bit .theme-category-stats {
+    color: var(--text-muted);
+}
+
+body.theme-8bit .theme-card { /* General card style, for challenge and category cards */
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-8bit .theme-challenge-card-locked {
+    background-color: var(--bg-input);
+    color: var(--text-muted);
+    border: var(--card-border);
+}
+
+body.theme-8bit .theme-challenge-title {
+    color: var(--text-header);
+}
+
+body.theme-8bit .theme-challenge-points {
+    color: var(--text-main);
+}
+
+body.theme-8bit .theme-challenge-status-text { /* For "Locked", "Unlocks after..." text */
+    color: var(--text-muted);
+    background-color: transparent;
+}
+body.theme-8bit .theme-challenge-status-text:hover {
+    color: var(--text-header);
+    background-color: transparent;
+}
+
+body.theme-8bit .theme-modal-title {
+    color: var(--text-header);
+}
+
+body.theme-8bit .theme-modal-description {
+    color: var(--text-main);
+}
+
+body.theme-8bit .theme-modal-points {
+    color: var(--text-main);
+}
+
+body.theme-8bit .theme-modal-hint-item {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-8bit .theme-modal-input {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+body.theme-8bit .theme-modal-button-primary {
+    background-color: var(--primary);
+    color: var(--text-main); /* Always white text on primary button */
+}
+
+body.theme-8bit .theme-modal-button-secondary {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-8bit .theme-code-block {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+/* General table styling */
+body.theme-8bit table.theme-table {
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+body.theme-8bit table.theme-table th {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-8bit table.theme-table td {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-8bit .theme-completed-challenge {
+    background-color: var(--bg-completed);
+}
+
+body.theme-8bit .theme-card.theme-hover-card:hover {
+    background-color: var(--bg-hover-surface);
+}
+
+body.theme-8bit .theme-empty-state-text {
+    color: var(--text-main);
+}
+
+/* New Semantic Classes for dynamic JS styling */
+/* Challenge Progress Status */
+body.theme-8bit .theme-status-completed { background-color: #047857; }
+body.theme-8bit .theme-status-high-progress { background-color: #65A30D; }
+body.theme-8bit .theme-status-medium-progress { background-color: #EAB308; }
+body.theme-8bit .theme-status-low-progress { background-color: #EA580C; }
+body.theme-8bit .theme-status-very-low-progress { background-color: #DC2626; }
+body.theme-8bit .theme-status-no-progress { background-color: var(--bg-surface); color: var(--text-main); }
+
+/* Flash Messages */
+body.theme-8bit .theme-flash-success { background-color: #10B981; color: white; }
+body.theme-8bit .theme-flash-danger { background-color: #EF4444; color: white; }
+
+/* Code Result */
+body.theme-8bit .theme-code-result-success { background-color: #065F46; color: white; }
+body.theme-8bit .theme-code-result-error { color: #EF4444; }
+
+/* Explicit SVG stroke for theme-challenge-status-text within buttons (modal close icon) */
+body.theme-8bit .theme-challenge-status-text svg {
+    stroke: var(--text-main) !important;
+}
+
+/* New Semantic Classes for Scoreboard & Profile */
+body.theme-8bit .theme-chart-container {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-8bit .theme-table-header-cell {
+    background-color: var(--bg-input);
+    color: var(--text-header);
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-8bit .theme-table-body-cell {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-8bit .theme-link {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+body.theme-8bit .theme-link:hover {
+    text-decoration: underline;
+}
+
+body.theme-8bit .theme-no-data-text {
+    color: var(--text-muted);
+}
+
+/* Profile Page specific variables */
+body.theme-8bit .theme-profile-score-rank {
+    color: var(--text-info);
+}
+
+body.theme-8bit .theme-profile-text-muted {
+    color: var(--text-muted);
+}
+
+body.theme-8bit .theme-profile-badge.admin {
+    background-color: var(--bg-admin-badge);
+    color: var(--text-admin-badge);
+}
+
+body.theme-8bit .theme-profile-badge.hidden {
+    background-color: var(--bg-hidden-badge);
+    color: var(--text-hidden-badge);
+}

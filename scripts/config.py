@@ -37,4 +37,4 @@ class TestConfig(Config):
 
 
 
-ACTIVE_THEME = 'default'
+ACTIVE_THEME = 'oceanic'

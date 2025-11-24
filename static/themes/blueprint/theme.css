@@ -1,0 +1,340 @@
+body.theme-blueprint {
+    --bg-main: #003366; /* Blueprint Blue */
+    --bg-surface: rgba(0, 51, 102, 0.9);
+    --bg-input: #004080;
+    --text-header: #FFFFFF;
+    --text-main: #B0C4DE;
+    --text-muted: #708090;
+    --border-color: #FFFFFF;
+    --primary: #FFFFFF;
+
+    --radius: 0px;
+    --card-border: 2px solid #FFFFFF;
+    --card-shadow: none;
+    font-family: 'Courier Prime', monospace;
+
+    /* Grid Lines */
+    background-image:
+        linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    line-height: 1.5;
+    letter-spacing: 0em;
+    --bg-completed: #047857; /* Tailwind green-700 for completed challenges */
+    --bg-hover-surface: rgba(0, 51, 102, 0.95); /* A slightly lighter gray for hover effect */
+
+    --chart-color-1: #FF6384;
+    --chart-color-2: #36A2EB;
+    --chart-color-3: #FFCE56;
+    --chart-color-4: #4BC0C0;
+    --chart-color-5: #9966FF;
+    --chart-color-6: #FF9F40;
+    --chart-color-7: #E7E9ED;
+    --chart-color-8: #8AC926;
+    --chart-color-9: #1982C4;
+    --chart-color-10: #F45B69;
+
+    --text-info: #FFFFFF; /* Using primary color for info */
+    --bg-admin-badge: #e53e3e;
+    --text-admin-badge: white;
+    --bg-hidden-badge: #718096;
+    --text-hidden-badge: white;
+
+    --chart-color-succeeds: rgb(75, 192, 75);
+    --chart-color-fails: rgb(255, 99, 132);
+    --chart-color-average: rgb(255, 0, 0);
+    --chart-color-max: rgb(0, 200, 0);
+    --chart-color-min: rgb(200, 0, 0);
+    --chart-color-iqr: rgb(128, 0, 128);
+    --chart-color-std-dev: rgb(255, 165, 0);
+    --chart-color-challenges-complete: rgb(75, 192, 192);
+}
+
+body.theme-blueprint p {
+    color: var(--text-main);
+}
+
+body.theme-blueprint h1,
+body.theme-blueprint h2,
+body.theme-blueprint h3 {
+    color: var(--text-header);
+}
+
+body.theme-blueprint a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+body.theme-blueprint a:hover {
+    text-decoration: underline;
+}
+
+/* Also ensure form inputs look correct in blueprint theme */
+body.theme-blueprint input,
+body.theme-blueprint button,
+body.theme-blueprint select,
+body.theme-blueprint textarea {
+    border-radius: var(--radius);
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-blueprint button {
+    background-color: var(--primary);
+    color: var(--bg-main);
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+body.theme-blueprint button:hover {
+    filter: brightness(1.2);
+}
+
+/* Theme-specific classes for base.html header */
+body.theme-blueprint .theme-header {
+    background-color: var(--bg-main);
+    color: var(--text-header);
+}
+
+body.theme-blueprint .theme-nav-item {
+    color: var(--text-main);
+}
+
+/* New Semantic Classes for Challenges Page and other elements */
+body.theme-blueprint .theme-page-title {
+    color: var(--text-header);
+}
+
+body.theme-blueprint .theme-accordion-item {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-blueprint .theme-accordion-header {
+    /* No specific background, will inherit from parent */
+}
+
+body.theme-blueprint .theme-category-title {
+    color: var(--text-header);
+}
+
+body.theme-blueprint .theme-category-stats {
+    color: var(--text-muted);
+}
+
+body.theme-blueprint .theme-card { /* General card style, for challenge and category cards */
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-blueprint .theme-challenge-card-locked {
+    background-color: var(--bg-input);
+    color: var(--text-muted);
+    border: var(--card-border);
+}
+
+body.theme-blueprint .theme-challenge-title {
+    color: var(--text-header);
+}
+
+body.theme-blueprint .theme-challenge-points {
+    color: var(--text-main);
+}
+
+body.theme-blueprint .theme-challenge-status-text { /* For "Locked", "Unlocks after..." text */
+    color: var(--text-muted);
+    background-color: transparent;
+}
+body.theme-blueprint .theme-challenge-status-text:hover {
+    color: var(--text-header);
+    background-color: transparent;
+}
+
+body.theme-blueprint .theme-modal-title {
+    color: var(--text-header);
+}
+
+body.theme-blueprint .theme-modal-description {
+    color: var(--text-main);
+}
+
+body.theme-blueprint .theme-modal-points {
+    color: var(--text-main);
+}
+
+body.theme-blueprint .theme-modal-hint-item {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-blueprint .theme-modal-input {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+body.theme-blueprint .theme-modal-button-primary {
+    background-color: var(--primary);
+    color: var(--bg-main);
+}
+
+body.theme-blueprint .theme-modal-button-secondary {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-blueprint .theme-code-block {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+/* General table styling */
+body.theme-blueprint table.theme-table {
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+body.theme-blueprint table.theme-table th {
+    background-color: var(--bg-input);
+    color: var(--text-header);
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-blueprint table.theme-table td {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-blueprint .theme-completed-challenge {
+    background-color: var(--bg-completed);
+}
+
+body.theme-blueprint .theme-card.theme-hover-card:hover {
+    background-color: var(--bg-hover-surface);
+}
+
+body.theme-blueprint .theme-empty-state-text {
+    color: var(--text-main);
+}
+
+/* New Semantic Classes for dynamic JS styling */
+/* Challenge Progress Status */
+body.theme-blueprint .theme-status-completed { background-color: #047857; }
+body.theme-blueprint .theme-status-high-progress { background-color: #65A30D; }
+body.theme-blueprint .theme-status-medium-progress { background-color: #EAB308; }
+body.theme-blueprint .theme-status-low-progress { background-color: #EA580C; }
+body.theme-blueprint .theme-status-very-low-progress { background-color: #DC2626; }
+body.theme-blueprint .theme-status-no-progress { background-color: var(--bg-surface); color: var(--text-main); }
+
+/* Flash Messages */
+body.theme-blueprint .theme-flash-success { background-color: #10B981; color: white; }
+body.theme-blueprint .theme-flash-danger { background-color: #EF4444; color: white; }
+
+/* Code Result */
+body.theme-blueprint .theme-code-result-success { background-color: #065F46; color: white; }
+body.theme-blueprint .theme-code-result-error { color: #EF4444; }
+
+/* Explicit SVG stroke for theme-challenge-status-text within buttons (modal close icon) */
+body.theme-blueprint .theme-challenge-status-text svg {
+    stroke: var(--text-main) !important;
+}
+
+/* New Semantic Classes for Scoreboard & Profile */
+body.theme-blueprint .theme-chart-container {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-blueprint .theme-table-header-cell {
+    background-color: var(--bg-input);
+    color: var(--text-header);
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-blueprint .theme-table-body-cell {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-blueprint .theme-table-row-even {
+    background-color: var(--bg-surface);
+}
+
+body.theme-blueprint .theme-table-row-odd {
+    background-color: var(--bg-surface);
+}
+
+body.theme-blueprint .theme-link {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+body.theme-blueprint .theme-link:hover {
+    text-decoration: underline;
+}
+
+body.theme-blueprint .theme-no-data-text {
+    color: var(--text-muted);
+}
+
+/* Profile Page specific variables */
+body.theme-blueprint .theme-profile-score-rank {
+    color: var(--text-info);
+}
+
+body.theme-blueprint .theme-profile-text-muted {
+    color: var(--text-muted);
+}
+
+body.theme-blueprint .theme-profile-badge.admin {
+    background-color: var(--bg-admin-badge);
+    color: var(--text-admin-badge);
+}
+
+body.theme-blueprint .theme-profile-badge.hidden {
+    background-color: var(--bg-hidden-badge);
+    color: var(--text-hidden-badge);
+}
+
+/* Also add general theme-modal-input and theme-modal-button-primary styles for the give award modal */
+body.theme-blueprint .theme-modal-input {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+body.theme-blueprint .theme-modal-button-primary {
+    background-color: var(--primary);
+    color: var(--bg-main);
+}
+
+body.theme-blueprint .theme-modal-button-secondary {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-blueprint .theme-modal-card {
+    background-color: var(--bg-surface);
+    border: var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+}
+
+/* Modal Overlay */
+body.theme-blueprint .modal-overlay {
+    background-color: rgba(45, 55, 72, 0.8); /* gray-800 with 80% opacity */
+}

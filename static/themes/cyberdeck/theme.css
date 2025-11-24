@@ -1,0 +1,258 @@
+body.theme-cyberdeck {
+    --bg-main: #121212;
+    --bg-surface: #1E1E1E;
+    --bg-input: #000000;
+    --text-header: #FFFF00; /* Hazard Yellow */
+    --text-main: #E0E0E0;
+    --text-muted: #FF0055;
+    --border-color: #FF0055;
+    --primary: #FFFF00;
+
+    --radius: 0px;
+    --card-border: 2px dashed var(--primary);
+    --card-shadow: 5px 5px 0px var(--text-muted);
+    font-family: 'Inconsolata', monospace;
+
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 3px);
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    line-height: 1.5;
+    letter-spacing: 0em;
+    --bg-completed: #047857; /* Tailwind green-700 for completed challenges */
+    --bg-hover-surface: #2E2E2E; /* A slightly lighter gray for hover effect */
+
+    --chart-color-1: #FF6384;
+    --chart-color-2: #36A2EB;
+    --chart-color-3: #FFCE56;
+    --chart-color-4: #4BC0C0;
+    --chart-color-5: #9966FF;
+    --chart-color-6: #FF9F40;
+    --chart-color-7: #E7E9ED;
+    --chart-color-8: #8AC926;
+    --chart-color-9: #1982C4;
+    --chart-color-10: #F45B69;
+
+    --text-info: var(--primary); /* Using primary color for info */
+    --chart-label-color: #FFFF00; /* Hazard Yellow for chart labels */
+    --bg-admin-badge: #e53e3e;
+    --text-admin-badge: white;
+    --bg-hidden-badge: #718096;
+    --text-hidden-badge: white;
+
+    --chart-color-succeeds: rgb(75, 192, 75);
+    --chart-color-fails: rgb(255, 99, 132);
+    --chart-color-average: rgb(255, 0, 0);
+    --chart-color-max: rgb(0, 200, 0);
+    --chart-color-min: rgb(200, 0, 0);
+    --chart-color-iqr: rgb(128, 0, 128);
+    --chart-color-std-dev: rgb(255, 165, 0);
+    --chart-color-challenges-complete: rgb(75, 192, 192);
+}
+body.theme-cyberdeck h1 {
+    font-family: 'Teko', sans-serif;
+    transform: skewX(-10deg);
+}
+
+body.theme-cyberdeck p {
+    color: var(--text-main);
+}
+
+body.theme-cyberdeck h1,
+body.theme-cyberdeck h2,
+body.theme-cyberdeck h3 {
+    color: var(--text-header);
+}
+
+body.theme-cyberdeck a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+body.theme-cyberdeck a:hover {
+    text-decoration: underline;
+}
+
+/* Also ensure form inputs look correct in cyberdeck theme */
+body.theme-cyberdeck input,
+body.theme-cyberdeck button,
+body.theme-cyberdeck select,
+body.theme-cyberdeck textarea {
+    border-radius: var(--radius);
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-cyberdeck button {
+    background-color: var(--primary);
+    color: var(--bg-main);
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+body.theme-cyberdeck button:hover {
+    filter: brightness(1.2);
+}
+
+/* Theme-specific classes for base.html header */
+body.theme-cyberdeck .theme-header {
+    background-color: var(--bg-main);
+    color: var(--text-header);
+}
+
+body.theme-cyberdeck .theme-nav-item {
+    color: var(--text-main);
+}
+
+/* New Semantic Classes for Challenges Page and other elements */
+body.theme-cyberdeck .theme-page-title {
+    color: var(--text-header);
+}
+
+body.theme-cyberdeck .theme-accordion-item {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-cyberdeck .theme-accordion-header {
+    /* No specific background, will inherit from parent */
+}
+
+body.theme-cyberdeck .theme-category-title {
+    color: var(--text-header);
+}
+
+body.theme-cyberdeck .theme-category-stats {
+    color: var(--text-muted);
+}
+
+body.theme-cyberdeck .theme-card { /* General card style, for challenge and category cards */
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-cyberdeck .theme-challenge-card-locked {
+    background-color: var(--bg-input);
+    color: var(--text-muted);
+    border: var(--card-border);
+}
+
+body.theme-cyberdeck .theme-challenge-title {
+    color: var(--text-header);
+}
+
+body.theme-cyberdeck .theme-challenge-points {
+    color: var(--text-main);
+}
+
+body.theme-cyberdeck .theme-challenge-status-text { /* For "Locked", "Unlocks after..." text */
+    color: var(--text-muted);
+    background-color: transparent;
+}
+body.theme-cyberdeck .theme-challenge-status-text:hover {
+    color: var(--text-header);
+    background-color: transparent;
+}
+
+body.theme-cyberdeck .theme-modal-title {
+    color: var(--text-header);
+}
+
+body.theme-cyberdeck .theme-modal-description {
+    color: var(--text-main);
+}
+
+body.theme-cyberdeck .theme-modal-points {
+    color: var(--text-main);
+}
+
+body.theme-cyberdeck .theme-modal-hint-item {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-cyberdeck .theme-modal-input {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+body.theme-cyberdeck .theme-modal-button-primary {
+    background-color: var(--primary);
+    color: white; /* Always white text on primary button */
+}
+
+body.theme-cyberdeck .theme-modal-button-secondary {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-cyberdeck .theme-code-block {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+/* General table styling */
+body.theme-cyberdeck table.theme-table {
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+body.theme-cyberdeck table.theme-table th {
+    background-color: var(--bg-input);
+    color: var(--text-header);
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-cyberdeck table.theme-table td {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-cyberdeck .theme-table-row-even {
+    background-color: var(--bg-surface);
+}
+
+body.theme-cyberdeck .theme-table-row-odd {
+    background-color: var(--bg-surface);
+}
+
+body.theme-cyberdeck .theme-link {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+body.theme-cyberdeck .theme-link:hover {
+    text-decoration: underline;
+}
+
+body.theme-cyberdeck .theme-no-data-text {
+    color: var(--text-muted);
+}
+
+/* Profile Page specific variables */
+body.theme-cyberdeck .theme-profile-score-rank {
+    color: var(--text-info);
+}
+
+body.theme-cyberdeck .theme-profile-text-muted {
+    color: var(--text-muted);
+}
+
+body.theme-cyberdeck .theme-profile-badge.admin {
+    background-color: var(--bg-admin-badge);
+    color: var(--text-admin-badge);
+}
+
+body.theme-cyberdeck .theme-profile-badge.hidden {
+    background-color: var(--bg-hidden-badge);
+    color: var(--text-hidden-badge);
+}

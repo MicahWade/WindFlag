@@ -1,0 +1,300 @@
+body.theme-oceanic {
+    background: linear-gradient(180deg, #021B2B 0%, #000000 100%) fixed;
+    --bg-main: transparent;
+    --bg-surface: rgba(2, 48, 71, 0.5);
+    --bg-input: rgba(0, 0, 0, 0.3);
+    --text-header: #8ECAE6;
+    --text-main: #E0F7FA;
+    --text-muted: #219EBC;
+    --border-color: #219EBC;
+    --primary: #00FFFF;
+
+    --radius: 16px;
+    --card-border: 1px solid rgba(33, 158, 188, 0.3);
+    --card-shadow: 0 0 15px rgba(33, 158, 188, 0.2);
+    font-family: 'Raleway', sans-serif;
+    backdrop-filter: blur(5px);
+    background-color: var(--bg-main); /* This will be transparent */
+    color: var(--text-main);
+    line-height: 1.5;
+    letter-spacing: 0em;
+    --bg-completed: #047857; /* Tailwind green-700 for completed challenges */
+    --bg-hover-surface: rgba(2, 48, 71, 0.65); /* A slightly darker gray for hover effect */
+
+    --chart-color-1: #40B4D5; /* Ocean Blue */
+    --chart-color-2: #219EBC; /* Darker Ocean Blue */
+    --chart-color-3: #187498; /* Even Darker Blue */
+    --chart-color-4: #8ECAE6; /* Light Blue */
+    --chart-color-5: #00FFFF; /* Cyan - primary */
+    --chart-color-6: #66CCCC; /* Light Cyan */
+    --chart-color-7: #A2E0E0; /* Aqua */
+    --chart-color-8: #33A066; /* Sea Green */
+    --chart-color-9: #008080; /* Dark Cyan */
+    --chart-color-10: #4B0082; /* Indigo - deep sea purple */
+
+    --text-info: var(--text-main); /* Using text-main color for info */
+    --chart-label-color: var(--primary); /* Primary cyan for chart labels */
+    --bg-admin-badge: #e53e3e;
+    --text-admin-badge: white;
+    --bg-hidden-badge: #718096;
+    --text-hidden-badge: white;
+
+    --chart-color-succeeds: rgb(75, 192, 75);
+    --chart-color-fails: rgb(255, 99, 132);
+    --chart-color-average: rgb(255, 0, 0);
+    --chart-color-max: rgb(0, 200, 0);
+    --chart-color-min: rgb(200, 0, 0);
+    --chart-color-iqr: rgb(128, 0, 128);
+    --chart-color-std-dev: rgb(255, 165, 0);
+    --chart-color-challenges-complete: rgb(75, 192, 192);
+}
+
+body.theme-oceanic p {
+    color: var(--text-main);
+}
+
+body.theme-oceanic h1,
+body.theme-oceanic h2,
+body.theme-oceanic h3 {
+    color: var(--text-header);
+}
+
+body.theme-oceanic a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+body.theme-oceanic a:hover {
+    text-decoration: underline;
+}
+
+/* Also ensure form inputs look correct in oceanic theme */
+body.theme-oceanic input,
+body.theme-oceanic button,
+body.theme-oceanic select,
+body.theme-oceanic textarea {
+    border-radius: var(--radius);
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-oceanic button {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+body.theme-oceanic button:hover {
+    filter: brightness(1.2);
+}
+
+/* Theme-specific classes for base.html header */
+body.theme-oceanic .theme-header {
+    background-color: var(--bg-main); /* transparent */
+    color: var(--text-header);
+}
+
+body.theme-oceanic .theme-nav-item {
+    color: var(--text-main);
+}
+
+/* New Semantic Classes for Challenges Page and other elements */
+body.theme-oceanic .theme-page-title {
+    color: var(--text-header);
+}
+
+body.theme-oceanic .theme-accordion-item {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-oceanic .theme-accordion-header {
+    /* No specific background, will inherit from parent */
+}
+
+body.theme-oceanic .theme-category-title {
+    color: var(--text-header);
+}
+
+body.theme-oceanic .theme-category-stats {
+    color: var(--text-muted);
+}
+
+body.theme-oceanic .theme-card { /* General card style, for challenge and category cards */
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-oceanic .theme-challenge-card-locked {
+    background-color: var(--bg-input);
+    color: var(--text-muted);
+    border: var(--card-border);
+}
+
+body.theme-oceanic .theme-challenge-title {
+    color: var(--text-header);
+}
+
+body.theme-oceanic .theme-challenge-points {
+    color: var(--text-main);
+}
+
+body.theme-oceanic .theme-challenge-status-text { /* For "Locked", "Unlocks after..." text */
+    color: var(--text-muted);
+    background-color: transparent;
+}
+body.theme-oceanic .theme-challenge-status-text:hover {
+    color: var(--text-header);
+    background-color: transparent;
+}
+
+body.theme-oceanic .theme-modal-title {
+    color: var(--text-header);
+}
+
+body.theme-oceanic .theme-modal-description {
+    color: var(--text-main);
+}
+
+body.theme-oceanic .theme-modal-points {
+    color: var(--text-main);
+}
+
+body.theme-oceanic .theme-modal-hint-item {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-oceanic .theme-modal-input {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+body.theme-oceanic .theme-modal-button-primary {
+    background-color: var(--primary);
+    color: white; /* Always white text on primary button */
+}
+
+body.theme-oceanic .theme-modal-button-secondary {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-oceanic .theme-code-block {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+/* General table styling */
+body.theme-oceanic table.theme-table {
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+body.theme-oceanic table.theme-table th {
+    background-color: var(--bg-input);
+    color: var(--text-header);
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-oceanic table.theme-table td {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-oceanic .theme-completed-challenge {
+    background-color: var(--bg-completed);
+}
+
+body.theme-oceanic .theme-card.theme-hover-card:hover {
+    background-color: var(--bg-hover-surface);
+}
+
+body.theme-oceanic .theme-empty-state-text {
+    color: var(--text-main);
+}
+
+/* New Semantic Classes for dynamic JS styling */
+/* Challenge Progress Status */
+body.theme-oceanic .theme-status-completed { background-color: #047857; }
+body.theme-oceanic .theme-status-high-progress { background-color: #65A30D; }
+body.theme-oceanic .theme-status-medium-progress { background-color: #EAB308; }
+body.theme-oceanic .theme-status-low-progress { background-color: #EA580C; }
+body.theme-oceanic .theme-status-very-low-progress { background-color: #DC2626; }
+body.theme-oceanic .theme-status-no-progress { background-color: var(--bg-surface); color: var(--text-main); }
+
+/* Flash Messages */
+body.theme-oceanic .theme-flash-success { background-color: #10B981; color: white; }
+body.theme-oceanic .theme-flash-danger { background-color: #EF4444; color: white; }
+
+/* Code Result */
+body.theme-oceanic .theme-code-result-success { background-color: #065F46; color: white; }
+body.theme-oceanic .theme-code-result-error { color: #EF4444; }
+
+/* Explicit SVG stroke for theme-challenge-status-text within buttons (modal close icon) */
+body.theme-oceanic .theme-challenge-status-text svg {
+    stroke: var(--text-main) !important;
+}
+
+/* New Semantic Classes for Scoreboard & Profile */
+body.theme-oceanic .theme-chart-container {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-oceanic .theme-table-header-cell {
+    background-color: var(--bg-input);
+    color: var(--text-header);
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-oceanic .theme-table-body-cell {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-oceanic .theme-link {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+body.theme-oceanic .theme-link:hover {
+    text-decoration: underline;
+}
+
+body.theme-oceanic .theme-no-data-text {
+    color: var(--text-muted);
+}
+
+/* Profile Page specific variables */
+body.theme-oceanic .theme-profile-score-rank {
+    color: var(--text-info);
+}
+
+body.theme-oceanic .theme-profile-text-muted {
+    color: var(--text-muted);
+}
+
+body.theme-oceanic .theme-profile-badge.admin {
+    background-color: var(--bg-admin-badge);
+    color: var(--text-admin-badge);
+}
+
+body.theme-oceanic .theme-profile-badge.hidden {
+    background-color: var(--bg-hidden-badge);
+    color: var(--text-hidden-badge);
+}

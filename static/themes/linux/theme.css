@@ -1,0 +1,353 @@
+body.theme-linux {
+    --bg-main: #282A36; /* Dracula Background */
+    --bg-surface: #44475A;
+    --bg-input: #6272A4;
+    --text-header: #FF79C6; /* Pink */
+    --text-main: #F8F8F2;
+    --text-muted: #6272A4;
+    --border-color: #BD93F9; /* Purple */
+    --primary: #BD93F9;
+
+    --radius: 4px;
+    --card-border: 1px solid #6272A4;
+    --card-shadow: none;
+    font-family: 'Ubuntu', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    line-height: 1.5;
+    letter-spacing: 0em;
+    --bg-completed: #047857; /* Tailwind green-700 for completed challenges */
+    --bg-hover-surface: #51546b; /* A slightly lighter gray for hover effect */
+
+    --chart-color-1: #FF6384;
+    --chart-color-2: #36A2EB;
+    --chart-color-3: #FFCE56;
+    --chart-color-4: #4BC0C0;
+    --chart-color-5: #9966FF;
+    --chart-color-6: #FF9F40;
+    --chart-color-7: #E7E9ED;
+    --chart-color-8: #8AC926;
+    --chart-color-9: #1982C4;
+    --chart-color-10: #F45B69;
+
+    --text-info: #BD93F9; /* Using primary color for info */
+    --bg-admin-badge: #e53e3e;
+    --text-admin-badge: white;
+    --bg-hidden-badge: #718096;
+    --text-hidden-badge: white;
+
+    --chart-color-succeeds: rgb(75, 192, 75);
+    --chart-color-fails: rgb(255, 99, 132);
+    --chart-color-average: rgb(255, 0, 0);
+    --chart-color-max: rgb(0, 200, 0);
+    --chart-color-min: rgb(200, 0, 0);
+    --chart-color-iqr: rgb(128, 0, 128);
+    --chart-color-std-dev: rgb(255, 165, 0);
+    --chart-color-challenges-complete: rgb(75, 192, 192);
+}
+
+body.theme-linux p {
+    color: var(--text-main);
+}
+
+body.theme-linux h1,
+body.theme-linux h2,
+body.theme-linux h3 {
+    color: var(--text-header);
+}
+
+body.theme-linux a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+body.theme-linux a:hover {
+    text-decoration: underline;
+}
+
+/* Also ensure form inputs look correct in linux theme */
+body.theme-linux input,
+body.theme-linux button,
+body.theme-linux select,
+body.theme-linux textarea {
+    border-radius: var(--radius);
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-linux button {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+body.theme-linux button:hover {
+    filter: brightness(1.2);
+}
+
+/* Theme-specific classes for base.html header */
+body.theme-linux .theme-header {
+    background-color: var(--bg-main);
+    color: var(--text-header);
+}
+
+body.theme-linux .theme-nav-item {
+    color: var(--text-main);
+}
+
+/* New Semantic Classes for Challenges Page and other elements */
+body.theme-linux .theme-page-title {
+    color: var(--text-header);
+}
+
+body.theme-linux .theme-accordion-item {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+}
+
+body.theme-linux .theme-accordion-header {
+    /* No specific background, will inherit from parent */
+}
+
+body.theme-linux .theme-category-title {
+    color: var(--text-header);
+}
+
+body.theme-linux .theme-category-stats {
+    color: var(--text-muted);
+}
+
+body.theme-linux .theme-card { /* General card style, for challenge and category cards */
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-linux .theme-challenge-card-locked {
+    background-color: var(--bg-input);
+    color: var(--text-muted);
+    border: var(--card-border);
+}
+
+body.theme-linux .theme-challenge-title {
+    color: var(--text-header);
+}
+
+body.theme-linux .theme-challenge-points {
+    color: var(--text-main);
+}
+
+body.theme-linux .theme-challenge-status-text { /* For "Locked", "Unlocks after..." text */
+    color: var(--text-muted);
+    background-color: transparent;
+}
+body.theme-linux .theme-challenge-status-text:hover {
+    color: var(--text-header);
+    background-color: transparent;
+}
+
+body.theme-linux .theme-modal-title {
+    color: var(--text-header);
+}
+
+body.theme-linux .theme-modal-description {
+    color: var(--text-main);
+}
+
+body.theme-linux .theme-modal-points {
+    color: var(--text-main);
+}
+
+body.theme-linux .theme-modal-hint-item {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-linux .theme-modal-input {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+body.theme-linux .theme-modal-button-primary {
+    background-color: var(--primary);
+    color: white; /* Always white text on primary button */
+}
+
+body.theme-linux .theme-modal-button-secondary {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-linux .theme-code-block {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+/* General table styling */
+body.theme-linux table.theme-table {
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+body.theme-linux table.theme-table th {
+    background-color: var(--bg-input);
+    color: var(--text-header);
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-linux table.theme-table td {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-linux .theme-completed-challenge {
+    background-color: var(--bg-completed);
+}
+
+body.theme-linux .theme-card.theme-hover-card:hover {
+    background-color: var(--bg-hover-surface);
+}
+
+body.theme-linux .theme-empty-state-text {
+    color: var(--text-main);
+}
+
+/* New Semantic Classes for dynamic JS styling */
+/* Challenge Progress Status */
+body.theme-linux .theme-status-completed { background-color: #047857; }
+body.theme-linux .theme-status-high-progress { background-color: #65A30D; }
+body.theme-linux .theme-status-medium-progress { background-color: #EAB308; }
+body.theme-linux .theme-status-low-progress { background-color: #EA580C; }
+body.theme-linux .theme-status-very-low-progress { background-color: #DC2626; }
+body.theme-linux .theme-status-no-progress { background-color: var(--bg-surface); color: var(--text-main); }
+
+/* Flash Messages */
+body.theme-linux .theme-flash-success { background-color: #10B981; color: white; }
+body.theme-linux .theme-flash-danger { background-color: #EF4444; color: white; }
+
+/* Code Result */
+body.theme-linux .theme-code-result-success { background-color: #065F46; color: white; }
+body.theme-linux .theme-code-result-error { color: #EF4444; }
+
+/* Explicit SVG stroke for theme-challenge-status-text within buttons (modal close icon) */
+body.theme-linux .theme-challenge-status-text svg {
+    stroke: var(--text-main) !important;
+}
+
+/* New Semantic Classes for Scoreboard & Profile */
+body.theme-linux .theme-chart-container {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+}
+
+body.theme-linux .theme-table-header-cell {
+    background-color: var(--bg-input);
+    color: var(--text-header);
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-linux .theme-table-body-cell {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-linux .theme-table-row-even {
+    background-color: var(--bg-surface);
+}
+
+body.theme-linux .theme-table-row-odd {
+    background-color: var(--bg-surface);
+}
+
+body.theme-linux .theme-link {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+body.theme-linux .theme-link:hover {
+    text-decoration: underline;
+}
+
+body.theme-linux .theme-no-data-text {
+    color: var(--text-muted);
+}
+
+/* Profile Page specific variables */
+body.theme-linux .theme-profile-score-rank {
+    color: var(--text-info);
+}
+
+body.theme-linux .theme-profile-text-muted {
+    color: var(--text-muted);
+}
+
+body.theme-linux .theme-profile-badge.admin {
+    background-color: var(--bg-admin-badge);
+    color: var(--text-admin-badge);
+}
+
+body.theme-linux .theme-profile-badge.hidden {
+    background-color: var(--bg-hidden-badge);
+    color: var(--text-hidden-badge);
+}
+
+/* Also add general theme-modal-input and theme-modal-button-primary styles for the give award modal */
+body.theme-linux .theme-modal-input {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+body.theme-linux .theme-modal-button-primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+body.theme-linux .theme-modal-button-secondary {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+body.theme-linux .theme-modal-card {
+    background-color: var(--bg-surface);
+    border: var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+}
+
+/* Modal Overlay */
+body.theme-linux .modal-overlay {
+    background-color: rgba(45, 55, 72, 0.8); /* gray-800 with 80% opacity */
+}
+
+/* Linux Close Button Style */
+body.theme-linux .close-modal {
+    background-color: var(--bg-input); /* A darker gray from the theme */
+    border: 1px solid var(--border-color); /* Purple border */
+    border-radius: var(--radius); /* Rounded corners from theme */
+    padding: 0.25rem 0.5rem; /* Some padding */
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+body.theme-linux .close-modal:hover {
+    background-color: var(--bg-surface); /* Lighter on hover */
+}
+
+body.theme-linux .close-modal svg {
+    stroke: var(--text-header) !important; /* Pink 'X' */
+    width: 1.25rem; /* Smaller icon */
+    height: 1.25rem; /* Smaller icon */
+}

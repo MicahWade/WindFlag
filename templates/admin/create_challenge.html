@@ -259,13 +259,13 @@
                     <legend class="text-xl font-bold text-gray-100 mb-4">General Prerequisites</legend>
                     <div class="mb-4" id="prerequisite_challenge_ids_input_field">
                         <label class="block text-gray-300 text-sm font-bold mb-2">Prerequisite Challenge</label>
-                        <div class="prerequisite-challenges-container border border-gray-600 rounded p-2 max-h-60 overflow-y-auto bg-gray-700">
+                        <div class="prerequisite-challenges-container border border-[var(--border-color)] rounded p-2 max-h-60 overflow-y-auto bg-[var(--bg-input)]">
                             {% for group_label, group_choices in form.prerequisite_challenge_ids_input.choices %}
                                 <div class="category-group mb-2">
                                     <h4 class="text-gray-200 font-semibold text-sm mb-1">{{ group_label }}</h4>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 ml-2">
                                         {% for choice_id, choice_name in group_choices %}
-                                            <label class="inline-flex items-center text-gray-300 text-sm">
+                                            <label class="inline-flex items-center text-[var(--text-main)] text-sm">
                                                 <input type="checkbox" name="prerequisite_challenge_ids_checkbox" value="{{ choice_id }}" class="form-checkbox h-4 w-4 text-blue-600 rounded focus:ring-blue-500 mr-1" {% if choice_id in (form.prerequisite_challenge_ids_input.data or []) %}checked{% endif %}>
                                                 {{ choice_name }}
                                             </label>
@@ -329,10 +329,10 @@
                     </div>
                     <div class="mb-4" id="prerequisite_count_category_ids_input_field">
                         {{ form.prerequisite_count_category_ids_input.label(class="block text-gray-300 text-sm font-bold mb-2") }}
-                        <div class="prerequisite-categories-container border border-gray-600 rounded p-2 max-h-60 overflow-y-auto bg-gray-700">
+                        <div class="prerequisite-categories-container border border-[var(--border-color)] rounded p-2 max-h-60 overflow-y-auto bg-[var(--bg-input)]">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 ml-2">
                                 {% for choice_id, choice_name in form.prerequisite_count_category_ids_input.choices %}
-                                    <label class="inline-flex items-center text-gray-300 text-sm">
+                                    <label class="inline-flex items-center text-[var(--text-main)] text-sm">
                                         <input type="checkbox" name="prerequisite_count_category_ids_checkbox" value="{{ choice_id }}" class="form-checkbox h-4 w-4 text-blue-600 rounded focus:ring-blue-500 mr-1" {% if choice_id in (form.prerequisite_count_category_ids_input.data or []) %}checked{% endif %}>
                                         {{ choice_name }}
                                     </label>

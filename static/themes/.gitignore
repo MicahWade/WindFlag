@@ -1,4 +1,25 @@
+# Ignore everything by default
 *
-!hacker/
-!learning/
-!.gitignore
+
+# Explicitly unignore certain directories and their contents
+!/hacker/
+!/learning/
+!/.gitignore
+!/canberra/
+!/glass/
+!/linux/
+!/80s/
+!/90s/
+!/2000s/
+!/2010s/
+!/nature/
+!/blueprint/
+!/noir/
+!/solarpunk/
+!/steampunk/
+!/scifi/
+!/fantasy/
+!/8bit/
+!/newspaper/
+!/cyberdeck/
+!/oceanic/
