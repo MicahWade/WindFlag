@@ -77,6 +77,7 @@ def create_app(config_class=Config):
     load_dotenv(os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), '.env'))
     app.config.from_object(config_class)
     app.config['APP_NAME'] = os.getenv('APP_NAME', 'WindFlag')
+    app.config['ACTIVE_THEME'] = get_active_theme() # Retrieve active theme from DB
     
     oauth = OAuth(app) # Initialize OAuth here
     

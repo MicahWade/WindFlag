@@ -1,7 +1,8 @@
 import os
+from scripts.extensions import db
+from scripts.models import Setting
 
 THEMES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'static', 'themes')
-CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.py')
 
 def scan_themes():
     """
@@ -23,43 +24,28 @@ def scan_themes():
 
 def get_active_theme():
     """
-    Retrieves the currently active theme from config.py.
+    Retrieves the currently active theme from the database.
     """
-    try:
-        with open(CONFIG_FILE, 'r') as f:
-            for line in f:
-                if line.startswith('ACTIVE_THEME ='):
-                    return line.split('=')[1].strip().strip("'\"")
-    except FileNotFoundError:
-        pass # config.py might not exist yet or be malformed
-    return 'default' # Default theme
+    # Use Flask's application context to access the database
+    from flask import current_app
+    with current_app.app_context():
+        setting = Setting.query.filter_by(key='ACTIVE_THEME').first()
+        if setting:
+            return setting.value
+    return 'default' # Default theme if not found in DB
 
 def set_active_theme(theme_name):
     """
-    Sets the active theme in config.py.
+    Sets the active theme in the database.
     """
-    current_config_content = []
-    found = False
-    try:
-        with open(CONFIG_FILE, 'r') as f:
-            current_config_content = f.readlines()
-        
-        with open(CONFIG_FILE, 'w') as f:
-            for line in current_config_content:
-                if line.startswith('ACTIVE_THEME ='):
-                    f.write(f"ACTIVE_THEME = '{theme_name}'\n")
-                    found = True
-                else:
-                    f.write(line)
-            if not found:
-                f.write(f"\nACTIVE_THEME = '{theme_name}'\n") # Add if not found
-    except FileNotFoundError:
-        with open(CONFIG_FILE, 'w') as f:
-            f.write(f"ACTIVE_THEME = '{theme_name}'\n")
+    # Use Flask's application context to access the database
+    from flask import current_app
+    with current_app.app_context():
+        setting = Setting.query.filter_by(key='ACTIVE_THEME').first()
+        if setting:
+            setting.value = theme_name
+        else:
+            setting = Setting(key='ACTIVE_THEME', value=theme_name)
+            db.session.add(setting)
+        db.session.commit()
 
-if __name__ == '__main__':
-    print("Available Themes:", scan_themes())
-    print("Active Theme:", get_active_theme())
-    # Example usage:
-    # set_active_theme('dark')
-    # print("New Active Theme:", get_active_theme())

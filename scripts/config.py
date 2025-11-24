@@ -51,4 +51,4 @@ class TestConfig(Config):
 
 
 
-ACTIVE_THEME = 'blueprint'
+ACTIVE_THEME = '8bit'
