@@ -9,7 +9,9 @@ and admin user creation.
 """
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, current_app
 from flask_login import login_user, current_user, logout_user, login_required
-from flask_socketio import SocketIO, emit # New: Import SocketIO and emit, login_required
+from flask_socketio import SocketIO, emit
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from scripts.config import Config
 from scripts.forms import RegistrationForm, LoginForm, FlagSubmissionForm, InlineGiveAwardForm
 from datetime import datetime, UTC, timedelta
@@ -96,6 +98,15 @@ def create_app(config_class=Config):
     login_manager.unauthorized_handler(lambda: redirect(url_for('home')))
     bcrypt.init_app(app)
 
+    # Initialize Flask-Limiter
+    limiter = Limiter(
+        get_remote_address,
+        app=app,
+        default_limits=[app.config['RATELIMIT_DEFAULT']],
+        storage_uri="memory://", # Use in-memory storage for simplicity, can be Redis for production
+        strategy="moving-window"
+    )
+
     # Initialize SocketIO
     socketio = SocketIO(app)
 
@@ -130,13 +141,10 @@ def create_app(config_class=Config):
         return render_template("index.html")
 
     @app.route('/register', methods=['GET', 'POST'])
+    @limiter.limit(Config.RATELIMIT_REGISTER)
     def register():
         """
         Handles user registration.
-
-        If registration is disabled or the user is already authenticated,
-        it redirects to the home page. Validates form data, checks join codes
-        if required, hashes the password, and creates a new user.
         """
         if app.config['DISABLE_SIGNUP']:
             flash('User registration is currently disabled.', 'info')
@@ -166,12 +174,10 @@ def create_app(config_class=Config):
                                require_join_code=app.config['REQUIRE_JOIN_CODE'])
 
     @app.route('/login', methods=['GET', 'POST'])
+    @limiter.limit(Config.RATELIMIT_LOGIN)
     def login():
         """
         Handles user login.
-
-        If the user is already authenticated, it redirects to the home page.
-        Validates form data, checks credentials, and logs the user in.
         """
         if current_user.is_authenticated:
             return redirect(url_for('home'))
@@ -537,6 +543,7 @@ def create_app(config_class=Config):
 
     @app.route('/submit_flag/<int:challenge_id>', methods=['POST'])
     @login_required
+    @limiter.limit(Config.RATELIMIT_SUBMIT_FLAG)
     def submit_flag(challenge_id):
         """
         Handles the submission of a flag for a given challenge.

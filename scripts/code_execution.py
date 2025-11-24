@@ -80,7 +80,7 @@ class CodeExecutionResult:
         self.error_message = error_message
         self.is_timeout = is_timeout
 
-def execute_code_in_sandbox(language, code, expected_output, setup_code=None, test_case_input=None, timeout=10):
+def execute_code_in_sandbox(language, code, expected_output, setup_code=None, test_case_input=None):
     """
     Executes user-provided code in a bwrap sandbox and compares its output.
 
@@ -90,13 +90,19 @@ def execute_code_in_sandbox(language, code, expected_output, setup_code=None, te
         expected_output (str): The expected STDOUT from the code.
         setup_code (str, optional): Code/commands to run before user's code.
         test_case_input (str, optional): Input to be fed to the user's code via stdin.
-        timeout (int, optional): Maximum execution time in seconds. Defaults to 10.
+        # timeout (int, optional): Maximum execution time in seconds. Removed as it's now fixed.
 
     Returns:
         CodeExecutionResult: An object containing success status, stdout, stderr, and error message.
     """
+    CODE_SIZE_LIMIT_BYTES = 200 * 1024 # 0.2 MB
+    EXECUTION_TIMEOUT_SECONDS = 5 # Fixed timeout
+
     if language not in LANGUAGE_CONFIGS:
         return CodeExecutionResult(False, "", "", f"Unsupported language: {language}")
+
+    if len(code.encode('utf-8')) > CODE_SIZE_LIMIT_BYTES:
+        return CodeExecutionResult(False, "", "", f"Submitted code exceeds the size limit of {CODE_SIZE_LIMIT_BYTES / 1024} KB.")
 
     runtime_host_path, file_extension, execute_cmd_template, language_binds_config = LANGUAGE_CONFIGS[language]
 
@@ -173,7 +179,7 @@ def execute_code_in_sandbox(language, code, expected_output, setup_code=None, te
                 capture_output=True,
                 text=True, # Decode stdout/stderr as text
                 input=process_input,
-                timeout=timeout + 2, # Give bwrap itself a bit more time to clean up
+                timeout=EXECUTION_TIMEOUT_SECONDS + 2, # Give bwrap itself a bit more time to clean up
                 check=False # Don't raise an exception for non-zero exit codes
             )
             stdout = process.stdout.strip()
