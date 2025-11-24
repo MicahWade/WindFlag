@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/must-have.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='themes/' + active_theme + '/theme.css') }}">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/password_toggle.js') }}" defer></script>
 </head>
@@ -71,6 +72,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
     <script src="{{ url_for('static', filename='js/marked.umd.js') }}"></script> <!-- Moved here -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="{{ url_for('static', filename='js/tables.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

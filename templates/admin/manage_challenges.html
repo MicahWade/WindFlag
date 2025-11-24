@@ -3,7 +3,7 @@
     <h1 class="theme-page-title text-3xl font-bold mb-6">Manage Challenges</h1>
     <p class="mb-4"><a href="{{ url_for('admin.new_challenge') }}" class="theme-modal-button-primary font-bold py-2 px-4 rounded shadow-md">Create New Challenge</a></p>
     <div class="overflow-x-auto theme-card">
-        <table class="min-w-full theme-table">
+        <table id="challenges-table" class="min-w-full theme-table">
             <thead>
                 <tr>
                     <th class="px-5 py-3 border-b-2 theme-table-header-cell text-left text-xs font-semibold uppercase tracking-wider">
