@@ -174,5 +174,10 @@ document.addEventListener('DOMContentLoaded', function() {
             scoreCell.className = 'px-6 py-4 whitespace-nowrap text-sm theme-table-body-cell';
             scoreCell.textContent = player.score;
         });
+
+        if ($.fn.DataTable.isDataTable('#playerRankings')) {
+            $('#playerRankings').DataTable().destroy();
+        }
+        $('#playerRankings').DataTable();
     }
 });
