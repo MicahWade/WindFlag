@@ -114,7 +114,7 @@ def create_app(config_class=Config):
     # and its blueprint (api_bp) is registered here.
 
     from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission, Award, AwardCategory, FlagAttempt, Hint, UserHint # Import FlagAttempt, Hint, UserHint
-from scripts.code_execution import execute_code_in_sandbox # New: Import for coding challenges
+    from scripts.code_execution import execute_code_in_sandbox # New: Import for coding challenges
 
     app.register_blueprint(admin_bp) # Register admin blueprint
     app.register_blueprint(api_key_bp) # Register api_key blueprint

@@ -187,7 +187,6 @@ def submit_code_challenge(challenge_id):
         expected_output=challenge.expected_output,
         setup_code=challenge.setup_code,
         test_case_input=challenge.test_case_input,
-        timeout=10 # Default timeout, can be made configurable per challenge
     )
 
     if execution_result.success:
