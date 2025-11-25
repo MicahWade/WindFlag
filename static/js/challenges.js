@@ -28,10 +28,38 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     const modalRunCodeButton = document.getElementById('modalRunCodeButton');
     const codeResult = document.getElementById('codeResult');
+    const modalFullscreenCodeButton = document.getElementById('modalFullscreenCodeButton'); // Get fullscreen button
 
     let currentChallengeId = null;
     let currentChallengeType = null; // New: Store current challenge type
     let currentChallengeLanguage = null; // New: Store current challenge language
+
+    // Function to toggle fullscreen mode for the modal
+    function toggleFullscreen() {
+        challengeModal.classList.toggle('fullscreen');
+        if (challengeModal.classList.contains('fullscreen')) {
+            document.documentElement.requestFullscreen();
+            modalFullscreenCodeButton.textContent = 'Exit Fullscreen';
+        } else {
+            document.exitFullscreen();
+            modalFullscreenCodeButton.textContent = 'Fullscreen';
+        }
+        editor.refresh(); // Important: Refresh CodeMirror to adjust to new dimensions
+    }
+
+    // Add event listener for the fullscreen button
+    modalFullscreenCodeButton.addEventListener('click', toggleFullscreen);
+
+    // Listen for fullscreen change events to update button text if user exits fullscreen manually
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+            challengeModal.classList.remove('fullscreen');
+            modalFullscreenCodeButton.textContent = 'Fullscreen';
+            editor.refresh();
+        }
+    });
+
+
 
     // Language-specific blacklists for client-side static code analysis
     // These are patterns or keywords that indicate potentially dangerous operations
