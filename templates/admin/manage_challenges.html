@@ -57,7 +57,21 @@
                             <p class="whitespace-no-wrap">{{ challenge.points }}</p>
                         </td>
                         <td class="px-5 py-5 text-sm theme-table-body-cell">
-                            <p class="whitespace-no-wrap">{{ challenge.unlock_type }} ({{ "%.2f" | format(data.unlocked_percentage) }}%)</p>
+                            {% if data.is_red_stripe %}
+                                <span class="text-red-500"><i class="fas fa-lock mr-2"></i>Hidden/Locked</span>
+                            {% elif challenge.unlock_type == 'NONE' %}
+                                <span class="text-green-500"><i class="fas fa-unlock mr-2"></i>Always Unlocked</span>
+                            {% elif challenge.unlock_type == 'TIMED' %}
+                                <span class="text-blue-500"><i class="fas fa-clock mr-2"></i>Timed: {{ challenge.unlock_date_time.strftime('%Y-%m-%d %H:%M') }}</span>
+                            {% elif challenge.unlock_type == 'PREREQUISITE_PERCENTAGE' %}
+                                <span class="text-yellow-500"><i class="fas fa-puzzle-piece mr-2"></i>{{ challenge.prerequisite_percentage_value }}% of challenges</span>
+                            {% elif challenge.unlock_type == 'PREREQUISITE_COUNT' %}
+                                <span class="text-yellow-500"><i class="fas fa-puzzle-piece mr-2"></i>{{ challenge.prerequisite_count_value }} challenges</span>
+                            {% elif challenge.unlock_type == 'PREREQUISITE_CHALLENGES' %}
+                                <span class="text-yellow-500"><i class="fas fa-puzzle-piece mr-2"></i>Specific challenges</span>
+                            {% else %}
+                                <p class="whitespace-no-wrap">{{ challenge.unlock_type }} ({{ "%.2f" | format(data.unlocked_percentage) }}%)</p>
+                            {% endif %}
                         </td>
                         <td class="px-5 py-5 text-sm theme-table-body-cell">
                             <a href="{{ url_for('admin.update_challenge', challenge_id=challenge.id) }}" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1 px-2 rounded text-xs shadow-md">Edit</a>
