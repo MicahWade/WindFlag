@@ -5,6 +5,8 @@ from sqlalchemy import func
 from scripts.extensions import db, get_setting
 from scripts.models import User, Submission, Challenge, Award, FlagAttempt, Category, UserHint, Hint
 import math
+from scripts.cache import cached
+from flask import current_app
 
 def _calculate_stats(data):
     if not data:
@@ -43,6 +45,16 @@ def get_global_score_history_data():
             - 'user_scores_over_time': Dict where keys are usernames and values are lists of dicts
                                        (timestamp, cumulative score for that user).
     """
+    if current_app.config['ENABLE_REDIS_CACHE'] and current_app.redis:
+        @cached(key_prefix='global_score_history', timeout=60)
+        def _get_global_score_history_data_cached():
+            return _get_global_score_history_data_uncached()
+        return _get_global_score_history_data_cached()
+    else:
+        return _get_global_score_history_data_uncached()
+
+def _get_global_score_history_data_uncached():
+def _get_global_score_history_data_uncached():
     # Fetch all relevant events (submissions and awards) ordered by timestamp
     all_events = []
 

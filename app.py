@@ -24,6 +24,8 @@ from scripts.api_routes import api_bp # Import api_bp
 from flask_restx import Api # Import Api from flask_restx
 from authlib.integrations.flask_client import OAuth
 from scripts.config import Config # Import Config
+import redis # Import redis library
+from scripts.cache import cached # Import caching decorator
 
 # ... existing code ...
 
@@ -92,6 +94,20 @@ def create_app(config_class=Config):
             api_base_url='https://api.github.com/',
             client_kwargs={'scope': 'user:email'},
         )
+    
+    
+    # Initialize Redis if caching is enabled
+    if app.config['ENABLE_REDIS_CACHE']:
+        try:
+            app.redis = redis.from_url(app.config['REDIS_URL'], decode_responses=True)
+            app.redis.ping() # Test connection
+            print("Redis cache connected successfully!")
+        except redis.exceptions.ConnectionError as e:
+            app.redis = None
+            print(f"Could not connect to Redis cache: {e}. Caching will be disabled.")
+    else:
+        app.redis = None
+        print("Redis caching is disabled by configuration.")
     
     # Initialize extensions with the app instance *before* entering app context
     # if those extensions are used within that context.
@@ -628,6 +644,7 @@ def create_app(config_class=Config):
                     current_user.score += points_awarded
                     new_submission.score_at_submission = current_user.score
                     db.session.commit()
+                    invalidate_cache('scoreboard_data:*') # Invalidate scoreboard cache
 
                     challenge.update_stripe_status()
                     emit('score_update', {
@@ -715,6 +732,7 @@ def create_app(config_class=Config):
                         current_user.score += points_awarded # Update user score
                         new_submission.score_at_submission = current_user.score # Record score at this submission
                         db.session.commit()
+                        invalidate_cache('scoreboard_data:*') # Invalidate scoreboard cache
 
                         # Recalculate stripe status for the solved challenge
                         challenge.update_stripe_status()
@@ -773,6 +791,7 @@ def create_app(config_class=Config):
 
     @app.route('/api/scoreboard_data')
     @login_required
+    @cached(key_prefix='scoreboard_data', timeout=60)
     def scoreboard_data():
         """
         Provides JSON data for the scoreboard, including ranked players and historical scores.
@@ -857,6 +876,7 @@ def create_app(config_class=Config):
 
     @app.route('/api/challenge_details/<int:challenge_id>')
     @login_required
+    @cached(key_prefix='challenge_details', timeout=300)
     def get_challenge_details(challenge_id):
         """
         Returns detailed information about a specific challenge, including hints and completion status.
