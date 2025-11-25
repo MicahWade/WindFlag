@@ -4,7 +4,7 @@ This module defines the API routes and functions for the WindFlag CTF platform.
 from flask import Blueprint, request, jsonify, g
 from flask_login import current_user, login_required
 from scripts.extensions import db
-from scripts.models import Challenge, Category, ChallengeFlag, Submission, User
+from scripts.models import Challenge, Category, ChallengeFlag, Submission, User, AwardCategory, Setting, CHALLENGE_TYPES, UserHint, FlagSubmission
 from scripts.utils import api_key_required
 from scripts.code_execution import execute_code_in_sandbox, CodeExecutionResult
 from functools import wraps
@@ -59,7 +59,13 @@ def create_challenge():
         unlock_point_reduction_value=data.get('unlock_point_reduction_value'),
         unlock_point_reduction_target_date=data.get('unlock_point_reduction_target_date'),
         is_hidden=data.get('is_hidden', False),
-        has_dynamic_flag=data.get('has_dynamic_flag', False)
+        has_dynamic_flag=data.get('has_dynamic_flag', False),
+        challenge_type=data.get('challenge_type', 'FLAG'),
+        language=data.get('language'),
+        starter_code=data.get('starter_code'),
+        expected_output=data.get('expected_output'),
+        setup_code=data.get('setup_code'),
+        test_case_input=data.get('test_case_input')
     )
     db.session.add(challenge)
     db.session.commit()
@@ -121,7 +127,10 @@ def get_public_challenges():
                     'description': challenge.description,
                     'solved': challenge.id in solved_challenges,
                     'solves': solves_per_challenge.get(challenge.id, 0),
-                    'category': category.name
+                    'category': category.name,
+                    'challenge_type': challenge.challenge_type,
+                    'language': challenge.language,
+                    'starter_code': challenge.starter_code
                 })
         if challenges_data:
             category_data.append({
@@ -131,6 +140,64 @@ def get_public_challenges():
     
     return jsonify(category_data)
 
+@api_bp.route('/challenge_details/<int:challenge_id>', methods=['GET'])
+@login_required
+def get_challenge_details_for_modal(challenge_id):
+    """
+    Gets details for a single challenge to display in the modal.
+    """
+    challenge = Challenge.query.get_or_404(challenge_id)
+    
+    # Check if the challenge is hidden from the current user
+    # For now, let's assume if it's hidden, we just return a message,
+    # or handle it upstream. The JS already handles a "success: false" response.
+    if challenge.is_hidden and not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Challenge not found or not accessible.'}), 404
+
+    # Check if the user has already solved this challenge
+    is_completed = Submission.query.filter_by(
+        user_id=current_user.id,
+        challenge_id=challenge.id
+    ).first() is not None
+
+    # Get hints, revealing if user has already paid for them
+    hints_data = []
+    for hint in challenge.hints:
+        user_hint = UserHint.query.filter_by(hint_id=hint.id, user_id=current_user.id).first()
+        hints_data.append({
+            'id': hint.id,
+            'title': hint.title,
+            'content': hint.content if user_hint else None,
+            'cost': hint.cost,
+            'is_revealed': user_hint is not None
+        })
+
+    # Get flags submitted count for multi-flag challenges
+    submitted_flags_count = 0
+    total_flags = 0
+    if challenge.multi_flag_type != 'SINGLE':
+        submitted_flags_count = FlagSubmission.query.filter_by(
+            user_id=current_user.id,
+            challenge_id=challenge.id
+        ).count()
+        total_flags = len(challenge.flags)
+
+    return jsonify({
+        'success': True,
+        'id': challenge.id,
+        'name': challenge.name,
+        'description': challenge.description,
+        'points': challenge.points,
+        'is_completed': is_completed,
+        'multi_flag_type': challenge.multi_flag_type,
+        'submitted_flags_count': submitted_flags_count,
+        'total_flags': total_flags,
+        'hints': hints_data,
+        'challenge_type': challenge.challenge_type,
+        'language': challenge.language,
+        'starter_code': challenge.starter_code
+    }), 200
+
 
 @api_bp.route('/challenges', methods=['GET'])
 @admin_api_required
@@ -139,7 +206,7 @@ def get_challenges():
     Gets a list of all challenges.
     """
     challenges = Challenge.query.all()
-    return jsonify([{'id': c.id, 'name': c.name, 'points': c.points} for c in challenges])
+    return jsonify([{'id': c.id, 'name': c.name, 'points': c.points, 'challenge_type': c.challenge_type, 'language': c.language, 'starter_code': c.starter_code} for c in challenges])
 
 
 @api_bp.route('/challenges/<int:challenge_id>', methods=['GET'])
@@ -173,6 +240,9 @@ def get_challenge(challenge_id):
         'unlock_point_reduction_target_date': challenge.unlock_point_reduction_target_date,
         'is_hidden': challenge.is_hidden,
         'has_dynamic_flag': challenge.has_dynamic_flag,
+        'challenge_type': challenge.challenge_type,
+        'language': challenge.language,
+        'starter_code': challenge.starter_code,
         'flags': [{'id': f.id, 'content': f.flag_content} for f in challenge.flags]
     })
 
@@ -188,7 +258,7 @@ def update_challenge_api(challenge_id):
     if not data:
         return jsonify({'message': 'Request body must be JSON'}), 400
 
-    for field in ['name', 'description', 'points', 'category_id', 'case_sensitive', 'multi_flag_type', 'multi_flag_threshold', 'point_decay_type', 'point_decay_rate', 'proactive_decay', 'minimum_points', 'unlock_type', 'prerequisite_percentage_value', 'prerequisite_count_value', 'prerequisite_count_category_ids', 'prerequisite_challenge_ids', 'unlock_date_time', 'unlock_point_reduction_type', 'unlock_point_reduction_value', 'unlock_point_reduction_target_date', 'is_hidden', 'has_dynamic_flag']:
+    for field in ['name', 'description', 'points', 'category_id', 'case_sensitive', 'multi_flag_type', 'multi_flag_threshold', 'point_decay_type', 'point_decay_rate', 'proactive_decay', 'minimum_points', 'unlock_type', 'prerequisite_percentage_value', 'prerequisite_count_value', 'prerequisite_count_category_ids', 'prerequisite_challenge_ids', 'unlock_date_time', 'unlock_point_reduction_type', 'unlock_point_reduction_value', 'unlock_point_reduction_target_date', 'is_hidden', 'has_dynamic_flag', 'challenge_type', 'language', 'starter_code', 'expected_output', 'setup_code', 'test_case_input']:
         if field in data:
             setattr(challenge, field, data[field])
 
@@ -227,7 +297,7 @@ def submit_code_challenge(challenge_id):
         test_case_input=challenge.test_case_input,
     )
 
-    if execution_result.success:
+    if execution_result.is_correct:
         # Check if the user has already solved this challenge
         existing_submission = Submission.query.filter_by(
             user_id=current_user.id,
@@ -244,20 +314,19 @@ def submit_code_challenge(challenge_id):
             db.session.add(new_submission)
             current_user.score += challenge.points
             db.session.commit()
-            return jsonify({'message': 'Challenge solved!', 'correct': True}), 200
+            return jsonify({'message': 'Challenge solved!', 'is_correct': True}), 200
         else:
-            return jsonify({'message': 'Challenge already solved!', 'correct': True}), 200
+            return jsonify({'message': 'Challenge already solved!', 'is_correct': True}), 200
     else:
         # Provide feedback on why it failed
         feedback = {
             'message': 'Code execution failed or output mismatch.',
-            'correct': False,
-            'stdout': execution_result.stdout,
-            'stderr': execution_result.stderr,
+            'is_correct': False,
+            'output': execution_result.stdout if execution_result.stdout else execution_result.stderr,
             'error_message': execution_result.error_message,
             'is_timeout': execution_result.is_timeout
         }
-        return jsonify(feedback), 400
+        return jsonify(feedback), 200
 
 
 @api_bp.route('/challenges/<int:challenge_id>', methods=['DELETE'])

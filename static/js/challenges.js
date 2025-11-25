@@ -21,20 +21,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const flagSubmissionSection = document.getElementById('flagSubmissionSection');
     const codeSubmissionSection = document.getElementById('codeSubmissionSection');
     const codeEditor = document.getElementById('codeEditor');
-    let editor = CodeMirror.fromTextArea(codeEditor, {
-        lineNumbers: true,
-        mode: "text/plain",
-        theme: "dracula",
-        indentUnit: 4,
-        tabSize: 4,
-        indentWithTabs: false
-    });
+
     const modalRunCodeButton = document.getElementById('modalRunCodeButton');
     const codeResult = document.getElementById('codeResult');
 
     let currentChallengeId = null;
     let currentChallengeType = null;
     let currentChallengeLanguage = null;
+    let codeMirrorEditor = null; // Initialize CodeMirror editor here
 
     function initChallengeCards() {
         const challengeCards = document.querySelectorAll('.challenge-card');
@@ -80,23 +74,45 @@ document.addEventListener('DOMContentLoaded', function() {
                             flagSubmissionSection.classList.add('hidden');
                             codeSubmissionSection.classList.remove('hidden');
                             currentChallengeLanguage = data.language || 'python';
-                            editor.setOption('mode', currentChallengeLanguage);
-                            editor.setValue(data.starter_code || '');
+                            currentChallengeType = 'CODING';
+
+                            if (!codeMirrorEditor) {
+                                codeMirrorEditor = CodeMirror.fromTextArea(codeEditor, {
+                                    lineNumbers: true,
+                                    mode: currentChallengeLanguage,
+                                    theme: "dracula",
+                                    indentUnit: 4,
+                                    tabSize: 4,
+                                    indentWithTabs: false
+                                });
+                            } else {
+                                codeMirrorEditor.setOption('mode', currentChallengeLanguage);
+                            }
+                            codeMirrorEditor.setValue(data.starter_code || '');
                             if (isCompleted) {
-                                editor.setOption('readOnly', true);
+                                codeMirrorEditor.setOption('readOnly', true);
                                 modalRunCodeButton.disabled = true;
                                 modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
                                 modalChallengeStatus.textContent = 'You have already completed this coding challenge!';
                                 modalChallengeStatus.classList.remove('hidden');
                             } else {
-                                editor.setOption('readOnly', false);
+                                codeMirrorEditor.setOption('readOnly', false);
                                 modalRunCodeButton.disabled = false;
                                 modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
                             }
-                            editor.refresh();
+                            codeMirrorEditor.refresh();
                         } else {
                             flagSubmissionSection.classList.remove('hidden');
                             codeSubmissionSection.classList.add('hidden');
+                            currentChallengeType = 'FLAG';
+
+                            if (codeMirrorEditor) {
+                                // If editor exists, hide it or prepare for destruction if needed
+                                // For now, just ensure it's not active
+                                codeMirrorEditor.toTextArea(); // Convert back to textarea to clean up CodeMirror instance
+                                codeMirrorEditor = null;
+                            }
+
                             if (isCompleted) {
                                 modalChallengeStatus.textContent = 'You have already completed this challenge!';
                                 modalChallengeStatus.classList.remove('hidden');
@@ -137,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             hintsList.innerHTML = '';
                         }
     
-                        if (data.challenge_type === 'FLAG') {
+                        if (currentChallengeType === 'FLAG') {
                             modalFlagForm.action = `/submit_flag/${currentChallengeId}`;
                         }
                         
@@ -151,6 +167,57 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    modalRunCodeButton.addEventListener('click', function() {
+        if (!codeMirrorEditor) return;
+
+        const userCode = codeMirrorEditor.getValue();
+        modalRunCodeButton.disabled = true;
+        modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
+        codeResult.classList.remove('hidden');
+        codeResult.textContent = 'Running code...';
+
+        fetch(`/submit_code/${currentChallengeId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ code: userCode, language: currentChallengeLanguage })
+        })
+        .then(response => response.json())
+        .then(data => {
+            codeResult.textContent = data.output;
+            if (data.success) {
+                showFlashMessage('Code executed successfully!', 'success');
+                if (data.is_correct) {
+                    showFlashMessage('Challenge Solved!', 'success');
+                    const currentCard = document.querySelector(`.challenge-card[data-id="${currentChallengeId}"]`);
+                    if (currentCard) {
+                        currentCard.dataset.completed = 'true';
+                        currentCard.classList.add('theme-completed-challenge');
+                        codeMirrorEditor.setOption('readOnly', true);
+                        modalRunCodeButton.disabled = true;
+                        modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
+                        modalChallengeStatus.textContent = 'You have already completed this coding challenge!';
+                        modalChallengeStatus.classList.remove('hidden');
+                    }
+                }
+            } else {
+                showFlashMessage(data.message || 'Error executing code.', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error running code:', error);
+            codeResult.textContent = `Error: ${error.message}`;
+            showFlashMessage('An error occurred during code execution.', 'danger');
+        })
+        .finally(() => {
+            modalRunCodeButton.disabled = false;
+            modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        });
+    });
+
+
 
     function initAccordion() {
         const accordionHeaders = document.querySelectorAll('.accordion-header');
