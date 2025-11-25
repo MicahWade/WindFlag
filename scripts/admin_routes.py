@@ -981,7 +981,7 @@ def analytics():
 
 from werkzeug.utils import secure_filename
 import os
-from app import import_challenges_from_yaml, import_categories_from_yaml
+from scripts.import_export import import_challenges_from_yaml, import_categories_from_yaml
 
 @admin_bp.route('/docs/dynamic_flags')
 @admin_required
@@ -1017,10 +1017,8 @@ def import_export():
             filepath = os.path.join(upload_folder, filename)
             file.save(filepath)
             
-            # Since the import functions are in app.py, and they create their own app context,
-            # we can call them directly.
-            import_categories_from_yaml(filepath)
-            import_challenges_from_yaml(filepath)
+            import_categories_from_yaml(current_app, filepath)
+            import_challenges_from_yaml(current_app, filepath)
             
             flash('YAML file imported successfully!', 'success')
             return redirect(url_for('admin.import_export'))
