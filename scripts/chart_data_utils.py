@@ -53,8 +53,7 @@ def get_global_score_history_data():
     else:
         return _get_global_score_history_data_uncached()
 
-def _get_global_score_history_data_uncached():
-def _get_global_score_history_data_uncached():
+
     # Fetch all relevant events (submissions and awards) ordered by timestamp
     all_events = []
 
