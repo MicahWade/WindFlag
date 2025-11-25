@@ -94,3 +94,93 @@
 .modal-overlay.fullscreen #codeEditor {
     height: auto; /* Allow CodeMirror to manage height */
 }
+/* Override chart label color for all themes */
+:root {
+    --chart-label-color: hsl(0, 0%, 90%); /* Light grey for chart labels */
+}
+
+/* Custom button styles for admin panel */
+.theme-button-edit {
+    background-color: var(--secondary); /* A neutral/secondary color */
+    color: var(--text-main);
+    border: 1px solid var(--secondary);
+    border-radius: var(--radius);
+    font-weight: bold;
+    padding: 0.25rem 0.5rem; /* py-1 px-2 */
+    font-size: 0.75rem; /* text-xs */
+    box-shadow: 0 2px 0 var(--text-muted);
+    transition: all 0.1s ease-in-out;
+}
+
+.theme-button-edit:hover {
+    background-color: var(--text-main);
+    color: var(--secondary);
+}
+
+.theme-button-edit:active {
+    top: 1px;
+    box-shadow: 0 0 0 var(--text-muted);
+}
+
+.theme-button-delete {
+    background-color: var(--danger); /* A danger/red color */
+    color: var(--text-main);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius);
+    font-weight: bold;
+    padding: 0.25rem 0.5rem; /* py-1 px-2 */
+    font-size: 0.75rem; /* text-xs */
+    box-shadow: 0 2px 0 var(--text-muted);
+    transition: all 0.1s ease-in-out;
+}
+
+.theme-button-delete:hover {
+    background-color: var(--text-main);
+    color: var(--danger);
+}
+
+.theme-button-delete:active {
+    top: 1px;
+    box-shadow: 0 0 0 var(--text-muted);
+}
+/* Tab Navigation and Content Styles */
+.theme-tab-navigation {
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 1.5rem;
+    padding-bottom: 5px; /* Added padding for visual separation */
+}
+
+.theme-tab-button {
+    background-color: transparent;
+    border: none;
+    padding: 0.5rem 1rem; /* Adjusted padding */
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    border-radius: var(--radius); /* Added rounded corners */
+    margin-right: 0.5rem; /* Space between buttons */
+}
+
+.theme-tab-button:hover:not(.active) {
+    color: var(--text-main);
+    background-color: var(--background-hover); /* Subtle hover effect */
+}
+
+.theme-tab-button.active {
+    color: var(--text-main);
+    background-color: var(--secondary); /* Highlight active tab with background */
+    border-bottom: none; /* Remove bottom border for active state */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Subtle shadow for depth */
+}
+
+.theme-tab-content {
+    display: none;
+}
+
+.theme-tab-content.active {
+    display: block;
+}
+
+.word-break-all { word-break: break-all; }
+.theme-table-end-padding { width: 1rem; }

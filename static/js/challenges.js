@@ -1,5 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const challengeCards = document.querySelectorAll('.challenge-card');
+    // The challengeContainer and loading elements are from the remote branch, but they are not present in the current HTML.
+    // I will comment them out for now, or ensure the HTML is updated. For now, commenting out.
+    // const challengeContainer = document.getElementById('challenge-container');
+    // if (!challengeContainer) {
+    //     return;
+    // }
+    // const loading = document.getElementById('loading');
+
     const challengeModal = document.getElementById('challengeModal');
     const modalContent = challengeModal.querySelector('div:first-child');
     const closeModalButtons = document.querySelectorAll('.close-modal');
@@ -11,28 +18,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalFlagForm = document.getElementById('modalFlagForm');
     const flagInput = document.getElementById('modalFlagInput');
     const submitButton = document.getElementById('modalSubmitButton');
-    const hintsList = document.getElementById('hintsList'); // New: Get hints list container
-    const userScoreDisplay = document.getElementById('userScoreDisplay'); // Assuming you have a score display element
+    const hintsList = document.getElementById('hintsList');
+    const userScoreDisplay = document.getElementById('userScoreDisplay');
 
-    // New elements for coding challenges
     const flagSubmissionSection = document.getElementById('flagSubmissionSection');
     const codeSubmissionSection = document.getElementById('codeSubmissionSection');
     const codeEditor = document.getElementById('codeEditor');
-    let editor = CodeMirror.fromTextArea(codeEditor, { // Declare and initialize here
-        lineNumbers: true,
-        mode: "text/plain", // Default to plain text, mode will be set dynamically
-        theme: "dracula",
-        indentUnit: 4, // 4 spaces for indentation
-        tabSize: 4, // 4 spaces for tab
-        indentWithTabs: false // Use spaces instead of tabs
-    });
+
     const modalRunCodeButton = document.getElementById('modalRunCodeButton');
     const codeResult = document.getElementById('codeResult');
     const modalFullscreenCodeButton = document.getElementById('modalFullscreenCodeButton'); // Get fullscreen button
 
     let currentChallengeId = null;
-    let currentChallengeType = null; // New: Store current challenge type
-    let currentChallengeLanguage = null; // New: Store current challenge language
+    let currentChallengeType = null;
+    let currentChallengeLanguage = null;
+    let codeMirrorEditor = null; // Initialize CodeMirror editor here
 
     // Function to toggle fullscreen mode for the modal
     function toggleFullscreen() {
@@ -44,22 +44,28 @@ document.addEventListener('DOMContentLoaded', function() {
             document.exitFullscreen();
             modalFullscreenCodeButton.textContent = 'Fullscreen';
         }
-        editor.refresh(); // Important: Refresh CodeMirror to adjust to new dimensions
+        if (codeMirrorEditor) { // Ensure editor exists before refreshing
+            codeMirrorEditor.refresh(); // Important: Refresh CodeMirror to adjust to new dimensions
+        }
     }
 
     // Add event listener for the fullscreen button
-    modalFullscreenCodeButton.addEventListener('click', toggleFullscreen);
+    if (modalFullscreenCodeButton) {
+        modalFullscreenCodeButton.addEventListener('click', toggleFullscreen);
+    }
 
     // Listen for fullscreen change events to update button text if user exits fullscreen manually
     document.addEventListener('fullscreenchange', () => {
         if (!document.fullscreenElement) {
             challengeModal.classList.remove('fullscreen');
-            modalFullscreenCodeButton.textContent = 'Fullscreen';
-            editor.refresh();
+            if (modalFullscreenCodeButton) {
+                modalFullscreenCodeButton.textContent = 'Fullscreen';
+            }
+            if (codeMirrorEditor) {
+                codeMirrorEditor.refresh();
+            }
         }
     });
-
-
 
     // Language-specific blacklists for client-side static code analysis
     // These are patterns or keywords that indicate potentially dangerous operations
@@ -75,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 /subprocess\.(run|call|check_call|check_output)/,
                 /os\.(system|popen|fork|kill|rmdir|remove|unlink|mkdir|makedirs)/,
                 /sys\.exit/, /sys\.modules/,
-                /\bfile\s*\(/
+                /\bfile\s*\(/ 
             ]
         },
         'javascript': { // Corresponds to 'nodejs' on backend
@@ -85,8 +91,8 @@ document.addEventListener('DOMContentLoaded', function() {
             ],
             'forbidden_regex': [
                 /while\s*\(\s*true\s*\)/, /for\s*\(\s*;\s*;\s*\)/, // JS infinite loops
-                /require\s*\([\'"].*[\'"]\)/,
-                /import\s+[\'"].*[\'"]/,
+                /require\s*\[\'getcwd\'\]\)/,
+                /import\s+[\'getcwd\']/, 
                 /process\.stdout/, /process\.stderr/, // Corrected JS regex patterns
                 /fs\.[a-zA-Z]+Sync/, // Synchronous file system operations
                 /child_process\.(spawn|exec|fork)/,
@@ -102,8 +108,8 @@ document.addEventListener('DOMContentLoaded', function() {
             ],
             'forbidden_regex': [
                 /while\s*\(\s*true\s*\)/, /for\s*\(\s*;\s*;\s*\)/, // PHP infinite loops
-                /include\s+[\'"].*[\'"]/,
-                /require\s+[\'"].*[\'"]/,
+                /include\s+[\'getcwd\']/, 
+                /require\s+[\'getcwd\']/, 
                 /\$_GET/, /\$_POST/, /\$_REQUEST/, /\$_FILES/, /\$_SERVER/ // External input access
             ]
         },
@@ -115,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 'while true', 'for ((;;))' // Bash infinite loops
             ],
             'forbidden_regex': [
-                /`.*`/, /\$\(.*\)/, // Command substitution
+                /`.*`/, /\$\(\)/, // Command substitution
                 /&&\s*/, /\|\|\s*/, /;\s*/, // Command chaining
                 /\bcat\s+\/etc\/(passwd|shadow)\b/, // Specific file access
                 /\/\w+\/\w+/ // Absolute paths
@@ -130,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 /while\s*\(\s*true\s*\)/, /for\s*\(\s*;\s*;\s*\)/, // Dart infinite loops
                 /import\s+['"]dart:io['"]/,
                 /import\s+['"]package:.*['"]/,
-                /new\s+File\s*\(/
+                /new\s+File\s*\(/ 
             ]
         },
         'haskell': {
@@ -209,157 +215,176 @@ document.addEventListener('DOMContentLoaded', function() {
             alertDiv.remove();
         }, 5000);
     }
-
-    challengeCards.forEach(card => {
-        const completionPercentage = parseInt(card.dataset.completionPercentage);
-        const isCompleted = card.dataset.completed === 'true';
-        const isLocked = card.classList.contains('locked-challenge'); // Check if the card is locked
-
-        // Get the computed value of --card-border from the body (or any element where it's defined)
-        const computedStyle = getComputedStyle(document.body);
-        const cardBorder = computedStyle.getPropertyValue('--card-border');
-        const cardRadius = computedStyle.getPropertyValue('--radius'); // New: Get --radius
-
-        // Apply border and border-radius to the card
-        if (cardBorder) {
-            card.style.border = cardBorder;
-        }
-        if (cardRadius) { // New: Apply border-radius
-            card.style.borderRadius = cardRadius;
-        }
-
-        // Apply initial background color based on completion percentage for unlocked challenges
-        if (!isCompleted && !isLocked) {
-            card.classList.add(getColorForPercentage(completionPercentage));
-        }
-
-        card.addEventListener('click', function() {
-            if (isLocked) {
-                // If the challenge is locked, do not open the modal.
-                // The unlock information is already displayed on the card itself.
-                return; 
+    
+    function initChallengeCards() {
+        const challengeCards = document.querySelectorAll('.challenge-card');
+        challengeCards.forEach(card => {
+            const completionPercentage = parseInt(card.dataset.completionPercentage);
+            const isCompleted = card.dataset.completed === 'true';
+            const isLocked = card.classList.contains('locked-challenge'); // Check if the card is locked
+    
+            // Get the computed value of --card-border from the body (or any element where it's defined)
+            const computedStyle = getComputedStyle(document.body);
+            const cardBorder = computedStyle.getPropertyValue('--card-border');
+            const cardRadius = computedStyle.getPropertyValue('--radius'); // New: Get --radius
+    
+            // Apply border and border-radius to the card
+            if (cardBorder) {
+                card.style.border = cardBorder;
+            }
+            if (cardRadius) { // New: Apply border-radius
+                card.style.borderRadius = cardRadius;
+            }
+    
+            // Apply initial background color based on completion percentage for unlocked challenges
+            if (!isCompleted && !isLocked) {
+                card.classList.add(getColorForPercentage(completionPercentage));
             }
 
-            currentChallengeId = this.dataset.id;
-            currentChallengeType = this.dataset.challengeType; // Get challenge type
-            
-            // Fetch challenge details including hints
-            fetch(`/api/challenge_details/${currentChallengeId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success === false) { // Handle server-side errors
-                        showFlashMessage(data.message, 'danger');
-                        challengeModal.classList.add('opacity-0', 'pointer-events-none');
-                        modalContent.classList.add('-translate-y-full');
-                        return;
-                    }
+            card.addEventListener('click', function() {
+                if (isLocked) {
+                    // If the challenge is locked, do not open the modal.
+                    // The unlock information is already displayed on the card itself.
+                    return; 
+                }
 
-                    modalChallengeName.textContent = data.name;
-                    // Safely parse markdown description using marked, with fallback
-                    if (typeof marked !== 'undefined' && marked.parse) {
-                        try {
-                            modalChallengeDescription.innerHTML = marked.parse(data.description);
-                        } catch (e) {
-                            console.error('Error parsing markdown:', e);
+                currentChallengeId = this.dataset.id;
+                currentChallengeType = this.dataset.challengeType; // Get challenge type
+                
+                // Fetch challenge details including hints
+                fetch(`/api/challenge_details/${currentChallengeId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success === false) { // Handle server-side errors
+                            showFlashMessage(data.message, 'danger');
+                            challengeModal.classList.add('opacity-0', 'pointer-events-none');
+                            modalContent.classList.add('-translate-y-full');
+                            return;
+                        }
+
+                        modalChallengeName.textContent = data.name;
+                        // Safely parse markdown description using marked, with fallback
+                        if (typeof marked !== 'undefined' && marked.parse) {
+                            try {
+                                modalChallengeDescription.innerHTML = marked.parse(data.description);
+                            } catch (e) {
+                                console.error('Error parsing markdown:', e);
+                                modalChallengeDescription.textContent = data.description;
+                            }
+                        } else {
+                            console.warn('Marked library not loaded, displaying raw description.');
                             modalChallengeDescription.textContent = data.description;
                         }
-                    } else {
-                        console.warn('Marked library not loaded, displaying raw description.');
-                        modalChallengeDescription.textContent = data.description;
-                    }
-                    modalChallengePoints.textContent = data.points + ' pts';
+                        modalChallengePoints.textContent = data.points + ' pts';
 
-                    const isCompleted = data.is_completed;
-                    const multiFlagType = data.multi_flag_type;
-                    let submittedFlagsCount = data.submitted_flags_count;
-                    let totalFlags = data.total_flags;
+                        const isCompleted = data.is_completed;
+                        const multiFlagType = data.multi_flag_type;
+                        let submittedFlagsCount = data.submitted_flags_count;
+                        let totalFlags = data.total_flags;
 
-                    // Reset modal status and progress
-                    modalChallengeStatus.classList.add('hidden');
-                    modalFlagProgress.classList.add('hidden');
-                    modalFlagProgress.textContent = '';
-                    codeResult.classList.add('hidden'); // Hide code result on modal open
+                        // Reset modal status and progress
+                        modalChallengeStatus.classList.add('hidden');
+                        modalFlagProgress.classList.add('hidden');
+                        modalFlagProgress.textContent = '';
+                        codeResult.classList.add('hidden'); // Hide code result on modal open
 
-                    // Conditional display of forms
-                    if (currentChallengeType === 'CODING') {
-                        flagSubmissionSection.classList.add('hidden');
-                        codeSubmissionSection.classList.remove('hidden');
-                        currentChallengeLanguage = data.language || 'python'; // Set currentChallengeLanguage
-                        editor.setOption('mode', currentChallengeLanguage); // Set CodeMirror mode
-                        editor.setValue(data.starter_code || ''); // Load starter code into CodeMirror
-                        if (isCompleted) {
-                            editor.setOption('readOnly', true);
-                            modalRunCodeButton.disabled = true;
-                            modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
-                            modalChallengeStatus.textContent = 'You have already completed this coding challenge!';
-                            modalChallengeStatus.classList.remove('hidden');
-                        } else {
-                            editor.setOption('readOnly', false);
-                            modalRunCodeButton.disabled = false;
-                            modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                        }
-                        editor.refresh(); // Important to refresh after setting value and options when editor might have been hidden
-                    } else { // FLAG challenge type
-                        flagSubmissionSection.classList.remove('hidden');
-                        codeSubmissionSection.classList.add('hidden');
-                        if (isCompleted) {
-                            modalChallengeStatus.textContent = 'You have already completed this challenge!';
-                            modalChallengeStatus.classList.remove('hidden');
-                            flagInput.disabled = true;
-                            submitButton.disabled = true;
-                            submitButton.classList.add('opacity-50', 'cursor-not-allowed');
-                        }
-                        else {
-                            flagInput.disabled = false;
-                            submitButton.disabled = false;
-                            submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                            if (totalFlags > 1) {
-                                modalFlagProgress.textContent = `Flags submitted: ${submittedFlagsCount} / ${totalFlags}`;
-                                modalFlagProgress.classList.remove('hidden');
-                            }
-                        }
-                    }
-
-                    // Populate hints section (common to all challenge types)
-                    if (data.hints && data.hints.length > 0) {
-                        hintsList.innerHTML = ''; // Clear previous hints
-                        document.getElementById('modalHintsSection').classList.remove('hidden'); // Show the section
-                        data.hints.forEach(hint => {
-                            const hintDiv = document.createElement('div');
-                            hintDiv.className = 'hint-item mb-2 p-3 theme-modal-hint-item';
-                            if (hint.is_revealed) {
-                                hintDiv.innerHTML = `<p>${hint.content}</p>`;
+                        // Conditional display of forms
+                        if (currentChallengeType === 'CODING') {
+                            flagSubmissionSection.classList.add('hidden');
+                            codeSubmissionSection.classList.remove('hidden');
+                            currentChallengeLanguage = data.language || 'python'; // Set currentChallengeLanguage
+                            if (!codeMirrorEditor) {
+                                codeMirrorEditor = CodeMirror.fromTextArea(codeEditor, {
+                                    lineNumbers: true,
+                                    mode: currentChallengeLanguage, // Set CodeMirror mode
+                                    theme: "dracula",
+                                    indentUnit: 4, // 4 spaces for indentation
+                                    tabSize: 4, // 4 spaces for tab
+                                    indentWithTabs: false // Use spaces instead of tabs
+                                });
                             } else {
-                                hintDiv.className += ' flex justify-between items-center';
-                                hintDiv.innerHTML = `
-                                    <span>${hint.title} (Cost: ${hint.cost} pts)</span>
-                                    <button class="reveal-hint-btn theme-modal-button-primary font-bold py-1 px-3 text-xs" data-hint-id="${hint.id}" data-hint-cost="${hint.cost}">Reveal Hint</button>
-                                `;
+                                codeMirrorEditor.setOption('mode', currentChallengeLanguage); // Set CodeMirror mode
                             }
-                            hintsList.appendChild(hintDiv);
-                        });
-                    } else {
-                        document.getElementById('modalHintsSection').classList.add('hidden'); // Hide the section
-                        hintsList.innerHTML = ''; // Ensure it's empty
-                    }
+                            codeMirrorEditor.setValue(data.starter_code || ''); // Load starter code into CodeMirror
+                            if (isCompleted) {
+                                codeMirrorEditor.setOption('readOnly', true);
+                                modalRunCodeButton.disabled = true;
+                                modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
+                                modalChallengeStatus.textContent = 'You have already completed this coding challenge!';
+                                modalChallengeStatus.classList.remove('hidden');
+                            } else {
+                                codeMirrorEditor.setOption('readOnly', false);
+                                modalRunCodeButton.disabled = false;
+                                modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                            }
+                            codeMirrorEditor.refresh(); // Important to refresh after setting value and options when editor might have been hidden
+                        } else { // FLAG challenge type
+                            flagSubmissionSection.classList.remove('hidden');
+                            codeSubmissionSection.classList.add('hidden');
+                            if (isCompleted) {
+                                modalChallengeStatus.textContent = 'You have already completed this challenge!';
+                                modalChallengeStatus.classList.remove('hidden');
+                                flagInput.disabled = true;
+                                submitButton.disabled = true;
+                                submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                            }
+                            else {
+                                flagInput.disabled = false;
+                                submitButton.disabled = false;
+                                submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                                if (totalFlags > 1) {
+                                    modalFlagProgress.textContent = `Flags submitted: ${submittedFlagsCount} / ${totalFlags}`;
+                                    modalFlagProgress.classList.remove('hidden');
+                                }
+                            }
+                            // Clean up CodeMirror if it was initialized for a previous coding challenge
+                            if (codeMirrorEditor) {
+                                codeMirrorEditor.toTextArea(); // Convert back to textarea to clean up CodeMirror instance
+                                codeMirrorEditor = null;
+                            }
+                        }
 
-                    // Update form action for submission (only for FLAG challenges)
-                    if (currentChallengeType === 'FLAG') {
-                        modalFlagForm.action = `/submit_flag/${currentChallengeId}`;
-                    }
-                    
-                    // Show modal with animation
-                    challengeModal.classList.remove('opacity-0', 'pointer-events-none');
-                    modalContent.classList.remove('-translate-y-full');
-                    // No explicit refresh/focus here, rely on autofocus option.
-                    // If issues persist, might need a small delay after modal fully visible.
-                })
-                .catch(error => {
-                    console.error('Error fetching challenge details:', error);
-                    showFlashMessage('Error loading challenge details.', 'danger');
-                });
+                        // Populate hints section (common to all challenge types)
+                        if (data.hints && data.hints.length > 0) {
+                            hintsList.innerHTML = ''; // Clear previous hints
+                            document.getElementById('modalHintsSection').classList.remove('hidden'); // Show the section
+                            data.hints.forEach(hint => {
+                                const hintDiv = document.createElement('div');
+                                hintDiv.className = 'hint-item mb-2 p-3 theme-modal-hint-item';
+                                if (hint.is_revealed) {
+                                    hintDiv.innerHTML = `<p>${hint.content}</p>`;
+                                } else {
+                                    hintDiv.className += ' flex justify-between items-center';
+                                    hintDiv.innerHTML = `
+                                        <span>${hint.title} (Cost: ${hint.cost} pts)</span>
+                                        <button class="reveal-hint-btn theme-modal-button-primary font-bold py-1 px-3 text-xs" data-hint-id="${hint.id}" data-hint-cost="${hint.cost}">Reveal Hint</button>
+                                    `;
+                                }
+                                hintsList.appendChild(hintDiv);
+                            });
+                        } else {
+                            document.getElementById('modalHintsSection').classList.add('hidden'); // Hide the section
+                            hintsList.innerHTML = ''; // Ensure it's empty
+                        }
+
+                        // Update form action for submission (only for FLAG challenges)
+                        if (currentChallengeType === 'FLAG') {
+                            modalFlagForm.action = `/submit_flag/${currentChallengeId}`;
+                        }
+                        
+                        // Show modal with animation
+                        challengeModal.classList.remove('opacity-0', 'pointer-events-none');
+                        modalContent.classList.remove('-translate-y-full');
+                        // No explicit refresh/focus here, rely on autofocus option.
+                        // If issues persist, might need a small delay after modal fully visible.
+                    })
+                    .catch(error => {
+                        console.error('Error fetching challenge details:', error);
+                        showFlashMessage('Error loading challenge details.', 'danger');
+                    });
+            });
         });
-    });
+    }
 
     // Event delegation for reveal hint buttons
     hintsList.addEventListener('click', function(event) {
@@ -374,7 +399,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            if (!confirm(`Are you sure you want to reveal this hint for ${hintCost} points?`)) {
+            if (!confirm('Are you sure you want to reveal this hint for ' + hintCost + ' points?')) {
                 return;
             }
 
@@ -429,9 +454,9 @@ document.addEventListener('DOMContentLoaded', function() {
             viewSolversBtn.textContent = 'View Solvers'; // Reset button text
 
             // CodeMirror Cleanup
-            if (editor) {
-                editor.setValue(''); // Clear content
-                editor.setOption('readOnly', false); // Ensure it's editable for next challenge
+            if (codeMirrorEditor) {
+                codeMirrorEditor.setValue(''); // Clear content
+                codeMirrorEditor.setOption('readOnly', false); // Ensure it's editable for next challenge
             }
         });
     });
@@ -455,39 +480,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let showingSolvers = false; // State to track what is currently shown
 
-    viewSolversBtn.addEventListener('click', function() {
-        if (!showingSolvers) {
-            // Currently showing challenge content, switch to solvers
-            fetch(`/api/challenge/${currentChallengeId}/solvers`)
-                .then(response => response.json())
-                .then(data => {
-                    solversList.innerHTML = '';
-                    if (data.solvers.length > 0) {
-                        data.solvers.forEach(solver => {
+    if (viewSolversBtn) {
+        viewSolversBtn.addEventListener('click', function() {
+            if (!showingSolvers) {
+                // Currently showing challenge content, switch to solvers
+                fetch(`/api/challenge/${currentChallengeId}/solvers`)
+                    .then(response => response.json())
+                    .then(data => {
+                        solversList.innerHTML = '';
+                        if (data.solvers.length > 0) {
+                            data.solvers.forEach(solver => {
+                                const li = document.createElement('li');
+                                li.textContent = solver;
+                                solversList.appendChild(li);
+                            });
+                        } else {
                             const li = document.createElement('li');
-                            li.textContent = solver;
+                                li.textContent = 'No solvers yet.';
                             solversList.appendChild(li);
-                        });
-                    } else {
-                        const li = document.createElement('li');
-                            li.textContent = 'No solvers yet.';
-                        solversList.appendChild(li);
-                    }
-                    solverCount.textContent = data.solver_count;
-                    challengeContent.classList.add('hidden');
-                    solversContent.classList.remove('hidden');
-                    viewSolversBtn.textContent = 'View Challenge';
-                    showingSolvers = true;
-                })
-                .catch(error => console.error('Error fetching solvers:', error));
-        } else {
-            // Currently showing solvers content, switch back to challenge
-            solversContent.classList.add('hidden');
-            challengeContent.classList.remove('hidden');
-            viewSolversBtn.textContent = 'View Solvers';
-            showingSolvers = false;
-        }
-    });
+                        }
+                        solverCount.textContent = data.solver_count;
+                        challengeContent.classList.add('hidden');
+                        solversContent.classList.remove('hidden');
+                        viewSolversBtn.textContent = 'View Challenge';
+                        showingSolvers = true;
+                    })
+                    .catch(error => console.error('Error fetching solvers:', error));
+            } else {
+                // Currently showing solvers content, switch back to challenge
+                solversContent.classList.add('hidden');
+                challengeContent.classList.remove('hidden');
+                viewSolversBtn.textContent = 'View Solvers';
+                showingSolvers = false;
+            }
+        });
+    }
 
     modalFlagForm.addEventListener('submit', function(event) {
         event.preventDefault();
@@ -508,10 +535,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (currentCard) {
                     if (data.message.includes('Challenge Solved!')) {
                         currentCard.dataset.completed = 'true';
-                        currentCard.classList.add('completed-challenge');
-                        currentCard.classList.remove(getColorForPercentage(parseInt(currentCard.dataset.completionPercentage)));
-                        currentCard.classList.add(getColorForPercentage(100));
-
+                        currentCard.classList.add('theme-completed-challenge');
                         flagInput.disabled = true;
                         submitButton.disabled = true;
                         submitButton.classList.add('opacity-50', 'cursor-not-allowed');
@@ -519,22 +543,25 @@ document.addEventListener('DOMContentLoaded', function() {
                         modalChallengeStatus.classList.remove('hidden');
                         modalFlagProgress.classList.add('hidden');
                     } else {
+                        // Handle multi-flag progress update
                         const submittedCountMatch = data.message.match(/submitted (\d+) of (\d+) flags/);
                         if (submittedCountMatch) {
                             const newSubmittedCount = parseInt(submittedCountMatch[1]);
                             const totalCount = parseInt(submittedCountMatch[2]);
                             currentCard.dataset.submittedFlagsCount = newSubmittedCount;
                             
+                            // Re-calculate completion percentage and apply color
                             const newCompletionPercentage = (newSubmittedCount / totalCount * 100);
                             currentCard.dataset.completionPercentage = newCompletionPercentage;
-
-                            currentCard.classList.remove(getColorForPercentage(parseInt(currentCard.dataset.completionPercentage)));
-                            currentCard.classList.add(getColorForPercentage(newCompletionPercentage));
-
-                            const cardFlagProgress = currentCard.querySelector('p:last-child');
-                            if (cardFlagProgress) {
-                                cardFlagProgress.textContent = `Flags: ${newSubmittedCount} / ${totalCount}`;
+                            
+                            // Remove previous percentage class and add new one
+                            const oldPercentageClass = Array.from(currentCard.classList).find(cls => cls.startsWith('theme-status-'));
+                            if (oldPercentageClass) {
+                                currentCard.classList.remove(oldPercentageClass);
                             }
+                            currentCard.classList.add(getColorForPercentage(newCompletionPercentage));
+    
+                            // Update modal progress display
                             if (totalCount > 1) {
                                 modalFlagProgress.textContent = `Flags submitted: ${newSubmittedCount} / ${totalCount}`;
                                 modalFlagProgress.classList.remove('hidden');
@@ -555,13 +582,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle code submission
     modalRunCodeButton.addEventListener('click', function() {
-        const code = editor.getValue(); // Get code from CodeMirror instance
+        if (!codeMirrorEditor) return; // Should not happen if button is visible for coding challenges
+
+        const code = codeMirrorEditor.getValue(); // Get code from CodeMirror instance
         const challengeId = currentChallengeId;
 
         // Perform client-side static analysis
         const {is_safe, message} = _staticCodeAnalysisJS(currentChallengeLanguage, code);
         if (!is_safe) {
             showFlashMessage(`Client-side security check failed: ${message}`, 'danger');
+            codeResult.classList.remove('hidden');
+            codeResult.classList.add('theme-code-result-error');
+            codeResult.textContent = `Security Error: ${message}`;
             return; // Prevent submission
         }
 
@@ -593,10 +625,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const currentCard = document.querySelector(`.challenge-card[data-id="${challengeId}"]`);
                 if (currentCard) {
                     currentCard.dataset.completed = 'true';
-                    currentCard.classList.add('completed-challenge');
                     currentCard.classList.remove(getColorForPercentage(parseInt(currentCard.dataset.completionPercentage)));
                     currentCard.classList.add(getColorForPercentage(100));
-                    codeEditor.disabled = true;
+                    codeMirrorEditor.setOption('readOnly', true);
                     modalRunCodeButton.disabled = true;
                     modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
                 }
@@ -626,38 +657,44 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Accordion functionality
-    const accordionHeaders = document.querySelectorAll('.accordion-header');
-    const ACCORDION_STATE_KEY = 'accordionState'; // Key for localStorage
-
-    // Load accordion states from localStorage on page load
-    const savedAccordionStates = JSON.parse(localStorage.getItem(ACCORDION_STATE_KEY)) || {};
-
-    accordionHeaders.forEach(header => {
-        const content = header.nextElementSibling;
-        const icon = header.querySelector('.accordion-icon');
-        const categoryId = header.dataset.categoryId; // Get the category ID
-
-        // Initialize state based on localStorage or default to open
-        let isOpen = savedAccordionStates[categoryId] !== false; // Default to true if not in storage or is true
-
-        if (isOpen) {
-            content.classList.remove('hidden');
-            icon.classList.add('rotate-180');
-        } else {
-            content.classList.add('hidden');
-            icon.classList.remove('rotate-180');
-        }
-
-        header.addEventListener('click', () => {
-            // Toggle the 'hidden' class on the content
-            content.classList.toggle('hidden');
-            // Toggle the 'rotate-180' class on the icon
-            icon.classList.toggle('rotate-180');
-
-            // Update state and save to localStorage
-            isOpen = !content.classList.contains('hidden');
-            savedAccordionStates[categoryId] = isOpen;
-            localStorage.setItem(ACCORDION_STATE_KEY, JSON.stringify(savedAccordionStates));
+    function initAccordion() {
+        const accordionHeaders = document.querySelectorAll('.accordion-header');
+        const ACCORDION_STATE_KEY = 'accordionState'; // Key for localStorage
+    
+        // Load accordion states from localStorage on page load
+        const savedAccordionStates = JSON.parse(localStorage.getItem(ACCORDION_STATE_KEY)) || {};
+    
+        accordionHeaders.forEach(header => {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.accordion-icon');
+            const categoryId = header.dataset.categoryId; // Get the category ID
+    
+            // Initialize state based on localStorage or default to open
+            let isOpen = savedAccordionStates[categoryId] !== false; // Default to true if not in storage or is true
+    
+            if (isOpen) {
+                content.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                content.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+    
+            header.addEventListener('click', () => {
+                // Toggle the 'hidden' class on the content
+                content.classList.toggle('hidden');
+                // Toggle the 'rotate-180' class on the icon
+                icon.classList.toggle('rotate-180');
+    
+                // Update state and save to localStorage
+                isOpen = !content.classList.contains('hidden');
+                savedAccordionStates[categoryId] = isOpen;
+                localStorage.setItem(ACCORDION_STATE_KEY, JSON.stringify(savedAccordionStates));
+            });
         });
-    });
+    }
+
+    // Initialize challenge cards and accordion after DOM is fully loaded
+    initChallengeCards();
+    initAccordion();
 });

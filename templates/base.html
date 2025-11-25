@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/must-have.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='themes/' + active_theme + '/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/jquery-datatables/jquery.dataTables.min.css') }}">
     <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/password_toggle.js') }}" defer></script>
 </head>
@@ -71,7 +72,10 @@
     <script src="{{ url_for('static', filename='vendor/chartjs-adapter-date-fns/chartjs-adapter-date-fns.min.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/chartjs-plugin-annotation/chartjs-plugin-annotation.min.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/socket.io/socket.io.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/marked.umd.js') }}"></script> <!-- Moved here -->
+    <script src="{{ url_for('static', filename='js/marked.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/jquery-datatables/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/jquery-datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tables.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

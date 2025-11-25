@@ -9,7 +9,6 @@ and admin user creation.
 """
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, current_app
 from flask_login import login_user, current_user, logout_user, login_required
-from flask_socketio import SocketIO, emit
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from scripts.config import Config
@@ -133,9 +132,6 @@ def create_app(config_class=Config):
         strategy="moving-window"
     )
 
-    # Initialize SocketIO
-    socketio = SocketIO(app)
-
     # Note: Flask-RESTX Api is initialized within scripts/api_routes.py
     # and its blueprint (api_bp) is registered here.
 
@@ -164,7 +160,7 @@ def create_app(config_class=Config):
         Renders the home page. Redirects authenticated users to their profile.
         """
         if current_user.is_authenticated:
-            return redirect(url_for('profile'))
+            return redirect(url_for('challenges'))
         return render_template("index.html")
 
     @app.route('/register', methods=['GET', 'POST'])
@@ -349,6 +345,12 @@ def create_app(config_class=Config):
                                            .order_by(Submission.timestamp.desc())\
                                            .all()
 
+        # Fetch all flag attempts for the target user, eager-loading challenge and category details
+        flag_attempts = FlagAttempt.query.filter_by(user_id=target_user.id)\
+                                       .options(joinedload(FlagAttempt.challenge).joinedload(Challenge.category))\
+                                       .order_by(FlagAttempt.timestamp.desc())\
+                                       .all()
+
         # Initialize InlineGiveAwardForm
         give_award_form = None
         if current_user.is_admin:
@@ -385,7 +387,7 @@ def create_app(config_class=Config):
 
         return render_template('profile.html', title=f"{target_user.username}'s Profile",
                                user=target_user, submissions=user_submissions, user_rank=user_rank,
-                               give_award_form=give_award_form,
+                               give_award_form=give_award_form, flag_attempts=flag_attempts,
                                profile_charts_data=profile_charts_data,
                                profile_stats_data=profile_stats_data)
 
@@ -393,166 +395,12 @@ def create_app(config_class=Config):
     @login_required
     def challenges():
         """
-        Displays the challenges page, listing all categories and challenges.
+        Displays the challenges page, which will be populated dynamically via API.
         Requires the user to be logged in.
         """
         flag_form = FlagSubmissionForm()
-        
-        # Eager load hints for each challenge
-        all_categories = Category.query.options(
-            joinedload(Category.challenges)
-            .joinedload(Challenge.flags),
-            joinedload(Category.challenges)
-            .joinedload(Challenge.hints) # Eager load hints
-        ).all()
-
-        # Get all challenge IDs completed by the current user
-        completed_challenge_ids = {s.challenge_id for s in Submission.query.filter_by(user_id=current_user.id).all()}
-
-        # Get all flags submitted by the current user
-        submitted_flag_ids = {fs.challenge_flag_id for fs in FlagSubmission.query.filter_by(user_id=current_user.id).all()}
-
-        # Get all hints revealed by the current user
-        revealed_hint_ids = {uh.hint_id for uh in UserHint.query.filter_by(user_id=current_user.id).all()}
-
-        # --- Performance Optimization: Pre-fetch data for stripe calculations ---
-        # 1. Fetch all eligible users (non-admin, non-hidden) once
-        eligible_users_cache = User.query.filter_by(is_admin=False, hidden=False).all()
-        
-        # 2. Fetch all submissions by all users and build a cache: {user_id: {challenge_id, ...}}
-        # This will be used by challenge.is_unlocked_for_user and category.is_unlocked_for_user
-        all_submissions = Submission.query.with_entities(Submission.user_id, Submission.challenge_id).all()
-        user_completed_challenges_cache = {}
-        for user_id, challenge_id in all_submissions:
-            user_completed_challenges_cache.setdefault(user_id, set()).add(challenge_id)
-        # --- End Performance Optimization ---
-
-        # Prepare categories and challenges for display, considering unlock status
-        display_categories = []
-        for category in all_categories:
-            # Explicitly hide categories marked as hidden from regular users
-            if category.is_hidden and not current_user.is_admin:
-                continue # Skip this category entirely
-
-            category_is_unlocked = category.is_unlocked_for_user(current_user, user_completed_challenges_cache)
-            
-            # If category is not unlocked for a regular user, prepare a locked placeholder
-            if not current_user.is_admin and not category_is_unlocked:
-                # Create unlock_info for the locked category
-                unlock_info = {
-                    'type': category.unlock_type,
-                    'prerequisite_percentage_value': category.prerequisite_percentage_value,
-                    'prerequisite_count_value': category.prerequisite_count_value,
-                    'prerequisite_count_category_ids': category.prerequisite_count_category_ids,
-                    'prerequisite_challenge_ids': category.prerequisite_challenge_ids,
-                    'unlock_date_time': category.unlock_date_time
-                }
-                display_categories.append({
-                    'name': category.name,
-                    'is_unlocked': False,
-                    'unlock_info': unlock_info,
-                    'challenges': [], # No challenges to display for a locked category
-                    'solved_count': 0,
-                    'visible_count': 0
-                })
-                continue # Skip to the next category
-
-            # If category is unlocked (or current_user is admin), process its challenges
-            display_challenges = []
-            solved_count_for_category = 0
-            visible_count_for_category = 0
-
-            for challenge in category.challenges:
-                # For regular users, if a challenge is not unlocked, it should not be displayed at all.
-                # This covers both explicitly hidden challenges and challenges locked by prerequisites.
-                if not current_user.is_admin and not challenge.is_unlocked_for_user(current_user, user_completed_challenges_cache):
-                    continue # Skip this challenge entirely for regular users if not unlocked
-
-                # If we reach here, it means:
-                # 1. It's an admin user (who sees everything as unlocked for management)
-                # 2. It's a regular user AND the challenge is unlocked for them.
-                
-                # This challenge is visible
-                visible_count_for_category += 1
-
-                challenge.is_completed = challenge.id in completed_challenge_ids
-                if challenge.is_completed:
-                    solved_count_for_category += 1
-                
-                # Use the calculated_points property from the model
-                challenge.display_points = challenge.calculated_points
-                
-                # Count how many flags the user has submitted for this specific challenge
-                challenge.submitted_flags_count = FlagSubmission.query.filter_by(
-                    user_id=current_user.id,
-                    challenge_id=challenge.id
-                ).count()
-                
-                # Determine total flags for the challenge
-                challenge.total_flags = len(challenge.flags)
-
-                # Add hint information
-                for hint in challenge.hints:
-                    hint.is_revealed = hint.id in revealed_hint_ids
-                
-                # --- Determine Challenge Stripes for Public View ---
-                # This logic is adapted from admin_routes.py to ensure public challenges also have stripe data
-                now = datetime.now(UTC)
-                unlocked_percentage = challenge.get_unlocked_percentage_for_eligible_users(eligible_users_cache, user_completed_challenges_cache)
-
-                # Determine Red Stripe (Hidden / Timed)
-                is_red_stripe = False
-                if challenge.is_hidden or challenge.category.is_hidden:
-                    is_red_stripe = True  # Explicitly hidden or category hidden
-                elif challenge.unlock_type == 'TIMED' and challenge.unlock_date_time:
-                    aware_unlock_date_time = make_datetime_timezone_aware(challenge.unlock_date_time)
-                    if now < aware_unlock_date_time:
-                        is_red_stripe = True  # Timed unlock in the future
-
-                # Determine Orange Stripe (Unlockable (No Solves))
-                is_orange_stripe = False
-                if not is_red_stripe and \
-                   challenge.unlock_type != 'NONE' and \
-                   (challenge.unlock_type != 'TIMED' or (challenge.unlock_date_time and now >= aware_unlock_date_time)) and \
-                   unlocked_percentage == 0:
-                    is_orange_stripe = True
-
-                # Determine Yellow Stripe (Unlocked (0-50%))
-                is_yellow_stripe = False
-                if not is_red_stripe and \
-                   not is_orange_stripe and \
-                   unlocked_percentage > 0 and unlocked_percentage <= 50.0:
-                    is_yellow_stripe = True
-
-                # Determine Blue Stripe (Rarely Unlocked (50-90%))
-                is_blue_stripe = False
-                if not is_red_stripe and \
-                   not is_orange_stripe and \
-                   not is_yellow_stripe and \
-                   unlocked_percentage > 50.0 and unlocked_percentage <= 90.0:
-                    is_blue_stripe = True
-                
-                # Assign to computed attributes on the challenge object
-                challenge.computed_red_stripe = is_red_stripe
-                challenge.computed_orange_stripe = is_orange_stripe
-                challenge.computed_yellow_stripe = is_yellow_stripe
-                challenge.computed_blue_stripe = is_blue_stripe
-                
-                display_challenges.append(challenge)
-            
-            # Only add categories that are unlocked (or admin) and have challenges (if not admin, challenges are filtered)
-            # If admin, we want to show the category even if it has no challenges, or if its challenges are all hidden.
-            # For regular users, if after filtering, there are no challenges, don't show the category.
-            if current_user.is_admin or display_challenges:
-                display_categories.append({
-                    'name': category.name,
-                    'is_unlocked': True, # For admin, it's always considered unlocked for display
-                    'challenges': display_challenges,
-                    'solved_count': solved_count_for_category,
-                    'visible_count': visible_count_for_category
-                })
         accordion_display_style = get_setting('ACCORDION_DISPLAY_STYLE', 'boxes')
-        return render_template('challenges.html', title='Challenges', categories=display_categories, flag_form=flag_form, current_user_score=current_user.score, accordion_display_style=accordion_display_style)
+        return render_template('challenges.html', title='Challenges', flag_form=flag_form, current_user_score=current_user.score, accordion_display_style=accordion_display_style)
 
     # The calculate_points function is now integrated into the Challenge model as a property.
     # This function is no longer needed here.
@@ -647,14 +495,6 @@ def create_app(config_class=Config):
                     invalidate_cache('scoreboard_data:*') # Invalidate scoreboard cache
 
                     challenge.update_stripe_status()
-                    emit('score_update', {
-                        'user_id': current_user.id,
-                        'username': current_user.username,
-                        'score': current_user.score,
-                        'challenge_id': challenge.id,
-                        'challenge_name': challenge.name,
-                        'points_awarded': points_awarded
-                    }, broadcast=True, namespace='/')
                     
                     return jsonify({'success': True, 'message': f'Coding challenge solved! You earned {points_awarded} points!', 'stdout': execution_result.stdout, 'stderr': execution_result.stderr})
                 else:
@@ -737,17 +577,6 @@ def create_app(config_class=Config):
                         # Recalculate stripe status for the solved challenge
                         challenge.update_stripe_status()
                         
-                        # Emit a SocketIO event for score update
-                        from flask_socketio import emit
-                        emit('score_update', {
-                            'user_id': current_user.id,
-                            'username': current_user.username,
-                            'score': current_user.score,
-                            'challenge_id': challenge.id,
-                            'challenge_name': challenge.name,
-                            'points_awarded': points_awarded
-                        }, broadcast=True, namespace='/')
-
                         return jsonify({'success': True, 'message': f'Correct Flag! Challenge Solved! You earned {points_awarded} points!'})
                     else:
                         # 7. Flag was correct, but challenge not fully solved yet
@@ -941,383 +770,38 @@ def create_app(config_class=Config):
         """
         return render_template('scoreboard.html', title='Scoreboard')
 
-    return app, socketio
+    return app
 
-def export_data_to_yaml(output_file_path, data_type='all'):
+
+
+def create_admin(username, password):
     """
-    Exports specified data types (users, categories, challenges, submissions, flag_attempts, awards)
-    from the database to a YAML file.
+    Creates a new super admin user.
 
     Args:
-        output_file_path (str): The path to the output YAML file.
-        data_type (str, optional): The type of data to export. Can be 'all', 'users',
-                                   'categories', 'challenges', 'submissions', 'flag_attempts',
-                                   or 'awards'. Defaults to 'all'.
-    """
-    with create_app().app_context():
-        from scripts.models import User, Category, Challenge, ChallengeFlag, Submission, FlagSubmission, FlagAttempt, AwardCategory, Award
-        exported_data = {}
-
-        if data_type == 'users' or data_type == 'all':
-            users = User.query.all()
-            users_data = []
-            for user in users:
-                users_data.append({
-                    'username': user.username,
-                    'email': user.email,
-                    'is_admin': user.is_admin,
-                    'is_super_admin': user.is_super_admin,
-                    'hidden': user.hidden,
-                    'score': user.score
-                    # Password hash is not exported for security reasons
-                })
-            exported_data['users'] = users_data
-
-        if data_type == 'categories' or data_type == 'all':
-            categories = Category.query.all()
-            categories_data = []
-            for category in categories:
-                categories_data.append({
-                    'name': category.name
-                })
-            exported_data['categories'] = categories_data
-
-        if data_type == 'challenges' or data_type == 'all':
-            challenges = Challenge.query.all()
-            challenges_data = []
-            for challenge in challenges:
-                flags_data = [flag.flag_content for flag in challenge.flags]
-                hints_data = []
-                for hint in challenge.hints:
-                    hints_data.append({
-                        'title': hint.title,
-                        'content': hint.content,
-                        'cost': hint.cost
-                    })
-                challenges_data.append({
-                    'name': challenge.name,
-                    'description': challenge.description,
-                    'points': challenge.points,
-                    'hint_cost': challenge.hint_cost, # New: Export hint_cost for the challenge
-                    'category': challenge.category.name,
-                    'case_sensitive': challenge.case_sensitive,
-                    'multi_flag_type': challenge.multi_flag_type,
-                    'multi_flag_threshold': challenge.multi_flag_threshold,
-                    'flags': flags_data,
-                    'hints': hints_data # New: Export hints
-                })
-            exported_data['challenges'] = challenges_data
-        
-        # Export other data types if needed (e.g., submissions, flag_attempts, awards)
-        # For 'all', we might want to include everything, but for now, let's stick to core entities.
-        # Submissions, FlagSubmissions, FlagAttempts, Awards are usually tied to specific user/challenge IDs
-        # and might be complex to re-import without careful ID management.
-        # For a simple export, we can just list them.
-
-        if data_type == 'submissions' or data_type == 'all':
-            submissions = Submission.query.all()
-            submissions_data = []
-            for submission in submissions:
-                submissions_data.append({
-                    'username': submission.solver.username,
-                    'challenge_name': submission.challenge_rel.name,
-                    'timestamp': submission.timestamp.isoformat(),
-                    'score_at_submission': submission.score_at_submission
-                })
-            exported_data['submissions'] = submissions_data
-
-        if data_type == 'flag_attempts' or data_type == 'all':
-            flag_attempts = FlagAttempt.query.all()
-            flag_attempts_data = []
-            for attempt in flag_attempts:
-                flag_attempts_data.append({
-                    'username': attempt.user.username,
-                    'challenge_name': attempt.challenge.name,
-                    'submitted_flag': attempt.submitted_flag,
-                    'is_correct': attempt.is_correct,
-                    'timestamp': attempt.timestamp.isoformat()
-                })
-            exported_data['flag_attempts'] = flag_attempts_data
-
-        if data_type == 'awards' or data_type == 'all':
-            awards = Award.query.all()
-            awards_data = []
-            for award in awards:
-                awards_data.append({
-                    'recipient_username': award.recipient.username,
-                    'category_name': award.category.name,
-                    'points_awarded': award.points_awarded,
-                    'giver_username': award.giver.username,
-                    'timestamp': award.timestamp.isoformat()
-                })
-            exported_data['awards'] = awards_data
-
-        try:
-            with open(output_file_path, 'w') as f:
-                yaml.dump(exported_data, f, default_flow_style=False, sort_keys=False)
-            print(f"Data of type '{data_type}' exported successfully to {output_file_path}")
-        except IOError as e:
-            print(f"Error writing to file {output_file_path}: {e}")
-
-def import_users_from_json(json_file_path):
-    """
-    Imports user data from a JSON file into the database.
-
-    Args:
-        json_file_path (str): The path to the JSON file containing user data.
+        username (str): The username for the new admin.
+        password (str): The password for the new admin.
     """
     with create_app().app_context():
         from scripts.models import User
-        try:
-            with open(json_file_path, 'r') as f:
-                users_data = json.load(f)
-        except FileNotFoundError:
-            print(f"Error: JSON file not found at {json_file_path}")
-            return
-        except json.JSONDecodeError as e:
-            print(f"Error parsing JSON file: {e}")
-            return
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        admin = User(username=username, email=None, password_hash=hashed_password, is_admin=True, is_super_admin=True, hidden=True)
+        db.session.add(admin)
+        db.session.commit()
+        print(f"Super Admin user with username {username} created successfully.")
 
-        if not isinstance(users_data, list):
-            print("Error: JSON file must contain a list of user objects.")
-            return
-
-        for user_data in users_data:
-            username = user_data.get('username')
-            password = user_data.get('password')
-            if not username or not password:
-                print(f"Skipping user: 'username' and 'password' are required. Data: {user_data}")
-                continue
-
-            existing_user = User.query.filter_by(username=username).first()
-            if existing_user:
-                print(f"Warning: User '{username}' already exists. Skipping import.")
-                continue
-
-            hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-            user = User(
-                username=username,
-                email=user_data.get('email'),
-                password_hash=hashed_password,
-                is_admin=user_data.get('is_admin', False),
-                is_super_admin=user_data.get('is_super_admin', False),
-                hidden=user_data.get('hidden', False)
-            )
-            db.session.add(user)
-            db.session.commit()
-            print(f"User '{username}' imported successfully.")
-        print("User import process completed.")
-
-def import_categories_from_yaml(yaml_file_path):
+def recalculate_all_challenge_stripes():
     """
-    Imports category data from a YAML file into the database.
-
-    Args:
-        yaml_file_path (str): The path to the YAML file containing category data.
+    Recalculates and updates the stripe status for all challenges.
     """
     with create_app().app_context():
-        from scripts.models import Category, Challenge
-        try:
-            with open(yaml_file_path, 'r') as f:
-                data = yaml.safe_load(f)
-        except FileNotFoundError:
-            print(f"Error: YAML file not found at {yaml_file_path}")
-            return
-        except yaml.YAMLError as e:
-            print(f"Error parsing YAML file: {e}")
-            return
-
-        if 'categories' not in data:
-            print("Error: YAML file must contain a 'categories' key.")
-            return
-
-        # Pass 1: Create all categories with basic properties
-        categories_to_process_prerequisites = []
-
-        for category_data in data['categories']:
-            category_name = category_data.get('name')
-            if not category_name:
-                print(f"Skipping category: 'name' is required. Data: {category_data}")
-                continue
-
-            existing_category = Category.query.filter_by(name=category_name).first()
-            if existing_category:
-                print(f"Warning: Category '{category_name}' already exists. Skipping import.")
-                continue
-
-            category = Category(
-                name=category_name,
-                unlock_type=category_data.get('unlock_type', 'NONE'),
-                prerequisite_percentage_value=category_data.get('prerequisite_percentage_value'),
-                prerequisite_count_value=category_data.get('prerequisite_count_value'),
-                unlock_date_time=category_data.get('unlock_date_time'),
-                is_hidden=category_data.get('is_hidden', False),
-                # Prerequisite IDs will be set in Pass 2
-                prerequisite_challenge_ids=[],
-                prerequisite_count_category_ids=[]
-            )
-            db.session.add(category)
-            db.session.flush() # Use flush to get category ID
-
-            categories_to_process_prerequisites.append({
-                'category_obj': category,
-                'original_data': category_data
-            })
-            print(f"Category '{category_name}' (Pass 1) imported successfully.")
-        
-        db.session.commit() # Commit all categories created in Pass 1
-
-        # Pass 2: Process prerequisites for categories
-        for item in categories_to_process_prerequisites:
-            category_obj = item['category_obj']
-            original_data = item['original_data']
-
-            # Handle prerequisite_challenge_names
-            prerequisite_challenge_names = original_data.get('prerequisite_challenge_names', [])
-            if prerequisite_challenge_names:
-                prerequisite_challenge_ids = []
-                for pre_name in prerequisite_challenge_names:
-                    pre_challenge = Challenge.query.filter_by(name=pre_name).first()
-                    if pre_challenge:
-                        prerequisite_challenge_ids.append(pre_challenge.id)
-                    else:
-                        print(f"Warning: Prerequisite challenge '{pre_name}' for category '{category_obj.name}' not found. Skipping this prerequisite.")
-                if prerequisite_challenge_ids:
-                    category_obj.prerequisite_challenge_ids = prerequisite_challenge_ids
-            
-            # Handle prerequisite_count_category_names
-            prerequisite_count_category_names = original_data.get('prerequisite_count_category_names', [])
-            if prerequisite_count_category_names:
-                prerequisite_count_category_ids = []
-                for pre_name in prerequisite_count_category_names:
-                    pre_category = Category.query.filter_by(name=pre_name).first()
-                    if pre_category:
-                        prerequisite_count_category_ids.append(pre_category.id)
-                    else:
-                        print(f"Warning: Prerequisite category '{pre_name}' for category '{category_obj.name}' not found. Skipping this prerequisite.")
-                if prerequisite_count_category_ids:
-                    category_obj.prerequisite_count_category_ids = prerequisite_count_category_ids
-            
-            if prerequisite_challenge_names or prerequisite_count_category_names:
-                db.session.add(category_obj)
-                db.session.commit()
-                print(f"Category '{category_obj.name}' (Pass 2) prerequisites linked successfully.")
-        
-        print("Category import process completed.")
-
-def import_challenges_from_yaml(yaml_file_path):
-    """
-    Imports challenge data from a YAML file into the database.
-
-    Args:
-        yaml_file_path (str): The path to the YAML file containing challenge data.
-    """
-    with create_app().app_context():
-        from scripts.models import Category, Challenge, ChallengeFlag, Hint # Import Hint
-        try:
-            with open(yaml_file_path, 'r') as f:
-                data = yaml.safe_load(f)
-        except FileNotFoundError:
-            print(f"Error: YAML file not found at {yaml_file_path}")
-            return
-        except yaml.YAMLError as e:
-            print(f"Error parsing YAML file: {e}")
-            return
-
-        if 'challenges' not in data:
-            print("Error: YAML file must contain a 'challenges' key.")
-            return
-
-        # Pass 1: Create all challenges and their basic properties, flags, and hints.
-        # Store challenge_data temporarily to process prerequisites in Pass 2.
-        challenges_to_process_prerequisites = []
-
-        for challenge_data in data['challenges']:
-            # Get or create category
-            category_name = challenge_data.get('category', 'Uncategorized')
-            category = Category.query.filter_by(name=category_name).first()
-            if not category:
-                category = Category(name=category_name)
-                db.session.add(category)
-                db.session.commit() # Commit to get category ID
-
-            # Create challenge
-            challenge_name = challenge_data.get('name')
-            if not challenge_name:
-                print(f"Skipping challenge: 'name' is required. Data: {challenge_data}")
-                continue
-
-            existing_challenge = Challenge.query.filter_by(name=challenge_name).first()
-            if existing_challenge:
-                print(f"Warning: Challenge '{challenge_name}' already exists. Skipping import.")
-                continue
-
-            challenge = Challenge(
-                name=challenge_name,
-                description=challenge_data.get('description', ''),
-                points=challenge_data.get('points', 0),
-                case_sensitive=challenge_data.get('case_sensitive', True),
-                category_id=category.id,
-                multi_flag_type=challenge_data.get('multi_flag_type', 'SINGLE'),
-                multi_flag_threshold=challenge_data.get('multi_flag_threshold'),
-                hint_cost=challenge_data.get('hint_cost', 0),
-                # Prerequisites will be set in Pass 2
-                unlock_type='ALWAYS_UNLOCKED', # Default, will be updated if prerequisites exist
-                prerequisite_challenge_ids=[]
-            )
-            db.session.add(challenge)
-            db.session.flush() # Use flush to get challenge ID before commit for flags/hints
-
-            # Add flags
-            flags = challenge_data.get('flags', [])
-            if not flags:
-                print(f"Warning: Challenge '{challenge_name}' has no flags defined.")
-            for flag_content in flags:
-                challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
-                db.session.add(challenge_flag)
-            
-            # Add hints
-            hints = challenge_data.get('hints', [])
-            for hint_data in hints:
-                hint_title = hint_data.get('title', 'Hint')
-                hint_content = hint_data.get('content')
-                hint_cost = hint_data.get('cost', 0)
-                if hint_content:
-                    hint = Hint(challenge_id=challenge.id, title=hint_title, content=hint_content, cost=hint_cost)
-                    db.session.add(hint)
-            
-            db.session.commit() # Commit after adding challenge, flags, and hints
-
-            # Store for Pass 2 processing
-            challenges_to_process_prerequisites.append({
-                'challenge_obj': challenge,
-                'original_data': challenge_data
-            })
-            print(f"Challenge '{challenge_name}' (Pass 1) imported successfully.")
-        
-        # Pass 2: Process prerequisites
-        for item in challenges_to_process_prerequisites:
-            challenge_obj = item['challenge_obj']
-            original_data = item['original_data']
-            
-            prerequisite_names = original_data.get('prerequisites', [])
-            if prerequisite_names:
-                prerequisite_ids = []
-                for pre_name in prerequisite_names:
-                    pre_challenge = Challenge.query.filter_by(name=pre_name).first()
-                    if pre_challenge:
-                        prerequisite_ids.append(pre_challenge.id)
-                    else:
-                        print(f"Warning: Prerequisite challenge '{pre_name}' for '{challenge_obj.name}' not found. Skipping this prerequisite.")
-                
-                if prerequisite_ids:
-                    challenge_obj.prerequisite_challenge_ids = prerequisite_ids
-                    challenge_obj.unlock_type = 'CHALLENGE_SOLVED'
-                    db.session.add(challenge_obj)
-                    db.session.commit()
-                    print(f"Challenge '{challenge_obj.name}' (Pass 2) prerequisites linked successfully.")
-        
-        print("Challenge import process completed.")
+        from scripts.models import Challenge
+        print("Recalculating stripe statuses for all challenges...")
+        challenges = Challenge.query.all()
+        for challenge in challenges:
+            challenge.update_stripe_status()
+            print(f"Updated stripe status for Challenge: {challenge.name}")
+        print("All challenge stripe statuses recalculated successfully.")
 
 def create_admin(username, password):
     """
@@ -1349,6 +833,7 @@ def recalculate_all_challenge_stripes():
         print("All challenge stripe statuses recalculated successfully.")
 
 if __name__ == '__main__':
+    from scripts.import_export import import_challenges_from_yaml, import_categories_from_yaml, import_users_from_json, export_data_to_yaml
     parser = argparse.ArgumentParser(description='WindFlag CTF Platform', add_help=False)
     parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                         help='Show this help message and exit.')
@@ -1370,7 +855,7 @@ if __name__ == '__main__':
         else:
             test_mode_timeout = args.test
     else:
-        app, socketio = create_app() # Unpack app and socketio
+        app = create_app() # Unpack app and socketio
         test_mode_timeout = None
 
     # Check if the database file exists, if not, create it
@@ -1410,9 +895,9 @@ if __name__ == '__main__':
     elif args.recalculate_stripes:
         recalculate_all_challenge_stripes()
     else:
-        # Otherwise, run the Flask app with SocketIO
+        # Otherwise, run the Flask app directly
         if args.test is not None:
             print(f"Running in test mode: server will shut down in {test_mode_timeout} seconds.")
             timer = threading.Timer(test_mode_timeout, os._exit, args=[0])
             timer.start()
-        socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+        app.run(debug=True, host='0.0.0.0', port=5000)

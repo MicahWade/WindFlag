@@ -3,8 +3,8 @@
 {% block content %}
 <div class="container mt-4">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="theme-card shadow-lg mb-4"> {# Removed text-center from here #}
+        <div class="col-md-8 col-lg-6 mb-4">
+            <div class="theme-card shadow-lg">
                 <div class="theme-card-header text-center">
                     <h3 class="theme-card-title mb-0 d-inline-block">{{ user.username }}'s Profile</h3>
                     {% if current_user.is_admin %}
@@ -18,9 +18,9 @@
                             {% if user_rank %}
                                 <p class="lead mb-1"><strong>Rank:</strong> <span class="theme-profile-score-rank">#{{ user_rank }}</span></p>
                             {% else %}
-                                <p class="lead mb-1"><strong>Rank:</strong> <span class="theme-profile-text-muted">N/A (Hidden User)</span></p>
+                                <p class="lead mb-1"><strong>Rank:</b> <span class="theme-profile-text-muted">N/A (Hidden User)</span></p>
                             {% endif %}
-                            <p class="lead mb-1"><strong>Score:</strong> <span class="theme-profile-score-rank">{{ user.score }}</span></p>
+                            <p class="lead mb-1"><strong>Score:</b> <span class="theme-profile-score-rank">{{ user.score }}</span></p>
                         </div>
                         <div class="text-center mx-3">
                             <p class="mb-1"><small class="theme-profile-text-muted">Last Seen: {{ user.last_seen.strftime('%Y-%m-%d') }}</small></p>
@@ -36,142 +36,238 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div> {# End of row for profile card #}
+
+    <div class="row justify-content-center"> {# New row for tabs and tab content #}
         <div class="col-12">
-            <div class="theme-card shadow-lg mb-4">
-                <div class="theme-card-header text-center"> {# Centered header #}
-                    <h3 class="theme-card-title mb-0">Solved Challenges</h3>
-                </div>
-                <div class="theme-card-body">
-                    {% if submissions %}
-                        <div class="overflow-x-auto">
-                            <table class="theme-table w-full">
-                                <thead>
-                                    <tr>
-                                        <th scope="col" class="theme-table-header-cell text-center">Challenge</th>
-                                        <th scope="col" class="theme-table-header-cell text-center">Category</th>
-                                        <th scope="col" class="theme-table-header-cell text-center">Points</th>
-                                        <th scope="col" class="theme-table-header-cell text-end">Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for submission in submissions %}
-                                    <tr>
-                                        <td class="py-2 text-center theme-table-body-cell"><a href="{{ url_for('challenges') }}" class="theme-link">{{ submission.challenge_rel.name }}</a></td>
-                                        <td class="py-2 text-center theme-table-body-cell">{{ submission.challenge_rel.category.name }}</td>
-                                        <td class="py-2 text-center theme-table-body-cell">{{ submission.challenge_rel.points }}</td>
-                                        <td class="py-2 text-end theme-table-body-cell">{{ submission.timestamp.strftime('%Y-%m-%d') }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+            <div class="theme-tab-navigation flex flex-wrap justify-center mb-4">
+                                <button class="theme-tab-button active" data-tab-target="#solved-challenges-tab">Solved Challenges</button>
+                                {% if current_user.is_admin %}
+                                    <button class="theme-tab-button" data-tab-target="#solves-admin-tab">Solves</button>
+                                    <button class="theme-tab-button" data-tab-target="#fails-admin-tab">Fails</button>
+                                    <button class="theme-tab-button" data-tab-target="#awards-admin-tab">Awards</button>
+                                {% endif %}
+                                <button class="theme-tab-button" data-tab-target="#charts-tab">Charts</button>
+                            </div>
+                
+                            <div id="solved-challenges-tab" class="theme-tab-content active">
+                                <div class="theme-card shadow-lg mb-4">
+                                    <div class="theme-card-header text-center">
+                                        <h3 class="theme-card-title mb-0">Solved Challenges</h3>
+                                    </div>
+                                    <div class="theme-card-body">
+                                        {% if submissions %}
+                                            <div class="overflow-x-auto">
+                                                <table class="theme-table w-full">
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col" class="theme-table-header-cell text-center">Challenge</th>
+                                                            <th scope="col" class="theme-table-header-cell text-center">Category</th>
+                                                            <th scope="col" class="theme-table-header-cell text-center">Points</th>
+                                                            <th scope="col" class="theme-table-header-cell text-end">Date</th>
+                                                            <th scope="col" class="theme-table-header-cell theme-table-end-padding"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for submission in submissions %}
+                                                        <tr>
+                                                            <td class="py-2 text-center theme-table-body-cell"><a href="{{ url_for('challenges') }}" class="theme-link">{{ submission.challenge_rel.name }}</a></td>
+                                                            <td class="py-2 text-center theme-table-body-cell">{{ submission.challenge_rel.category.name }}</td>
+                                                            <td class="py-2 text-center theme-table-body-cell">{{ submission.challenge_rel.points }}</td>
+                                                            <td class="py-2 text-end theme-table-body-cell date-column">{{ submission.timestamp.strftime('%d/%m') }}</td>
+                                                            <td class="py-2 theme-table-body-cell theme-table-end-padding"></td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        {% else %}
+                                            <p class="theme-profile-text-muted text-center">No challenges solved yet.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                
+                            {% if current_user.is_admin %}
+                            <div id="solves-admin-tab" class="theme-tab-content">
+                                <div class="theme-card shadow-lg mb-4">
+                                    <div class="theme-card-header text-center">
+                                        <h3 class="theme-card-title mb-0">All Solves</h3>
+                                    </div>
+                                    <div class="theme-card-body">
+                                        {% set solved_attempts = flag_attempts | selectattr('is_correct', '==', True) | list %}
+                                        {% if solved_attempts %}
+                                            <div class="overflow-x-auto">
+                                                <table class="theme-table w-full">
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col" class="theme-table-header-cell text-center">Challenge</th>
+                                                            <th scope="col" class="theme-table-header-cell text-center">Category</th>
+                                                            <th scope="col" class="theme-table-header-cell text-center">Submitted Flag</th>
+                                                            <th scope="col" class="theme-table-header-cell text-end">Date</th>
+                                                            <th scope="col" class="theme-table-header-cell theme-table-end-padding"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for attempt in solved_attempts %}
+                                                        <tr>
+                                                            <td class="py-2 text-center theme-table-body-cell"><a href="{{ url_for('challenges') }}" class="theme-link">{{ attempt.challenge.name }}</a></td>
+                                                            <td class="py-2 text-center theme-table-body-cell">{{ attempt.challenge.category.name }}</td>
+                                                            <td class="py-2 text-center theme-table-body-cell word-break-all">{{ attempt.submitted_flag }}</td>
+                                                            <td class="py-2 text-end theme-table-body-cell date-column">{{ attempt.timestamp.strftime('%d/%m') }}</td>
+                                                            <td class="py-2 theme-table-body-cell theme-table-end-padding"></td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        {% else %}
+                                            <p class="theme-profile-text-muted text-center">No successful flags submitted yet.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                
+                            <div id="fails-admin-tab" class="theme-tab-content">
+                                <div class="theme-card shadow-lg mb-4">
+                                    <div class="theme-card-header text-center">
+                                        <h3 class="theme-card-title mb-0">Failed Attempts</h3>
+                                    </div>
+                                    <div class="theme-card-body">
+                                        {% set failed_attempts = flag_attempts | selectattr('is_correct', '==', False) | list %}
+                                        {% if failed_attempts %}
+                                            <div class="overflow-x-auto">
+                                                <table class="theme-table w-full">
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col" class="theme-table-header-cell text-center">Challenge</th>
+                                                            <th scope="col" class="theme-table-header-cell text-center">Category</th>
+                                                            <th scope="col" class="theme-table-header-cell text-center">Submitted Flag</th>
+                                                            <th scope="col" class="theme-table-header-cell text-end">Date</th>
+                                                            <th scope="col" class="theme-table-header-cell theme-table-end-padding"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for attempt in failed_attempts %}
+                                                        <tr>
+                                                            <td class="py-2 text-center theme-table-body-cell"><a href="{{ url_for('challenges') }}" class="theme-link">{{ attempt.challenge.name }}</a></td>
+                                                            <td class="py-2 text-center theme-table-body-cell">{{ attempt.challenge.category.name }}</td>
+                                                            <td class="py-2 text-center theme-table-body-cell word-break-all">{{ attempt.submitted_flag }}</td>
+                                                            <td class="py-2 text-end theme-table-body-cell date-column">{{ attempt.timestamp.strftime('%d/%m') }}</td>
+                                                            <td class="py-2 theme-table-body-cell theme-table-end-padding"></td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        {% else %}
+                                            <p class="theme-profile-text-muted text-center">No failed flags submitted yet.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                
+                            <div id="awards-admin-tab" class="theme-tab-content">
+                                <div class="theme-card shadow-lg mb-4">
+                                    <div class="theme-card-header text-center">
+                                        <h3 class="theme-card-title mb-0">Awards Received</h3>
+                                    </div>
+                                    <div class="theme-card-body">
+                                        {% if user.awards_received %}
+                                            <div class="overflow-x-auto">
+                                                <table class="theme-table w-full">
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col" class="theme-table-header-cell text-center">Category</th>
+                                                            <th scope="col" class="theme-table-header-cell text-center">Points</th>
+                                                            <th scope="col" class="theme-table-header-cell text-center">Given By</th>
+                                                            <th scope="col" class="theme-table-header-cell text-end date-column">Date</th>
+                                                            <th scope="col" class="theme-table-header-cell theme-table-end-padding"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for award in user.awards_received %}
+                                                        <tr>
+                                                            <td class="py-2 text-center theme-table-body-cell">{{ award.category.name }}</td>
+                                                            <td class="py-2 text-center theme-table-body-cell">{{ award.points_awarded }}</td>
+                                                            <td class="py-2 text-center theme-table-body-cell">{{ award.giver.username }}</td>
+                                                            <td class="py-2 text-end theme-table-body-cell date-column">{{ award.timestamp.strftime('%d/%m') }}</td>
+                                                            <td class="py-2 theme-table-body-cell theme-table-end-padding"></td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        {% else %}
+                                            <p class="theme-profile-text-muted text-center">No awards received yet.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+            <div id="charts-tab" class="theme-tab-content">
+                <div class="col-12 mt-4">
+                    {% if profile_charts_data.points_over_time %}
+                    <div id="pointsOverTimeChartContainer" class="theme-chart-container shadow-lg mb-4">
+                        <div class="theme-card-header text-center">
+                            <h3 class="theme-card-title mb-0">Points Over Time</h3>
                         </div>
-                    {% else %}
-                        <p class="theme-profile-text-muted text-center">No challenges solved yet.</p> {# Centered text #}
+                        <div class="theme-card-body">
+                            <canvas id="pointsOverTimeChart" class="points-over-time-chart"></canvas>
+                            <script type="application/json" id="profile-stats-data">{{ profile_stats_data | tojson }}</script>
+                            <script type="application/json" id="is-admin-data">{{ current_user.is_admin | tojson }}</script>
+                            <script type="application/json" id="profile-charts-data">{{ profile_charts_data | tojson }}</script>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="flex flex-wrap -mx-4">
+                        {% if profile_charts_data.fails_vs_succeeds %}
+                        <div class="w-full lg:w-1/2 px-4">
+                            <div id="failsVsSucceedsChartContainer" class="theme-chart-container shadow-lg mb-4 chart-hover-scale">
+                                <div class="theme-card-header text-center">
+                                    <h3 class="theme-card-title mb-0">Flag Attempts: Succeeds vs. Fails</h3>
+                                </div>
+                                <div class="theme-card-body">
+                                    <canvas id="failsVsSucceedsChart" class="fails-vs-succeeds-chart"></canvas>
+                                    <script type="application/json" id="fails-vs-succeeds-data">{{ profile_charts_data.fails_vs_succeeds | tojson }}</script>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if profile_charts_data.categories_per_score %}
+                        <div class="w-full lg:w-1/2 px-4">
+                            <div id="categoriesPerScoreChartContainer" class="theme-chart-container shadow-lg mb-4 chart-hover-scale">
+                                <div class="theme-card-header text-center">
+                                    <h3 class="theme-card-title mb-0">Points per Category</h3>
+                                </div>
+                                <div class="theme-card-body">
+                                    <canvas id="categoriesPerScoreChart" class="categories-per-score-chart"></canvas>
+                                    <script type="application/json" id="categories-per-score-data">{{ profile_charts_data.categories_per_score | tojson }}</script>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if profile_charts_data.challenges_complete %}
+                    <div id="challengesCompleteChartContainer" class="theme-chart-container shadow-lg mb-4">
+                        <div class="theme-card-header text-center">
+                            <h3 class="theme-card-title mb-0">Challenges Solved Over Time</h3>
+                        </div>
+                        <div class="theme-card-body">
+                            <canvas id="challengesCompleteChart" class="challenges-complete-chart"></canvas>
+                            <script type="application/json" id="challenges-complete-data">{{ profile_charts_data.challenges_complete | tojson }}</script>
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>
         </div>
-
-        {% if current_user.is_admin %}
-        <div class="col-12">
-            <div class="theme-card shadow-lg mb-4">
-                <div class="theme-card-header text-center">
-                    <h3 class="theme-card-title mb-0">Awards Received</h3>
-                </div>
-                <div class="theme-card-body">
-                    {% if user.awards_received %}
-                        <div class="overflow-x-auto">
-                            <table class="theme-table w-full">
-                                <thead>
-                                    <tr>
-                                        <th scope="col" class="theme-table-header-cell text-center">Category</th>
-                                        <th scope="col" class="theme-table-header-cell text-center">Points</th>
-                                        <th scope="col" class="theme-table-header-cell text-center">Given By</th>
-                                        <th scope="col" class="theme-table-header-cell text-end date-column">Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for award in user.awards_received %}
-                                    <tr>
-                                        <td class="py-2 text-center theme-table-body-cell">{{ award.category.name }}</td>
-                                        <td class="py-2 text-center theme-table-body-cell">{{ award.points_awarded }}</td>
-                                        <td class="py-2 text-center theme-table-body-cell">{{ award.giver.username }}</td>
-                                        <td class="py-2 text-end theme-table-body-cell">{{ award.timestamp.strftime('%Y-%m-%d') }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <p class="theme-profile-text-muted text-center">No awards received yet.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="col-12 mt-4">
-            {% if profile_charts_data.points_over_time %}
-            <div id="pointsOverTimeChartContainer" class="theme-chart-container shadow-lg mb-4">
-                <div class="theme-card-header text-center">
-                    <h3 class="theme-card-title mb-0">Points Over Time</h3>
-                </div>
-                <div class="theme-card-body">
-                    <canvas id="pointsOverTimeChart" class="points-over-time-chart"></canvas>
-                    <script type="application/json" id="profile-stats-data">{{ profile_stats_data | tojson }}</script>
-                    <script type="application/json" id="is-admin-data">{{ current_user.is_admin | tojson }}</script>
-                    <script type="application/json" id="profile-charts-data">{{ profile_charts_data | tojson }}</script>
-                </div>
-            </div>
-            {% endif %}
-
-            <div class="flex flex-wrap -mx-4"> {# New flex container for side-by-side charts #}
-                {% if profile_charts_data.fails_vs_succeeds %}
-                <div class="w-full lg:w-1/2 px-4"> {# Half width on large screens #}
-                    <div id="failsVsSucceedsChartContainer" class="theme-chart-container shadow-lg mb-4 chart-hover-scale">
-                        <div class="theme-card-header text-center">
-                            <h3 class="theme-card-title mb-0">Flag Attempts: Succeeds vs. Fails</h3>
-                        </div>
-                        <div class="theme-card-body">
-                            <canvas id="failsVsSucceedsChart" class="fails-vs-succeeds-chart"></canvas>
-                            <script type="application/json" id="fails-vs-succeeds-data">{{ profile_charts_data.fails_vs_succeeds | tojson }}</script>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if profile_charts_data.categories_per_score %}
-                <div class="w-full lg:w-1/2 px-4"> {# Half width on large screens #}
-                    <div id="categoriesPerScoreChartContainer" class="theme-chart-container shadow-lg mb-4 chart-hover-scale">
-                        <div class="theme-card-header text-center">
-                            <h3 class="theme-card-title mb-0">Points per Category</h3>
-                        </div>
-                        <div class="theme-card-body">
-                            <canvas id="categoriesPerScoreChart" class="categories-per-score-chart"></canvas>
-                            <script type="application/json" id="categories-per-score-data">{{ profile_charts_data.categories_per_score | tojson }}</script>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-            </div> {# End flex container #}
-
-            {% if profile_charts_data.challenges_complete %}
-            <div id="challengesCompleteChartContainer" class="theme-chart-container shadow-lg mb-4">
-                <div class="theme-card-header text-center">
-                    <h3 class="theme-card-title mb-0">Challenges Solved Over Time</h3>
-                </div>
-                <div class="theme-card-body">
-                    <canvas id="challengesCompleteChart" class="challenges-complete-chart"></canvas>
-                    <script type="application/json" id="challenges-complete-data">{{ profile_charts_data.challenges_complete | tojson }}</script>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-
-        </div>
-    </div>
-</div>
+    </div> {# End of row for tabs and tab content #}
+</div> {# End of container #}
 
 {% if give_award_form %}
 <!-- Tailwind CSS Modal for Give Award -->

@@ -26,9 +26,6 @@ class Config:
     WORDS_FILE_PATH = os.environ.get('WORDS_FILE_PATH', 'words.text')
     ACTIVE_THEME = os.environ.get('ACTIVE_THEME', 'default')
 
-    # New: Live Score Graph
-    ENABLE_LIVE_SCORE_GRAPH = os.environ.get('ENABLE_LIVE_SCORE_GRAPH', 'True').lower() == 'true'
-
     # Rate Limiting Configuration
     RATELIMIT_DEFAULT = os.environ.get('RATELIMIT_DEFAULT', '200 per day, 50 per hour')
     RATELIMIT_LOGIN = os.environ.get('RATELIMIT_LOGIN', '5 per minute')
@@ -39,6 +36,7 @@ class Config:
     ENABLE_GITHUB_SSO = os.environ.get('ENABLE_GITHUB_SSO', 'False').lower() == 'true' # Set to 'True' to enable GitHub SSO (requires internet access)
     GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID')
     GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET')
+    UPLOAD_FOLDER = os.path.join(basedir, 'instance', 'uploads')
 
     # Redis Cache Configuration
     REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
