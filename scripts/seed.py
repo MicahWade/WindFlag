@@ -297,6 +297,14 @@ def seed_database():
                               prerequisite_challenge_ids=prerequisite_challenge_ids)
         challenges.append(challenge)
         db.session.add(challenge) # Add challenge to session
+        db.session.flush() # Flush to get challenge.id before creating flags
+
+        # Add flags for the challenge (for non-coding, non-dynamic, non-http challenges)
+        if challenge.challenge_type == 'FLAG' and challenge.multi_flag_type not in ['DYNAMIC', 'HTTP']:
+            for _ in range(num_flags_for_challenge):
+                flag_content = f"FLAG{{{challenge.name.replace(' ', '_').upper()}}}"
+                challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
+                db.session.add(challenge_flag)
     
     db.session.commit()
 

@@ -144,7 +144,7 @@ def create_app(config_class=Config):
         Renders the home page. Redirects authenticated users to their profile.
         """
         if current_user.is_authenticated:
-            return redirect(url_for('profile'))
+            return redirect(url_for('challenges'))
         return render_template("index.html")
 
     @app.route('/register', methods=['GET', 'POST'])
@@ -329,6 +329,12 @@ def create_app(config_class=Config):
                                            .order_by(Submission.timestamp.desc())\
                                            .all()
 
+        # Fetch all flag attempts for the target user, eager-loading challenge and category details
+        flag_attempts = FlagAttempt.query.filter_by(user_id=target_user.id)\
+                                       .options(joinedload(FlagAttempt.challenge).joinedload(Challenge.category))\
+                                       .order_by(FlagAttempt.timestamp.desc())\
+                                       .all()
+
         # Initialize InlineGiveAwardForm
         give_award_form = None
         if current_user.is_admin:
@@ -365,7 +371,7 @@ def create_app(config_class=Config):
 
         return render_template('profile.html', title=f"{target_user.username}'s Profile",
                                user=target_user, submissions=user_submissions, user_rank=user_rank,
-                               give_award_form=give_award_form,
+                               give_award_form=give_award_form, flag_attempts=flag_attempts,
                                profile_charts_data=profile_charts_data,
                                profile_stats_data=profile_stats_data)
 
