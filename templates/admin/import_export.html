@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1 class="theme-page-title text-3xl font-bold mb-6">Import/Export Data</h1>
+    <div class="theme-card p-8 rounded-lg shadow-lg">
+        <h2 class="theme-category-title text-2xl font-semibold mb-4">Import Challenges from YAML</h2>
+        <form method="post" enctype="multipart/form-data">
+            <div class="mb-4">
+                <label for="file" class="block text-sm font-bold mb-2">Choose a YAML file to import:</label>
+                <input type="file" name="file" id="file" class="theme-modal-input shadow appearance-none rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+            <button type="submit" class="theme-modal-button-primary font-bold py-2 px-4 rounded shadow-md">Import</button>
+        </form>
+    </div>
+{% endblock %}

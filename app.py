@@ -1151,6 +1151,35 @@ def recalculate_all_challenge_stripes():
             print(f"Updated stripe status for Challenge: {challenge.name}")
         print("All challenge stripe statuses recalculated successfully.")
 
+def create_admin(username, password):
+    """
+    Creates a new super admin user.
+
+    Args:
+        username (str): The username for the new admin.
+        password (str): The password for the new admin.
+    """
+    with create_app().app_context():
+        from scripts.models import User
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        admin = User(username=username, email=None, password_hash=hashed_password, is_admin=True, is_super_admin=True, hidden=True)
+        db.session.add(admin)
+        db.session.commit()
+        print(f"Super Admin user with username {username} created successfully.")
+
+def recalculate_all_challenge_stripes():
+    """
+    Recalculates and updates the stripe status for all challenges.
+    """
+    with create_app().app_context():
+        from scripts.models import Challenge
+        print("Recalculating stripe statuses for all challenges...")
+        challenges = Challenge.query.all()
+        for challenge in challenges:
+            challenge.update_stripe_status()
+            print(f"Updated stripe status for Challenge: {challenge.name}")
+        print("All challenge stripe statuses recalculated successfully.")
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='WindFlag CTF Platform', add_help=False)
     parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,

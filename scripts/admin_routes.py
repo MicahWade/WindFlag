@@ -979,6 +979,10 @@ def analytics():
                            all_challenges=all_challenges,
                            user_challenge_status=user_challenge_status)
 
+from werkzeug.utils import secure_filename
+import os
+from app import import_challenges_from_yaml, import_categories_from_yaml
+
 @admin_bp.route('/docs/dynamic_flags')
 @admin_required
 def dynamic_flags_docs():
@@ -986,3 +990,42 @@ def dynamic_flags_docs():
     Renders the documentation page for dynamic flags.
     """
     return render_template('docs/dynamic_flags.html', title='Dynamic Flags Documentation')
+
+@admin_bp.route('/import_export', methods=['GET', 'POST'])
+@admin_required
+def import_export():
+    """
+    Handles the import and export of data.
+    """
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part', 'danger')
+            return redirect(request.url)
+        file = request.files['file']
+        # if user does not select file, browser also
+        # submit an empty part without filename
+        if file.filename == '':
+            flash('No selected file', 'danger')
+            return redirect(request.url)
+        if file and file.filename.endswith('.yaml'):
+            filename = secure_filename(file.filename)
+            # Ensure the upload folder exists
+            upload_folder = current_app.config['UPLOAD_FOLDER']
+            if not os.path.exists(upload_folder):
+                os.makedirs(upload_folder)
+            filepath = os.path.join(upload_folder, filename)
+            file.save(filepath)
+            
+            # Since the import functions are in app.py, and they create their own app context,
+            # we can call them directly.
+            import_categories_from_yaml(filepath)
+            import_challenges_from_yaml(filepath)
+            
+            flash('YAML file imported successfully!', 'success')
+            return redirect(url_for('admin.import_export'))
+        else:
+            flash('Invalid file type. Please upload a YAML file.', 'danger')
+            return redirect(request.url)
+
+    return render_template('admin/import_export.html', title='Import/Export Data')

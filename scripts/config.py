@@ -36,6 +36,7 @@ class Config:
     ENABLE_GITHUB_SSO = os.environ.get('ENABLE_GITHUB_SSO', 'False').lower() == 'true'
     GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID')
     GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET')
+    UPLOAD_FOLDER = os.path.join(basedir, 'instance', 'uploads')
 
 class TestConfig(Config):
     """
