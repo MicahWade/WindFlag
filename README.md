@@ -54,57 +54,16 @@ WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwin
     pip install -r requirements.txt
     ```
 
-2.  **Download Frontend Assets (For Offline Use):**
-    To enable full offline functionality, download the required frontend libraries and place them in the correct static directories.
-
-    First, create the necessary directories:
-    ```bash
-    mkdir -p static/codemirror static/vendor/font-awesome/css static/vendor/tailwindcss static/vendor/socket.io static/vendor/chart.js static/vendor/luxon static/vendor/chartjs-adapter-luxon static/vendor/chartjs-adapter-date-fns static/vendor/chartjs-plugin-annotation
-    ```
-
-    Then, download the assets using `wget`:
-    ```bash
-    # CodeMirror
-    wget -O static/codemirror/codemirror.min.css https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.css
-    wget -O static/codemirror/dracula.min.css https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/theme/dracula.min.css
-    wget -O static/codemirror/codemirror.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.js
-    wget -O static/codemirror/shell.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/shell/shell.min.js
-    wget -O static/codemirror/dart.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/dart/dart.min.js
-    wget -O static/codemirror/haskell.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/haskell/haskell.min.js
-    wget -O static/codemirror/javascript.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/javascript/javascript.min.js
-    wget -O static/codemirror/php.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/php/php.min.js
-    wget -O static/codemirror/python.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/python/python.min.js
-
-    # Font Awesome
-    wget -O static/vendor/font-awesome/css/all.min.css https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css
-
-    # TailwindCSS
-    wget -O static/vendor/tailwindcss/browser.js https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4
-
-    # Socket.IO
-    wget -O static/vendor/socket.io/socket.io.min.js https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js
-
-    # Chart.js and related libraries
-    wget -O static/vendor/chart.js/chart.min.js https://cdn.jsdelivr.net/npm/chart.js
-    wget -O static/vendor/luxon/luxon.min.js https://cdn.jsdelivr.net/npm/luxon@3.x/build/global/luxon.min.js
-    wget -O static/vendor/chartjs-adapter-luxon/chartjs-adapter-luxon.min.js https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.x/dist/chartjs-adapter-luxon.min.js
-    wget -O static/vendor/chartjs-adapter-date-fns/chartjs-adapter-date-fns.min.js https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3
-    wget -O static/vendor/chartjs-plugin-annotation/chartjs-plugin-annotation.min.js https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0
-    
-    # marked.umd.js
-    wget -O static/js/marked.umd.js https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js
-    ```
-
-3.  **Configure Environment Variables:**
+2.  **Configure Environment Variables:**
     Copy the `.env.template` file to `.env` and fill in the values. For more information, see [ENV.md](docs/ENV.md).
 
-4.  **Run the Application:**
+3.  **Run the Application:**
     The default database (`app.db`) will be created automatically if it doesn't exist.
     ```bash
     python app.py
     ```
 
-5.  **Access the Application:**
+4.  **Access the Application:**
     Open your web browser and go to `http://127.0.0.1:5000/`.
 
 ## Creating an Admin User

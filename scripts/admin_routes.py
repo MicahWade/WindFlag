@@ -16,7 +16,6 @@ from scripts.utils import make_datetime_timezone_aware
 import secrets # New: for generating API keys
 import hashlib # New: for hashing API keys
 from scripts.theme_utils import scan_themes, get_active_theme, set_active_theme # New: Import theme utilities
-from scripts.cache import invalidate_cache # Import invalidate_cache
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -524,8 +523,6 @@ def update_challenge(challenge_id):
             db.session.add(challenge_flag)
         
         db.session.commit()
-        invalidate_cache(f'challenge_details:{challenge.id}')
-        invalidate_cache(f'challenge:{challenge.id}')
         flash('Challenge has been updated!', 'success')
         return redirect(url_for('admin.manage_challenges'))
     elif request.method == 'GET':
@@ -586,8 +583,6 @@ def delete_challenge(challenge_id):
     challenge = Challenge.query.get_or_404(challenge_id)
     db.session.delete(challenge)
     db.session.commit()
-    invalidate_cache(f'challenge_details:{challenge_id}')
-    invalidate_cache(f'challenge:{challenge_id}')
     flash('Challenge has been deleted!', 'success')
     return redirect(url_for('admin.manage_challenges'))
 

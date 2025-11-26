@@ -33,14 +33,10 @@ class Config:
     RATELIMIT_SUBMIT_FLAG = os.environ.get('RATELIMIT_SUBMIT_FLAG', '10 per minute')
 
     # GitHub SSO Configuration
-    ENABLE_GITHUB_SSO = os.environ.get('ENABLE_GITHUB_SSO', 'False').lower() == 'true' # Set to 'True' to enable GitHub SSO (requires internet access)
+    ENABLE_GITHUB_SSO = os.environ.get('ENABLE_GITHUB_SSO', 'False').lower() == 'true'
     GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID')
     GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET')
     UPLOAD_FOLDER = os.path.join(basedir, 'instance', 'uploads')
-
-    # Redis Cache Configuration
-    REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-    ENABLE_REDIS_CACHE = os.environ.get('ENABLE_REDIS_CACHE', 'False').lower() == 'true'
 
 class TestConfig(Config):
     """

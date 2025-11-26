@@ -8,7 +8,6 @@ from scripts.models import Challenge, Category, ChallengeFlag, Submission, User,
 from scripts.utils import api_key_required
 from scripts.code_execution import execute_code_in_sandbox, CodeExecutionResult
 from functools import wraps
-from scripts.cache import invalidate_cache # Import invalidate_cache
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -70,9 +69,6 @@ def create_challenge():
     )
     db.session.add(challenge)
     db.session.commit()
-    invalidate_cache('challenge:*')
-    invalidate_cache('challenge_details:*')
-    invalidate_cache('scoreboard_data:*')
 
     if 'flags' in data and isinstance(data['flags'], list):
         for flag_content in data['flags']:
@@ -273,9 +269,6 @@ def update_challenge_api(challenge_id):
             db.session.add(challenge_flag)
 
     db.session.commit()
-    invalidate_cache(f'challenge:{challenge_id}')
-    invalidate_cache(f'challenge_details:{challenge_id}')
-    invalidate_cache('scoreboard_data:*')
     return jsonify({'message': 'Challenge updated successfully'})
 
 
@@ -345,9 +338,6 @@ def delete_challenge_api(challenge_id):
     challenge = Challenge.query.get_or_404(challenge_id)
     db.session.delete(challenge)
     db.session.commit()
-    invalidate_cache(f'challenge:{challenge_id}')
-    invalidate_cache(f'challenge_details:{challenge_id}')
-    invalidate_cache('scoreboard_data:*')
     return jsonify({'message': 'Challenge deleted successfully'})
 
 # Category Endpoints
@@ -385,8 +375,6 @@ def create_category():
     category = Category(name=data['name'])
     db.session.add(category)
     db.session.commit()
-    invalidate_cache('category:*') # Invalidate all category caches
-    invalidate_cache('scoreboard_data:*') # Categories can influence scoreboard
     return jsonify({'message': 'Category created successfully', 'category': {'id': category.id, 'name': category.name}}), 201
 
 @api_bp.route('/categories/<int:category_id>', methods=['PUT'])
@@ -404,8 +392,6 @@ def update_category_api(category_id):
         category.name = data['name']
     
     db.session.commit()
-    invalidate_cache(f'category:{category_id}') # Invalidate specific category cache
-    invalidate_cache('scoreboard_data:*') # Category changes can influence scoreboard
     return jsonify({'message': 'Category updated successfully'})
 
 @api_bp.route('/categories/<int:category_id>', methods=['DELETE'])
@@ -418,8 +404,6 @@ def delete_category_api(category_id):
     category = Category.query.get_or_404(category_id)
     db.session.delete(category)
     db.session.commit()
-    invalidate_cache(f'category:{category_id}')
-    invalidate_cache('scoreboard_data:*')
     return jsonify({'message': 'Category deleted successfully'})
 
 # User Endpoints
@@ -465,7 +449,6 @@ def update_user(user_id):
         user.is_admin = data['is_admin']
 
     db.session.commit()
-    invalidate_cache('scoreboard_data:*')
     return jsonify({'message': 'User updated successfully'})
 
 # Award Category Endpoints
@@ -504,8 +487,6 @@ def create_award_category():
     award_category = AwardCategory(name=data['name'], default_points=data['default_points'])
     db.session.add(award_category)
     db.session.commit()
-    invalidate_cache('award_category:*') # Invalidate all award category caches
-    invalidate_cache('scoreboard_data:*') # New award categories might affect scoreboard data if awards are given
     return jsonify({'message': 'Award category created successfully', 'award_category': {'id': award_category.id, 'name': award_category.name, 'default_points': award_category.default_points}}), 201
 
 @api_bp.route('/award_categories/<int:category_id>', methods=['PUT'])
@@ -525,8 +506,6 @@ def update_award_category_api(category_id):
         award_category.default_points = data['default_points']
     
     db.session.commit()
-    invalidate_cache(f'award_category:{category_id}') # Invalidate specific award category cache
-    invalidate_cache('scoreboard_data:*') # Award category changes can influence scoreboard
     return jsonify({'message': 'Award category updated successfully'})
 
 @api_bp.route('/award_categories/<int:category_id>', methods=['DELETE'])
@@ -540,8 +519,6 @@ def delete_award_category_api(category_id):
         return jsonify({'message': 'Cannot delete category with associated awards. Please delete awards first.'}), 400
     db.session.delete(award_category)
     db.session.commit()
-    invalidate_cache(f'award_category:{category_id}')
-    invalidate_cache('scoreboard_data:*')
     return jsonify({'message': 'Award category deleted successfully'})
 
 # Award Endpoints
@@ -567,8 +544,7 @@ def give_award():
     db.session.add(award)
     user.score += data['points_awarded']
     db.session.commit()
-    invalidate_cache('scoreboard_data:*')
-    return jsonify({'message': 'Award given successfully', 'award': {'id': award.id, 'user_id': award.user.id, 'category_id': award.category.id, 'points_awarded': award.points_awarded}}), 201
+    return jsonify({'message': 'Award given successfully', 'award': {'id': award.id, 'user_id': award.user_id, 'category_id': award.category_id, 'points_awarded': award.points_awarded}}), 201
 
 # Setting Endpoints
 @api_bp.route('/settings', methods=['GET'])
