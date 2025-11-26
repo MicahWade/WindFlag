@@ -69,11 +69,18 @@ These variables relate to user registration and authentication processes.
 
 ## Database Configuration
 
-While not explicitly in the `.env.template` by default (as WindFlag often uses SQLite for simplicity), the application can be configured to use external databases via environment variables.
+The WindFlag application primarily uses SQLite for simplicity but can be configured to use external relational databases like PostgreSQL via environment variables.
 
-*   `DATABASE_URL` (string, optional): The SQLAlchemy database URI. If not set, WindFlag defaults to an SQLite database named `app.db` in the instance folder.
+*   `USE_POSTGRES` (boolean): If set to `true`, the application will attempt to connect to a PostgreSQL database using the `DATABASE_URL`. If `false` (or omitted), it will default to an SQLite database.
+    *   **Default**: `false`
+    *   **Example**: `USE_POSTGRES=true`
+
+*   `DATABASE_URL` (string, optional): The SQLAlchemy database URI for the main application database. This variable is only used if `USE_POSTGRES` is set to `true`.
     *   **Example for PostgreSQL**: `DATABASE_URL="postgresql://user:password@host:port/database_name"`
-    *   **Example for MySQL**: `DATABASE_URL="mysql+pymysql://user:password@host:port/database_name"`
+    *   **Example for MySQL (if supported)**: `DATABASE_URL="mysql+pymysql://user:password@host:port/database_name"`
+
+*   `TEST_DATABASE_URL` (string, optional): The SQLAlchemy database URI for the test environment. This variable is used when `USE_POSTGRES` is `true` AND the application is running in a test context (e.g., during `pytest` execution). It's crucial to use a separate database for testing to avoid data conflicts.
+    *   **Example for PostgreSQL**: `TEST_DATABASE_URL="postgresql://test_user:test_password@host:port/test_database_name"`
 
 ## Development & Debugging Settings
 
