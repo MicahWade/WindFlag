@@ -1,6 +1,6 @@
 # WindFlag
 
-WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwind CSS.
+A lightweight, self-hostable CTF platform featuring dynamic scoring, real-time analytics, and an integrated coding environment
 
 ## Release Installation Guide
 
