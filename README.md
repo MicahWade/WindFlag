@@ -2,6 +2,202 @@
 
 WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwind CSS.
 
+## Release Installation Guide
+
+This guide provides comprehensive instructions to set up and run WindFlag on various operating systems, including necessary local dependencies for offline functionality.
+
+### 1. Install System Dependencies
+
+Before running WindFlag, ensure you have Python 3.8+ and `pip` installed.
+
+#### **Python 3.8+ & pip**
+Most Linux distributions come with Python pre-installed. You might need to install `pip`.
+
+*   **Ubuntu/Debian:**
+    ```bash
+    sudo apt update
+    sudo apt install python3 python3-pip python3-venv
+    ```
+*   **Arch Linux:**
+    ```bash
+    sudo pacman -S python python-pip
+    ```
+*   **RedHat/Fedora:**
+    ```bash
+    sudo dnf install python3 python3-pip python3-venv # For Fedora 22+ / RHEL 8+
+    # For older RedHat/CentOS: sudo yum install python3 python3-pip python3-venv
+    ```
+*   **macOS:**
+    Install [Homebrew](https://brew.sh) and then `brew install python`. `pip` and `venv` will be included.
+*   **Windows:**
+    Download and install Python from [python.org](https://www.python.org/downloads/). Ensure you check "Add Python to PATH" during installation.
+
+### 2. Get the WindFlag Application
+
+You can obtain the WindFlag application by cloning the repository or downloading a release archive.
+
+#### **Using Git (Recommended for development/updates):**
+```bash
+git clone https://github.com/MicahWade/WindFlag.git
+cd WindFlag
+```
+
+#### **Using a Release Archive (for stable deployments):**
+Download the latest `release.zip` from the [GitHub releases page](https://github.com/MicahWade/WindFlag/releases), then extract it:
+```bash
+unzip release.zip
+cd WindFlag # If the zip extracts to a subdirectory
+```
+
+### 3. Setup Python Virtual Environment
+
+It's highly recommended to use a Python virtual environment to manage dependencies.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate # On Linux/macOS
+# On Windows (Command Prompt): .venv\Scripts\activate.bat
+# On Windows (PowerShell): .venv\Scripts\Activate.ps1
+```
+
+### 4. Install Python Dependencies
+
+Install the required Python packages using pip:
+```bash
+pip install -r requirements.txt
+```
+
+### 5. Download Frontend Assets (For Offline Use)
+
+To enable full offline functionality, download the required frontend libraries. These files are excluded from Git for regular development but are essential for the application to function without internet access.
+
+First, create the necessary directories:
+```bash
+mkdir -p static/codemirror static/vendor/font-awesome/css static/vendor/tailwindcss static/vendor/socket.io static/vendor/chart.js static/vendor/luxon static/vendor/chartjs-adapter-luxon static/vendor/chartjs-adapter-date-fns static/vendor/chartjs-plugin-annotation static/vendor/jquery-datatables
+```
+
+Then, download the assets using `wget` (ensure `wget` is installed on your system; e.g., `sudo apt install wget` on Ubuntu):
+```bash
+# CodeMirror
+wget -O static/codemirror/codemirror.min.css https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.css
+wget -O static/codemirror/dracula.min.css https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/theme/dracula.min.css
+wget -O static/codemirror/codemirror.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.js
+wget -O static/codemirror/shell.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/shell/shell.min.js
+wget -O static/codemirror/dart.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/dart/dart.min.js
+wget -O static/codemirror/haskell.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/haskell/haskell.min.js
+wget -O static/codemirror/javascript.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/javascript/javascript.min.js
+wget -O static/codemirror/php.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/php/php.min.js
+wget -O static/codemirror/python.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/python/python.min.js
+
+# Font Awesome
+wget -O static/vendor/font-awesome/css/all.min.css https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css
+
+# TailwindCSS
+wget -O static/vendor/tailwindcss/browser.js https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4
+
+# Socket.IO
+wget -O static/vendor/socket.io/socket.io.min.js https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js
+
+# Chart.js and related libraries
+wget -O static/vendor/chart.js/chart.min.js https://cdn.jsdelivr.net/npm/chart.js
+wget -O static/vendor/luxon/luxon.min.js https://cdn.jsdelivr.net/npm/luxon@3.x/build/global/luxon.min.js
+wget -O static/vendor/chartjs-adapter-luxon/chartjs-adapter-luxon.min.js https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.x/dist/chartjs-adapter-luxon.min.js
+wget -O static/vendor/chartjs-adapter-date-fns/chartjs-adapter-date-fns.min.js https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3
+wget -O static/vendor/chartjs-plugin-annotation/chartjs-plugin-annotation.min.js https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0
+
+# jQuery and DataTables
+wget -O static/vendor/jquery-datatables/jquery.dataTables.min.css https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css
+wget -O static/vendor/jquery-datatables/jquery-3.7.1.min.js https://code.jquery.com/jquery-3.7.1.min.js
+wget -O static/vendor/jquery-datatables/jquery.dataTables.min.js https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js
+
+# marked.js
+wget -O static/js/marked.min.js https://cdn.jsdelivr.net/npm/marked@latest/marked.min.js
+```
+
+### 6. Configure Environment Variables
+
+Copy the `.env.template` file to `.env` in the root directory of your project and fill in the values. This file is crucial for application settings like `SECRET_KEY`.
+
+```bash
+cp .env.template .env
+# Open .env with a text editor and fill in necessary values.
+```
+For more information, see [ENV.md](docs/ENV.md).
+
+### 7. Redis Caching Setup (Optional)
+
+WindFlag supports optional Redis caching to improve performance for frequently accessed data. To enable and configure Redis caching:
+
+#### **Install Redis Server:**
+*   **Ubuntu/Debian:**
+    ```bash
+    sudo apt update
+    sudo apt install redis-server
+    ```
+*   **Arch Linux:**
+    ```bash
+    sudo pacman -S redis
+    ```
+*   **RedHat/Fedora:**
+    ```bash
+    sudo dnf install redis # For Fedora 22+ / RHEL 8+
+    # For older RedHat/CentOS: sudo yum install redis
+    ```
+*   **macOS (using Homebrew):**
+    ```bash
+    brew install redis
+    ```
+*   **Windows:**
+    Redis is not officially supported on Windows by the Redis project itself. Recommended approaches include:
+    *   **WSL (Windows Subsystem for Linux):** Install a Linux distribution (e.g., Ubuntu) via WSL and then follow the Linux installation instructions.
+    *   **Unofficial Windows Port:** Microsoft previously maintained a port, but it's outdated. You can find newer unofficial builds or use a Docker container.
+    *   **Docker Desktop:** Install Docker Desktop for Windows and run Redis in a Docker container (recommended for production-like environments).
+    For detailed Windows instructions, refer to community guides or the [official Redis documentation for Docker](https://redis.io/docs/getting-started/installation/install-redis-on-docker/).
+
+#### **Start Redis Server:**
+*   **Linux (systemd-based, e.g., Ubuntu, RedHat, Arch):**
+    ```bash
+    sudo systemctl start redis-server # or redis for Arch
+    sudo systemctl enable redis-server # To start Redis automatically on boot (or redis for Arch)
+    ```
+*   **macOS (using Homebrew):**
+    ```bash
+    brew services start redis
+    ```
+*   **Windows (via WSL):** Follow Linux (systemd-based) instructions within your WSL terminal.
+
+    You can verify Redis is running by executing `redis-cli ping`. It should return `PONG`.
+
+#### **Configure WindFlag to Use Redis:**
+Open your `.env` file and add/modify the following variables:
+```
+# Enable Redis caching (set to True to activate)
+ENABLE_REDIS_CACHE=True
+
+# Redis connection URL (default is usually fine for local development)
+# If your Redis server is on a different host or port, adjust this value.
+REDIS_URL=redis://localhost:6379/0
+```
+Ensure `ENABLE_REDIS_CACHE` is set to `True` for caching to be active. The `REDIS_URL` should point to your running Redis instance.
+
+### 8. Run the Application
+
+Activate your virtual environment (if not already active) and then run the Flask application:
+```bash
+source .venv/bin/activate # On Linux/macOS
+# On Windows (Command Prompt): .venv\Scripts\activate.bat
+# On Windows (PowerShell): .venv\Scripts\Activate.ps1
+
+python app.py
+```
+The default database (`app.db`) will be created automatically if it doesn't exist.
+
+### 9. Access the Application
+
+Open your web browser and go to `http://127.0.0.1:5000/`.
+
+---
+
 ## Features
 
 *   **User Authentication**: Secure registration, login, and logout.
@@ -44,69 +240,6 @@ WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwin
     *   **Syntax Highlighting**: Supports a wide range of languages including Bash, Dart, Haskell, JavaScript (Node), PHP, and Python.
     *   **Themes**: Customizable editor themes to suit user preferences.
     *   **Interactive Coding**: Provides a comfortable environment for users to write and test code snippets directly within the platform.
-
-## How to Run
-
-1.  **Install Dependencies:**
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt
-    ```
-
-2.  **Configure Environment Variables:**
-    Copy the `.env.template` file to `.env` and fill in the values. For more information, see [ENV.md](docs/ENV.md).
-
-3.  **Run the Application:**
-    The default database (`app.db`) will be created automatically if it doesn't exist.
-    ```bash
-    python app.py
-    ```
-
-4.  **Access the Application:**
-    Open your web browser and go to `http://127.0.0.1:5000/`.
-
-## Redis Caching Setup (Optional)
-
-WindFlag supports optional Redis caching to improve performance for frequently accessed data. To enable and configure Redis caching:
-
-1.  **Install Redis Server:**
-    *   **Ubuntu/Debian:**
-        ```bash
-        sudo apt update
-        sudo apt install redis-server
-        ```
-    *   **macOS (using Homebrew):**
-        ```bash
-        brew install redis
-        ```
-    *   For other operating systems, please refer to the [official Redis documentation](https://redis.io/docs/getting-started/installation/).
-
-2.  **Start Redis Server:**
-    *   **Ubuntu/Debian:**
-        ```bash
-        sudo systemctl start redis-server
-        sudo systemctl enable redis-server # To start Redis automatically on boot
-        ```
-    *   **macOS (using Homebrew):**
-        ```bash
-        brew services start redis
-        ```
-    *   You can verify Redis is running by executing `redis-cli ping`. It should return `PONG`.
-
-3.  **Configure WindFlag to Use Redis:**
-    Open your `.env` file (created from `.env.template`) and add/modify the following variables:
-    ```
-    # Enable Redis caching (set to True to activate)
-    ENABLE_REDIS_CACHE=True
-
-    # Redis connection URL (default is usually fine for local development)
-    # If your Redis server is on a different host or port, adjust this value.
-    REDIS_URL=redis://localhost:6379/0
-    ```
-    Ensure `ENABLE_REDIS_CACHE` is set to `True` for caching to be active. The `REDIS_URL` should point to your running Redis instance.
-
-With Redis running and configured, WindFlag will automatically utilize the cache for various data lookups and API responses, significantly improving performance.
 
 ## Creating an Admin User
 
