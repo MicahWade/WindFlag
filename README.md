@@ -66,6 +66,48 @@ WindFlag: A lightweight, self-hostable CTF platform built with Flask and Tailwin
 4.  **Access the Application:**
     Open your web browser and go to `http://127.0.0.1:5000/`.
 
+## Redis Caching Setup (Optional)
+
+WindFlag supports optional Redis caching to improve performance for frequently accessed data. To enable and configure Redis caching:
+
+1.  **Install Redis Server:**
+    *   **Ubuntu/Debian:**
+        ```bash
+        sudo apt update
+        sudo apt install redis-server
+        ```
+    *   **macOS (using Homebrew):**
+        ```bash
+        brew install redis
+        ```
+    *   For other operating systems, please refer to the [official Redis documentation](https://redis.io/docs/getting-started/installation/).
+
+2.  **Start Redis Server:**
+    *   **Ubuntu/Debian:**
+        ```bash
+        sudo systemctl start redis-server
+        sudo systemctl enable redis-server # To start Redis automatically on boot
+        ```
+    *   **macOS (using Homebrew):**
+        ```bash
+        brew services start redis
+        ```
+    *   You can verify Redis is running by executing `redis-cli ping`. It should return `PONG`.
+
+3.  **Configure WindFlag to Use Redis:**
+    Open your `.env` file (created from `.env.template`) and add/modify the following variables:
+    ```
+    # Enable Redis caching (set to True to activate)
+    ENABLE_REDIS_CACHE=True
+
+    # Redis connection URL (default is usually fine for local development)
+    # If your Redis server is on a different host or port, adjust this value.
+    REDIS_URL=redis://localhost:6379/0
+    ```
+    Ensure `ENABLE_REDIS_CACHE` is set to `True` for caching to be active. The `REDIS_URL` should point to your running Redis instance.
+
+With Redis running and configured, WindFlag will automatically utilize the cache for various data lookups and API responses, significantly improving performance.
+
 ## Creating an Admin User
 
 You can create an admin user with the `-admin` flag when running the application:
