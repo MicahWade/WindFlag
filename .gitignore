@@ -8,6 +8,10 @@ static/themes/*
 # Keep the .gitkeep file
 !static/themes/.gitkeep
 
+# Exclude downloaded frontend assets (for regular development)
+static/vendor/
+static/codemirror/
+
 # Local Files
 TODO
 .env
