@@ -81,15 +81,15 @@
     </div>
 {% endblock content %}
 {% block scripts %}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/theme/dracula.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/shell/shell.min.js"></script> {# Bash #}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/dart/dart.min.js"></script> {# Dart #}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/haskell/haskell.min.js"></script> {# Haskell #}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/javascript/javascript.min.js"></script> {# Node/JavaScript #}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/php/php.min.js"></script> {# PHP (includes JS dependency) #}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/python/python.min.js"></script> {# Python #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/codemirror.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/dracula.min.css') }}">
+    <script src="{{ url_for('static', filename='codemirror/codemirror.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='codemirror/shell.min.js') }}"></script> {# Bash #}
+    <script src="{{ url_for('static', filename='codemirror/dart.min.js') }}"></script> {# Dart #}
+    <script src="{{ url_for('static', filename='codemirror/haskell.min.js') }}"></script> {# Haskell #}
+    <script src="{{ url_for('static', filename='codemirror/javascript.min.js') }}"></script> {# Node/JavaScript #}
+    <script src="{{ url_for('static', filename='codemirror/php.min.js') }}"></script> {# PHP (includes JS dependency) #}
+    <script src="{{ url_for('static', filename='codemirror/python.min.js') }}"></script> {# Python #}
     <script src="{{ url_for('static', filename='js/challenges.js') }}"></script>
     <script>
         // Add a Jinja2 filter for datetime formatting
