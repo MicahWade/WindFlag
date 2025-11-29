@@ -67,6 +67,34 @@ These variables relate to user registration and authentication processes.
     *   **Default**: `words.text` (located in the project root)
     *   **Example**: `WORDS_FILE_PATH="data/custom_words.txt"`
 
+## Programming Language Enablement
+
+These variables control which programming languages are enabled for coding challenges. By default, all supported languages are enabled. Disabling a language will prevent it from appearing as an option in the admin panel and from being executed in the sandboxed environment.
+
+*   `ENABLE_PYTHON3` (boolean): Set to `true` to enable Python 3 for coding challenges.
+    *   **Default**: `true`
+    *   **Example**: `ENABLE_PYTHON3=false`
+
+*   `ENABLE_NODEJS` (boolean): Set to `true` to enable Node.js for coding challenges.
+    *   **Default**: `true`
+    *   **Example**: `ENABLE_NODEJS=false`
+
+*   `ENABLE_PHP` (boolean): Set to `true` to enable PHP for coding challenges.
+    *   **Default**: `true`
+    *   **Example**: `ENABLE_PHP=false`
+
+*   `ENABLE_BASH` (boolean): Set to `true` to enable Bash for coding challenges.
+    *   **Default**: `true`
+    *   **Example**: `ENABLE_BASH=false`
+
+*   `ENABLE_DART` (boolean): Set to `true` to enable Dart for coding challenges.
+    *   **Default**: `true`
+    *   **Example**: `ENABLE_DART=false`
+
+*   `ENABLE_HASKELL` (boolean): Set to `true` to enable Haskell for coding challenges.
+    *   **Default**: `true`
+    *   **Example**: `ENABLE_HASKELL=false`
+
 ## Database Configuration
 
 The WindFlag application primarily uses SQLite for simplicity but can be configured to use external relational databases like PostgreSQL via environment variables.

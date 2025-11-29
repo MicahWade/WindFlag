@@ -55,13 +55,15 @@ Coding challenges are a special type of challenge where users submit code that i
 
 #### Configuration for Coding Challenges
 
-When creating or editing a challenge, set its `multi_flag_type` to `CODING`. This will reveal additional fields:
+When creating or editing a challenge in the admin panel:
 
-*   **`language`**: (Required) Select the programming language in which the user is expected to write their solution. Supported languages include `python3`, `nodejs`, `php`, `bash`, `dart`, and `haskell`. This choice determines the runtime environment used in the sandbox and the specific static analysis rules applied.
-*   **`starter_code`**: (Optional) Provide pre-filled code that will appear in the user's code editor when they open the challenge. This can include function stubs, necessary imports, or example input/output structures.
-*   **`expected_output`**: (Required) The exact string output (stdout) that the user's code must produce to successfully solve the challenge.
-*   **`setup_code`**: (Optional) A bash script that will be executed inside the sandbox *before* the user's code. This can be used to set up files, create directories, or prepare the environment for the user's code.
-*   **`test_case_input`**: (Optional) Input that will be fed to the user's code via `stdin`.
+1.  **Set "Challenge Type" to `CODING`**: This will reveal additional fields specifically for coding challenges.
+2.  **Fill in the Coding Challenge Specific Fields**:
+    *   **`Language`**: (Required) Select the programming language in which the user is expected to write their solution. Supported languages include Python, Node.js, PHP, Bash, Dart, and Haskell. The available options will dynamically adjust based on the `ENABLE_<LANGUAGE_NAME>` settings in your `.env` file. This choice determines the runtime environment used in the sandbox and the specific static analysis rules applied.
+    *   **`Expected Output`**: (Required) The exact string output (stdout) that the user's code must produce to successfully solve the challenge.
+    *   **`Setup Code (Bash)`**: (Optional) A bash script that will be executed inside the sandbox *before* the user's code. This can be used to set up files, create directories, or prepare the environment for the user's code.
+    *   **`Test Case Input`**: (Optional) Input that will be fed to the user's code via `stdin`.
+    *   **`Starter Code`**: (Optional) Provide pre-filled code that will appear in the user's code editor when they open the challenge. This can include function stubs, necessary imports, or example input/output structures.
 
 #### Static Code Analysis (Security Measures)
 

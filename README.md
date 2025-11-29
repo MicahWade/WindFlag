@@ -167,6 +167,8 @@ Ensure the necessary language runtimes are installed on your system if you want 
 
 Copy the `.env.template` file to `.env` in the root directory of your project and fill in the values. This file is crucial for application settings like `SECRET_KEY`.
 
+**Language Enablement Flags:** WindFlag supports coding challenges in multiple programming languages. You can enable or disable specific languages by setting `ENABLE_<LANGUAGE_NAME>=True/False` in your `.env` file (e.g., `ENABLE_PYTHON3=True`). By default, all supported languages are enabled. Refer to [ENV.md](docs/ENV.md) for a full list and more details.
+
 ```bash
 cp .env.template .env
 # Open .env with a text editor and fill in necessary values.
@@ -367,6 +369,7 @@ Open your web browser and go to `http://127.0.0.1:5000/`.
     *   Export existing challenges to YAML for backup or migration.
     *   Supports bulk operations, ideal for rapid challenge deployment.
 *   **Responsive Design**: Crafted with Tailwind CSS to ensure a modern, accessible, and adaptive user interface across all devices and screen sizes.
+*   **Coding Challenges**: Create challenges where users submit code in various programming languages (Python, Node.js, PHP, Bash, Dart, Haskell) directly within the platform. Configure expected output, setup code, and test case inputs for automated evaluation.
 *   **Code Editor (CodeMirror)**: An integrated, feature-rich in-browser code editor designed for coding challenges:
     *   **Syntax Highlighting**: Supports a wide range of languages including Bash, Dart, Haskell, JavaScript (Node), PHP, and Python.
     *   **Themes**: Customizable editor themes to suit user preferences.
@@ -467,7 +470,7 @@ We welcome contributions to WindFlag! If you're looking to contribute, please fo
     *   Add unit or integration tests for new features or bug fixes, if applicable.
 5.  **Test Your Changes**: Ensure that your changes do not introduce new bugs and that all existing tests pass.
     ```bash
-    python run_tests.py
+    python app.py -run-tests
     ```
 6.  **Commit Your Changes**: Write clear and descriptive commit messages.
     ```bash
@@ -511,7 +514,13 @@ For feature requests, open an issue on GitHub. Describe:
 
 ## Testing
 
-To run the automated tests, use the `run_tests.py` script. This will start the application in test mode and run the unit and end-to-end tests.
+To run the automated test suite, use the `app.py` script with the `-run-tests` command-line argument:
+
+```bash
+python app.py -run-tests
+```
+
+This will execute the unit and integration tests and then exit.
 
 ## Environment Variables
 
