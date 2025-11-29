@@ -73,7 +73,7 @@ To enable full offline functionality, download the required frontend libraries. 
 
 First, create the necessary directories:
 ```bash
-mkdir -p static/codemirror static/vendor/font-awesome/css static/vendor/tailwindcss static/vendor/socket.io static/vendor/chart.js static/vendor/luxon static/vendor/chartjs-adapter-luxon static/vendor/chartjs-adapter-date-fns static/vendor/chartjs-plugin-annotation static/vendor/jquery-datatables
+mkdir -p static/codemirror static/vendor/font-awesome/css static/vendor/font-awesome/webfonts static/vendor/tailwindcss static/vendor/socket.io static/vendor/chart.js static/vendor/luxon static/vendor/chartjs-adapter-luxon static/vendor/chartjs-adapter-date-fns static/vendor/chartjs-plugin-annotation static/vendor/jquery-datatables
 ```
 
 Then, download the assets using `wget` (ensure `wget` is installed on your system; e.g., `sudo apt install wget` on Ubuntu):
@@ -91,6 +91,9 @@ wget -O static/codemirror/python.min.js https://cdnjs.cloudflare.com/ajax/libs/c
 
 # Font Awesome
 wget -O static/vendor/font-awesome/css/all.min.css https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css
+# Download Font Awesome webfonts
+wget -O static/vendor/font-awesome/webfonts/fa-solid-900.woff2 https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/webfonts/fa-solid-900.woff2
+wget -O static/vendor/font-awesome/webfonts/fa-solid-900.ttf https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/webfonts/fa-solid-900.ttf
 
 # TailwindCSS
 wget -O static/vendor/tailwindcss/browser.js https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4

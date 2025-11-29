@@ -7,6 +7,11 @@ routes for user authentication, profile management, challenge interaction,
 and scoreboard display. It also includes utility functions for data export/import
 and admin user creation.
 """
+from dotenv import load_dotenv # Moved to top
+import os # Moved to top
+# Load environment variables from .env file in the project root
+load_dotenv(os.path.join(os.path.abspath(os.path.dirname(__file__)), '.env')) # Moved to top
+
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, current_app
 from flask_login import login_user, current_user, logout_user, login_required
 from flask_limiter import Limiter
@@ -95,6 +100,14 @@ def create_app(config_class=Config):
     # Initialize extensions with the app instance *before* entering app context
     # if those extensions are used within that context.
     db.init_app(app)
+    print(f"INFO: Database configured: {app.config['SQLALCHEMY_DATABASE_URI']}") # Added line
+
+    # New check for PostgreSQL configuration
+    if app.config.get('USE_POSTGRES') and not app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgresql://'):
+        print("WARNING: USE_POSTGRES is enabled in .env, but DATABASE_URL is not correctly set for PostgreSQL or is missing. Falling back to SQLite.")
+    elif app.config.get('USE_POSTGRES') and app.config['SQLALCHEMY_DATABASE_URI'] is None:
+        print("WARNING: USE_POSTGRES is enabled in .env, but DATABASE_URL is not set. Falling back to SQLite.")
+
     login_manager.init_app(app)
     login_manager.unauthorized_handler(lambda: redirect(url_for('home')))
     bcrypt.init_app(app)
@@ -754,56 +767,36 @@ def create_app(config_class=Config):
 
 
 
-def create_admin(username, password):
+def create_admin(app, username, password):
     """
-    Creates a new super admin user.
+    Creates a new super admin user. If a user with the given username already
+    exists, it will be deleted and recreated as a super admin.
 
     Args:
+        app: The Flask application instance.
         username (str): The username for the new admin.
         password (str): The password for the new admin.
     """
-    with create_app().app_context():
+    with app.app_context():
         from scripts.models import User
+        # Check if user already exists
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            db.session.delete(existing_user)
+            db.session.commit()
+            print(f"Existing user with username {username} removed before creating new admin.")
+
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         admin = User(username=username, email=None, password_hash=hashed_password, is_admin=True, is_super_admin=True, hidden=True)
         db.session.add(admin)
         db.session.commit()
         print(f"Super Admin user with username {username} created successfully.")
 
-def recalculate_all_challenge_stripes():
+def recalculate_all_challenge_stripes(app):
     """
     Recalculates and updates the stripe status for all challenges.
     """
-    with create_app().app_context():
-        from scripts.models import Challenge
-        print("Recalculating stripe statuses for all challenges...")
-        challenges = Challenge.query.all()
-        for challenge in challenges:
-            challenge.update_stripe_status()
-            print(f"Updated stripe status for Challenge: {challenge.name}")
-        print("All challenge stripe statuses recalculated successfully.")
-
-def create_admin(username, password):
-    """
-    Creates a new super admin user.
-
-    Args:
-        username (str): The username for the new admin.
-        password (str): The password for the new admin.
-    """
-    with create_app().app_context():
-        from scripts.models import User
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        admin = User(username=username, email=None, password_hash=hashed_password, is_admin=True, is_super_admin=True, hidden=True)
-        db.session.add(admin)
-        db.session.commit()
-        print(f"Super Admin user with username {username} created successfully.")
-
-def recalculate_all_challenge_stripes():
-    """
-    Recalculates and updates the stripe status for all challenges.
-    """
-    with create_app().app_context():
+    with app.app_context():
         from scripts.models import Challenge
         print("Recalculating stripe statuses for all challenges...")
         challenges = Challenge.query.all()
@@ -838,15 +831,8 @@ if __name__ == '__main__':
         app = create_app() # Unpack app and socketio
         test_mode_timeout = None
 
-    # Check if the database file exists, if not, create it
-    db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
-    if not os.path.exists(db_path):
-        with app.app_context():
-            db.create_all()
-            print(f"Database '{db_path}' created successfully.")
-
     if args.admin:
-        create_admin(args.admin[0], args.admin[1])
+        create_admin(app, args.admin[0], args.admin[1])
     elif args.admin_r:
         with app.app_context():
             from scripts.models import User
@@ -873,7 +859,7 @@ if __name__ == '__main__':
             data_type = args.export_yaml[1]
         export_data_to_yaml(output_file, data_type)
     elif args.recalculate_stripes:
-        recalculate_all_challenge_stripes()
+        recalculate_all_challenge_stripes(app)
     else:
         # Otherwise, run the Flask app directly
         if args.test is not None:

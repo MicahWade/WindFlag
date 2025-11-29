@@ -1,16 +1,26 @@
 $(document).ready(function() {
-    function initializeDataTable(tableId) {
+    function initializeDataTable(tableId, options = {}) {
         var table = $(tableId);
         if (table.length && !$.fn.DataTable.isDataTable(table)) {
-            // Only initialize if the table has rows in the body
-            if (table.find('tbody tr').length > 0) {
-                table.DataTable();
-            }
+            // Always initialize DataTables, it will handle empty tables gracefully.
+            table.DataTable(options);
         }
     }
 
     initializeDataTable('#users-table');
-    initializeDataTable('#challenges-table');
+    initializeDataTable('#challenges-table', {
+        "columns": [
+            { "orderable": true }, // ID
+            { "orderable": true }, // Name
+            { "orderable": true }, // Category
+            { "orderable": true }, // Points
+            { "orderable": true }, // Unlock
+            { "orderable": false }  // Actions (typically not sortable)
+        ],
+        "language": {
+            "emptyTable": "No challenges found. <a href='/admin/challenge/new' class='text-blue-500 hover:underline'>Create one?</a>"
+        }
+    });
     initializeDataTable('#categories-table');
     initializeDataTable('#award-categories-table');
     initializeDataTable('#submissions-table');

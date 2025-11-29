@@ -12,11 +12,14 @@ class Config:
     Loads settings from environment variables or uses default values.
     """
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db' # Changed to app.db for main database
+    
     USE_POSTGRES = os.environ.get('USE_POSTGRES', 'False').lower() == 'true'
 
     if USE_POSTGRES:
         SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    else:
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db' # Default to SQLite if PostgreSQL not used
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     REQUIRE_JOIN_CODE = os.environ.get('REQUIRE_JOIN_CODE', 'False').lower() == 'true'
     JOIN_CODE = os.environ.get('JOIN_CODE') if REQUIRE_JOIN_CODE else None
@@ -47,12 +50,13 @@ class TestConfig(Config):
     Configuration class for testing environments.
     Inherits from `Config` and overrides settings for testing purposes.
     """
-    if Config.USE_POSTGRES:
+    if os.environ.get('USE_POSTGRES', 'False').lower() == 'true':
         SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or 'postgresql://localhost/test_db'
     else:
         SQLALCHEMY_DATABASE_URI = 'sqlite:///test.db' # Dedicated database for test mode
     WTF_CSRF_ENABLED = False
     DISABLE_SIGNUP = False # Allow signup in test mode for demo purposes
+
 
 
 

@@ -80,12 +80,6 @@
                             </form>
                         </td>
                     </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="6" class="text-center py-10">
-                            <p class="text-gray-400">No challenges found. <a href="{{ url_for('admin.new_challenge') }}" class="text-blue-500 hover:underline">Create one?</a></p>
-                        </td>
-                    </tr>
                 {% endfor %}
             </tbody>
         </table>
