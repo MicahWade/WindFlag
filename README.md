@@ -114,7 +114,53 @@ wget -O static/vendor/jquery-datatables/jquery.dataTables.min.js https://cdn.dat
 wget -O static/js/marked.min.js https://cdn.jsdelivr.net/npm/marked@latest/marked.min.js
 ```
 
-### 6. Configure Environment Variables
+### 6. Code Execution Sandbox (Optional)
+
+WindFlag supports executing user-submitted code for challenges in a secure, isolated environment using `bwrap` (Bubblewrap). This is highly recommended for any production deployment where users can submit code. If you plan to host challenges that require code execution (e.g., Python, Node.js, PHP, Bash, Dart, Haskell), you need to install `bwrap` and the respective language runtimes.
+
+#### **Install Bubblewrap (`bwrap`)**
+`bwrap` is primarily a Linux-specific sandboxing tool.
+
+*   **Ubuntu/Debian:**
+    ```bash
+    sudo apt update
+    sudo apt install bubblewrap
+    ```
+*   **Arch Linux:**
+    ```bash
+    sudo pacman -S bubblewrap
+    ```
+*   **RedHat/Fedora:**
+    ```bash
+    sudo dnf install bubblewrap # For Fedora 22+ / RHEL 8+
+    # For older RedHat/CentOS: sudo yum install bubblewrap
+    ```
+*   **macOS/Windows:**
+    `bwrap` is not available on macOS or Windows. If running WindFlag on these operating systems and you require code execution, consider using a Linux VM or Docker. The code execution feature will be disabled if `bwrap` is not found.
+
+#### **Install Language Runtimes (for code execution challenges)**
+Ensure the necessary language runtimes are installed on your system if you want to support challenges in those languages. The `scripts/code_execution.py` file details the paths expected for each runtime.
+
+*   **Python 3:** Typically already installed with system dependencies.
+*   **Node.js:**
+    ```bash
+    # Example for Ubuntu/Debian
+    sudo apt install nodejs npm
+    ```
+*   **PHP:**
+    ```bash
+    # Example for Ubuntu/Debian
+    sudo apt install php
+    ```
+*   **Bash:** Typically pre-installed on Linux systems.
+*   **Dart SDK:** Follow official installation instructions (e.g., from dart.dev) to install the Dart SDK, typically to `/opt/dart-sdk`.
+*   **Haskell (runghc/GHC):**
+    ```bash
+    # Example for Ubuntu/Debian
+    sudo apt install haskell-platform
+    ```
+
+### 7. Configure Environment Variables
 
 Copy the `.env.template` file to `.env` in the root directory of your project and fill in the values. This file is crucial for application settings like `SECRET_KEY`.
 
@@ -124,7 +170,7 @@ cp .env.template .env
 ```
 For more information, see [ENV.md](docs/ENV.md).
 
-### 7. Redis Caching Setup (Optional)
+### 8. Redis Caching Setup (Optional)
 
 WindFlag supports optional Redis caching to improve performance for frequently accessed data. To enable and configure Redis caching:
 
@@ -180,7 +226,7 @@ REDIS_URL=redis://localhost:6379/0
 ```
 Ensure `ENABLE_REDIS_CACHE` is set to `True` for caching to be active. The `REDIS_URL` should point to your running Redis instance.
 
-### 8. Run the Application
+### 9. Run the Application
 
 Activate your virtual environment (if not already active) and then run the Flask application:
 ```bash
@@ -192,7 +238,7 @@ python app.py
 ```
 The default database (`app.db`) will be created automatically if it doesn't exist.
 
-### 9. Access the Application
+### 10. Access the Application
 
 Open your web browser and go to `http://127.0.0.1:5000/`.
 
