@@ -226,7 +226,89 @@ REDIS_URL=redis://localhost:6379/0
 ```
 Ensure `ENABLE_REDIS_CACHE` is set to `True` for caching to be active. The `REDIS_URL` should point to your running Redis instance.
 
-### 9. Run the Application
+### 9. PostgreSQL Database Setup (Optional)
+
+WindFlag supports PostgreSQL as an alternative to the default SQLite database. Using PostgreSQL is recommended for production environments due to its robustness and scalability.
+
+#### **Install PostgreSQL Server:**
+
+*   **Ubuntu/Debian:**
+    ```bash
+    sudo apt update
+    sudo apt install postgresql postgresql-contrib
+    ```
+    After installation, you'll typically have a default user `postgres` and a database `postgres`. You might want to set a password for the `postgres` user:
+    ```bash
+    sudo -i -u postgres
+    psql
+    \password postgres
+    \q
+    exit
+    ```
+*   **Arch Linux:**
+    ```bash
+    sudo pacman -S postgresql
+    ```
+    Initialize the database cluster and enable/start the service:
+    ```bash
+    sudo -i -u postgres initdb -D /var/lib/postgres/data
+    sudo systemctl enable postgresql
+    sudo systemctl start postgresql
+    ```
+*   **RedHat/Fedora:**
+    ```bash
+    sudo dnf install postgresql-server postgresql-contrib
+    ```
+    Initialize the database and enable/start the service:
+    ```bash
+    sudo postgresql-setup --initdb
+    sudo systemctl enable postgresql
+    sudo systemctl start postgresql
+    ```
+*   **macOS (using Homebrew):**
+    ```bash
+    brew install postgresql
+    brew services start postgresql
+    ```
+    You might need to create a default user and database if Homebrew doesn't do it automatically.
+*   **Windows:**
+    Download and install from the [official PostgreSQL website](https://www.postgresql.org/download/windows/). During installation, you'll set the `postgres` user password and data directory.
+
+#### **Create a Database and User for WindFlag:**
+It's best practice to create a dedicated database and user for WindFlag.
+
+```bash
+# Connect as the postgres user (replace with appropriate command for your OS)
+sudo -i -u postgres psql
+
+# Create a new database for WindFlag
+CREATE DATABASE windflag_db;
+
+# Create a new user with a strong password
+CREATE USER windflag_user WITH PASSWORD 'your_strong_password';
+
+# Grant all privileges on the new database to the new user
+GRANT ALL PRIVILEGES ON DATABASE windflag_db TO windflag_user;
+
+# Exit psql
+\q
+```
+Remember to replace `windflag_db`, `windflag_user`, and `'your_strong_password'` with your desired values.
+
+#### **Configure WindFlag to Use PostgreSQL:**
+Open your `.env` file and add/modify the following variables to point to your PostgreSQL database:
+
+```
+# Set to True to enable PostgreSQL, False for SQLite (default)
+USE_POSTGRES=True
+
+# PostgreSQL connection URI
+# Format: postgresql://user:password@host:port/database_name
+DATABASE_URL=postgresql://windflag_user:your_strong_password@localhost:5432/windflag_db
+```
+Ensure `USE_POSTGRES` is set to `True` and `DATABASE_URL` matches your PostgreSQL configuration. Refer to [ENV.md](docs/ENV.md) for more details.
+
+### 10. Run the Application
 
 Activate your virtual environment (if not already active) and then run the Flask application:
 ```bash
@@ -238,7 +320,7 @@ python app.py
 ```
 The default database (`app.db`) will be created automatically if it doesn't exist.
 
-### 10. Access the Application
+### 11. Access the Application
 
 Open your web browser and go to `http://127.0.0.1:5000/`.
 
