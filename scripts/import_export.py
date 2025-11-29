@@ -143,20 +143,24 @@ def import_users_from_json(app, json_file_path):
             print(f"User '{username}' imported successfully.")
         print("User import process completed.")
 
-def import_categories_from_yaml(app, yaml_file_path):
+def import_categories_from_yaml(app, yaml_source, is_file=True):
     with app.app_context():
+        data = None
         try:
-            with open(yaml_file_path, 'r') as f:
-                data = yaml.safe_load(f)
+            if is_file:
+                with open(yaml_source, 'r') as f:
+                    data = yaml.safe_load(f)
+            else: # yaml_source is content string
+                data = yaml.safe_load(yaml_source)
         except FileNotFoundError:
-            print(f"Error: YAML file not found at {yaml_file_path}")
+            print(f"Error: YAML file not found at {yaml_source}")
             return
         except yaml.YAMLError as e:
-            print(f"Error parsing YAML file: {e}")
+            print(f"Error parsing YAML: {e}")
             return
 
-        if 'categories' not in data:
-            print("Error: YAML file must contain a 'categories' key.")
+        if not data or 'categories' not in data:
+            print("Error: YAML source must contain a 'categories' key.")
             return
 
         categories_to_process_prerequisites = []
@@ -228,20 +232,24 @@ def import_categories_from_yaml(app, yaml_file_path):
         
         print("Category import process completed.")
 
-def import_challenges_from_yaml(app, yaml_file_path):
+def import_challenges_from_yaml(app, yaml_source, is_file=True):
     with app.app_context():
+        data = None
         try:
-            with open(yaml_file_path, 'r') as f:
-                data = yaml.safe_load(f)
+            if is_file:
+                with open(yaml_source, 'r') as f:
+                    data = yaml.safe_load(f)
+            else: # yaml_source is content string
+                data = yaml.safe_load(yaml_source)
         except FileNotFoundError:
-            print(f"Error: YAML file not found at {yaml_file_path}")
+            print(f"Error: YAML file not found at {yaml_source}")
             return
         except yaml.YAMLError as e:
-            print(f"Error parsing YAML file: {e}")
+            print(f"Error parsing YAML: {e}")
             return
 
-        if 'challenges' not in data:
-            print("Error: YAML file must contain a 'challenges' key.")
+        if not data or 'challenges' not in data:
+            print("Error: YAML source must contain a 'challenges' key.")
             return
 
         challenges_to_process_prerequisites = []

@@ -7,8 +7,8 @@ routes for user authentication, profile management, challenge interaction,
 and scoreboard display. It also includes utility functions for data export/import
 and admin user creation.
 """
-from dotenv import load_dotenv # Moved to top
 import os # Moved to top
+from dotenv import load_dotenv # Moved to top
 # Load environment variables from .env file in the project root
 load_dotenv(os.path.join(os.path.abspath(os.path.dirname(__file__)), '.env')) # Moved to top
 
@@ -848,8 +848,8 @@ if __name__ == '__main__':
                 print(f"Error: User {args.admin_r} not found.")
     elif args.yaml:
         # First import categories, then challenges
-        import_categories_from_yaml(args.yaml)
-        import_challenges_from_yaml(args.yaml)
+        import_categories_from_yaml(app, args.yaml)
+        import_challenges_from_yaml(app, args.yaml)
     elif args.users: # New conditional for JSON user import
         import_users_from_json(args.users)
     elif args.export_yaml:

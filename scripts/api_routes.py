@@ -23,6 +23,59 @@ def admin_api_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+@api_bp.route('/admin/import/yaml', methods=['POST'])
+@admin_api_required
+def import_yaml():
+    """
+    Imports challenges and categories from a YAML string provided in the request body.
+    Requires admin API access.
+    """
+    yaml_content = request.data.decode('utf-8') # Get raw YAML content from request body
+
+    if not yaml_content:
+        return jsonify({'message': 'Request body must contain YAML content'}), 400
+
+    from flask import current_app # Import current_app to pass to import functions
+    from scripts.import_export import import_categories_from_yaml, import_challenges_from_yaml
+
+    # Use a list to capture messages from import functions
+    import_messages = []
+
+    def custom_print(*args, **kwargs):
+        """Custom print function to capture output."""
+        message = " ".join(map(str, args))
+        import_messages.append(message)
+        # Also print to console for server logs
+        current_app.logger.info(message)
+
+    # Temporarily redirect print to capture output
+    import builtins
+    original_print = builtins.print
+    builtins.print = custom_print
+
+    try:
+        # It's generally safer to import categories first, then challenges
+        import_categories_from_yaml(current_app, yaml_content, is_file=False)
+        import_challenges_from_yaml(current_app, yaml_content, is_file=False)
+        
+        # Check if any errors or warnings occurred during import
+        if any("Error:" in msg for msg in import_messages):
+            status_code = 400
+            overall_message = "YAML import completed with errors or warnings. Check messages for details."
+        else:
+            status_code = 200
+            overall_message = "YAML import completed successfully."
+
+        return jsonify({'message': overall_message, 'details': import_messages}), status_code
+
+    except Exception as e:
+        current_app.logger.error(f"Error during YAML import API call: {e}", exc_info=True)
+        return jsonify({'message': f'An unexpected error occurred during YAML import: {str(e)}'}), 500
+    finally:
+        # Restore original print function
+        builtins.print = original_print
+
+
 @api_bp.route('/challenges', methods=['POST'])
 @admin_api_required
 def create_challenge():
