@@ -84,7 +84,6 @@ wget -O static/codemirror/dracula.min.css https://cdnjs.cloudflare.com/ajax/libs
 wget -O static/codemirror/codemirror.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.js
 wget -O static/codemirror/shell.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/shell/shell.min.js
 wget -O static/codemirror/dart.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/dart/dart.min.js
-wget -O static/codemirror/haskell.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/haskell/haskell.min.js
 wget -O static/codemirror/javascript.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/javascript/javascript.min.js
 wget -O static/codemirror/php.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/php/php.min.js
 wget -O static/codemirror/python.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/python/python.min.js
@@ -157,11 +156,6 @@ Ensure the necessary language runtimes are installed on your system if you want 
     ```
 *   **Bash:** Typically pre-installed on Linux systems.
 *   **Dart SDK:** Follow official installation instructions (e.g., from dart.dev) to install the Dart SDK, typically to `/opt/dart-sdk`.
-*   **Haskell (runghc/GHC):**
-    ```bash
-    # Example for Ubuntu/Debian
-    sudo apt install haskell-platform
-    ```
 
 ### 7. Configure Environment Variables
 
@@ -369,9 +363,9 @@ Open your web browser and go to `http://127.0.0.1:5000/`.
     *   Export existing challenges to YAML for backup or migration.
     *   Supports bulk operations, ideal for rapid challenge deployment.
 *   **Responsive Design**: Crafted with Tailwind CSS to ensure a modern, accessible, and adaptive user interface across all devices and screen sizes.
-*   **Coding Challenges**: Create challenges where users submit code in various programming languages (Python, Node.js, PHP, Bash, Dart, Haskell) directly within the platform. Configure expected output, setup code, and test case inputs for automated evaluation.
+    *   **Coding Challenges**: Create challenges where users submit code in various programming languages (Python, Node.js, PHP, Bash, Dart) directly within the platform. Configure expected output, setup code, and test case inputs for automated evaluation.
 *   **Code Editor (CodeMirror)**: An integrated, feature-rich in-browser code editor designed for coding challenges:
-    *   **Syntax Highlighting**: Supports a wide range of languages including Bash, Dart, Haskell, JavaScript (Node), PHP, and Python.
+    *   **Syntax Highlighting**: Supports a wide range of languages including Bash, Dart, JavaScript (Node), PHP, and Python.
     *   **Themes**: Customizable editor themes to suit user preferences.
     *   **Interactive Coding**: Provides a comfortable environment for users to write and test code snippets directly within the platform.
 
@@ -525,3 +519,4 @@ This will execute the unit and integration tests and then exit.
 ## Environment Variables
 
 For information on environment variables, see [ENV.md](ENV.md).
+

@@ -129,6 +129,28 @@ document.addEventListener('DOMContentLoaded', function () {
         updateCategoryFields(); // Initial call
     }
 
+    function updateChallengeTypeFields() {
+        const challengeTypeSelect = document.getElementById('challenge_type_select');
+        const flagFields = document.getElementById('flag_challenge_fields');
+        const codingFields = document.getElementById('coding_challenge_fields');
+
+        if (challengeTypeSelect) {
+             if (challengeTypeSelect.value === 'CODING') {
+                if (flagFields) flagFields.style.display = 'none';
+                if (codingFields) codingFields.style.display = 'block';
+            } else {
+                if (flagFields) flagFields.style.display = 'block';
+                if (codingFields) codingFields.style.display = 'none';
+            }
+        }
+    }
+
+    const challengeTypeSelect = document.getElementById('challenge_type_select');
+    if (challengeTypeSelect) {
+        challengeTypeSelect.addEventListener('change', updateChallengeTypeFields);
+        updateChallengeTypeFields(); // Initial call
+    }
+
     // Custom logic for prerequisite_challenge_ids_input_field (checkboxes)
     const prerequisiteChallengeCheckboxes = document.querySelectorAll('input[name="prerequisite_challenge_ids_checkbox"]');
     const prerequisiteChallengeHiddenInput = document.getElementById('prerequisite_challenge_ids_hidden');

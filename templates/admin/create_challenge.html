@@ -113,121 +113,151 @@
                         {% endif %}
                     </div>
                 </fieldset>
-                <div class="mb-4 flex items-center">
-                    {{ form.multi_flag_type.label(class="block text-gray-300 text-sm font-bold mb-2") | replace('Multi-Flag Type', 'Flag Type') }}
-                    {% if form.multi_flag_type.errors %}
-                        {{ form.multi_flag_type(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="multi_flag_type_select") }}
-                        <p class="text-red-400 text-xs italic">
-                            {% for error in form.multi_flag_type.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </p>
-                    {% else %}
-                        {{ form.multi_flag_type(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="multi_flag_type_select") }}
-                    {% endif %}
+
+                <div class="mb-4">
+                    {{ form.challenge_type.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                    {{ form.challenge_type(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="challenge_type_select") }}
                 </div>
 
-                <div id="flags_input_fields_section">
-                    <div class="mb-4" id="multi_flag_threshold_field">
-                        {{ form.multi_flag_threshold.label(class="block text-gray-300 text-sm font-bold mb-2") }}
-                        {% if form.multi_flag_threshold.errors %}
-                            {{ form.multi_flag_threshold(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                <div id="flag_challenge_fields">
+                    <div class="mb-4 flex items-center">
+                        {{ form.multi_flag_type.label(class="block text-gray-300 text-sm font-bold mb-2") | replace('Multi-Flag Type', 'Flag Type') }}
+                        {% if form.multi_flag_type.errors %}
+                            {{ form.multi_flag_type(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="multi_flag_type_select") }}
                             <p class="text-red-400 text-xs italic">
-                                {% for error in form.multi_flag_threshold.errors %}
+                                {% for error in form.multi_flag_type.errors %}
                                     <span>{{ error }}</span>
                                 {% endfor %}
                             </p>
                         {% else %}
-                            {{ form.multi_flag_threshold(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                            {{ form.multi_flag_type(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", id="multi_flag_type_select") }}
                         {% endif %}
                     </div>
 
-                    <div class="mb-4">
-                        {{ form.flags_input.label(class="block text-gray-300 text-sm font-bold mb-2") }}
-                        {% if form.flags_input.errors %}
-                            {{ form.flags_input(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                            <p class="text-red-400 text-xs italic">
-                                {% for error in form.flags_input.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </p>
-                        {% else %}
-                            {{ form.flags_input(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
-                        {% endif %}
-                    </div>
-                </div>
+                    <div id="flags_input_fields_section">
+                        <div class="mb-4" id="multi_flag_threshold_field">
+                            {{ form.multi_flag_threshold.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                            {% if form.multi_flag_threshold.errors %}
+                                {{ form.multi_flag_threshold(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                                <p class="text-red-400 text-xs italic">
+                                    {% for error in form.multi_flag_threshold.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </p>
+                            {% else %}
+                                {{ form.multi_flag_threshold(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                            {% endif %}
+                        </div>
 
-                <div class="mb-4" id="dynamic_flag_api_key_section" style="display: none;">
-                    <fieldset class="border-t border-gray-700 pt-4 mt-4">
-                        <legend class="text-xl font-bold text-gray-100 mb-4">Dynamic Flag Settings</legend>
-                        {% if challenge %}
-                            <div class="bg-card p-6 rounded-lg shadow-lg mb-6">
-                                <div class="mb-4">
-                                    <p class="text-text-primary"><strong>Dynamic Flag Enabled:</strong> 
-                                        <span class="{% if challenge.has_dynamic_flag %}text-green-500{% else %}text-red-500{% endif %}">
-                                            {{ challenge.has_dynamic_flag }}
-                                        </span>
-                                        <a href="{{ url_for('admin.dynamic_flags_docs') }}" target="_blank" class="ml-2">
-                                            <i class="fas fa-question-circle"></i>
-                                        </a>
-                                    </p>
-                                </div>
-                
-                                <div class="mb-6">
-                                    <p class="text-text-primary"><strong>Dynamic Flag API Key Hash:</strong> 
-                                        {% if challenge.dynamic_flag_api_key_hash %}
-                                            <span class="font-mono bg-background-light p-1 rounded">{{ challenge.dynamic_flag_api_key_hash[:8] }}...</span>
-                                            <button onclick="copyToClipboard('{{ challenge.dynamic_flag_api_key_hash }}')" class="ml-2 px-2 py-1 bg-button text-button-text rounded hover:bg-button-hover transition duration-200">Copy Full Hash</button>
-                                        {% else %}
-                                            <span class="text-muted">No API Key set.</span>
-                                        {% endif %}
-                                    </p>
-                                </div>
-                
-                                {% if generated_key %}
-                                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
-                                        <p class="font-bold">New API Key Generated!</p>
-                                        <p>Please save this key *now*, as it will not be shown again:</p>
-                                        <code class="block font-mono bg-green-200 p-2 rounded break-all mt-2">{{ generated_key }}</code>
-                                        <button onclick="copyToClipboard('{{ generated_key }}')" class="ml-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition duration-200 mt-2">Copy Key</button>
+                        <div class="mb-4">
+                            {{ form.flags_input.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                            {% if form.flags_input.errors %}
+                                {{ form.flags_input(class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                                <p class="text-red-400 text-xs italic">
+                                    {% for error in form.flags_input.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </p>
+                            {% else %}
+                                {{ form.flags_input(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4" id="dynamic_flag_api_key_section" style="display: none;">
+                        <fieldset class="border-t border-gray-700 pt-4 mt-4">
+                            <legend class="text-xl font-bold text-gray-100 mb-4">Dynamic Flag Settings</legend>
+                            {% if challenge %}
+                                <div class="bg-card p-6 rounded-lg shadow-lg mb-6">
+                                    <div class="mb-4">
+                                        <p class="text-text-primary"><strong>Dynamic Flag Enabled:</strong> 
+                                            <span class="{% if challenge.has_dynamic_flag %}text-green-500{% else %}text-red-500{% endif %}">
+                                                {{ challenge.has_dynamic_flag }}
+                                            </span>
+                                            <a href="{{ url_for('admin.dynamic_flags_docs') }}" target="_blank" class="ml-2">
+                                                <i class="fas fa-question-circle"></i>
+                                            </a>
+                                        </p>
                                     </div>
-                                {% endif %}
-                
-                                <div class="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
-                                    <form method="POST" action="{{ url_for('admin.update_challenge', challenge_id=challenge.id) }}">
-                                        <input type="hidden" name="generate_key" value="true">
-                                        <button type="submit"
-                                                class="w-full md:w-auto px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200">
-                                            Generate New Dynamic Flag API Key
-                                        </button>
-                                    </form>
-                
-                                    <form method="POST" action="{{ url_for('admin.update_challenge', challenge_id=challenge.id) }}">
-                                        <input type="hidden" name="toggle_dynamic_flag" value="true">
-                                        <button type="submit"
-                                                class="w-full md:w-auto px-4 py-2 {% if challenge.has_dynamic_flag %}bg-red-500 hover:bg-red-600{% else %}bg-green-500 hover:bg-green-600{% endif %} text-white rounded transition duration-200">
-                                            {% if challenge.has_dynamic_flag %}Disable Dynamic Flag{% else %}Enable Dynamic Flag{% endif %}
-                                        </button>
-                                    </form>
+                    
+                                    <div class="mb-6">
+                                        <p class="text-text-primary"><strong>Dynamic Flag API Key Hash:</strong> 
+                                            {% if challenge.dynamic_flag_api_key_hash %}
+                                                <span class="font-mono bg-background-light p-1 rounded">{{ challenge.dynamic_flag_api_key_hash[:8] }}...</span>
+                                                <button onclick="copyToClipboard('{{ challenge.dynamic_flag_api_key_hash }}')" class="ml-2 px-2 py-1 bg-button text-button-text rounded hover:bg-button-hover transition duration-200">Copy Full Hash</button>
+                                            {% else %}
+                                                <span class="text-muted">No API Key set.</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                    
+                                    {% if generated_key %}
+                                        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
+                                            <p class="font-bold">New API Key Generated!</p>
+                                            <p>Please save this key *now*, as it will not be shown again:</p>
+                                            <code class="block font-mono bg-green-200 p-2 rounded break-all mt-2">{{ generated_key }}</code>
+                                            <button onclick="copyToClipboard('{{ generated_key }}')" class="ml-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition duration-200 mt-2">Copy Key</button>
+                                        </div>
+                                    {% endif %}
+                    
+                                    <div class="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
+                                        <form method="POST" action="{{ url_for('admin.update_challenge', challenge_id=challenge.id) }}">
+                                            <input type="hidden" name="generate_key" value="true">
+                                            <button type="submit"
+                                                    class="w-full md:w-auto px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200">
+                                                Generate New Dynamic Flag API Key
+                                            </button>
+                                        </form>
+                    
+                                        <form method="POST" action="{{ url_for('admin.update_challenge', challenge_id=challenge.id) }}">
+                                            <input type="hidden" name="toggle_dynamic_flag" value="true">
+                                            <button type="submit"
+                                                    class="w-full md:w-auto px-4 py-2 {% if challenge.has_dynamic_flag %}bg-red-500 hover:bg-red-600{% else %}bg-green-500 hover:bg-green-600{% endif %} text-white rounded transition duration-200">
+                                                {% if challenge.has_dynamic_flag %}Disable Dynamic Flag{% else %}Enable Dynamic Flag{% endif %}
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
-                            </div>
-                        {% else %}
-                            <p class="text-yellow-400 text-sm mt-2">Dynamic Flag API Key settings will be available after the challenge is created.</p>
+                            {% else %}
+                                <p class="text-yellow-400 text-sm mt-2">Dynamic Flag API Key settings will be available after the challenge is created.</p>
+                            {% endif %}
+                        </fieldset>
+                    </div>
+                    
+                    <div class="mb-4 flex items-center">
+                        {{ form.case_sensitive(class="mr-2 leading-tight") }}
+                        {{ form.case_sensitive.label(class="text-gray-300 text-sm font-bold") }}
+                        {% if form.case_sensitive.errors %}
+                            <p class="text-red-400 text-xs italic ml-2">
+                                {% for error in form.case_sensitive.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
                         {% endif %}
-                    </fieldset>
+                    </div>
                 </div>
-                
 
-                <div class="mb-4 flex items-center">
-                    {{ form.case_sensitive(class="mr-2 leading-tight") }}
-                    {{ form.case_sensitive.label(class="text-gray-300 text-sm font-bold") }}
-                    {% if form.case_sensitive.errors %}
-                        <p class="text-red-400 text-xs italic ml-2">
-                            {% for error in form.case_sensitive.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </p>
-                    {% endif %}
+                <div id="coding_challenge_fields" style="display: none;">
+                    <div class="mb-4">
+                        {{ form.language.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {{ form.language(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                    </div>
+                    <div class="mb-4">
+                        {{ form.expected_output.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {{ form.expected_output(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono") }}
+                    </div>
+                    <div class="mb-4">
+                        {{ form.test_case_input.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {{ form.test_case_input(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono") }}
+                    </div>
+                    <div class="mb-4">
+                        {{ form.setup_code.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {{ form.setup_code(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono") }}
+                    </div>
+                    <div class="mb-4">
+                        {{ form.starter_code.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {{ form.starter_code(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono") }}
+                    </div>
                 </div>
                 <div class="mb-4">
                     {{ form.category.label(class="block text-gray-300 text-sm font-bold mb-2") }}

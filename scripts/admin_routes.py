@@ -404,7 +404,14 @@ def new_challenge():
                               unlock_point_reduction_value=form.unlock_point_reduction_value.data,
                               unlock_point_reduction_target_date=unlock_point_reduction_target_date_utc,
                               is_hidden=form.is_hidden.data,
-                              dynamic_flag_api_key_hash=None) # Dynamic flag key is generated AFTER creation, so initialize to None
+                              dynamic_flag_api_key_hash=None, # Dynamic flag key is generated AFTER creation, so initialize to None
+                              # New fields for coding challenges
+                              challenge_type=form.challenge_type.data,
+                              language=form.language.data if form.challenge_type.data == 'CODING' else None,
+                              expected_output=form.expected_output.data if form.challenge_type.data == 'CODING' else None,
+                              test_case_input=form.test_case_input.data if form.challenge_type.data == 'CODING' else None,
+                              setup_code=form.setup_code.data if form.challenge_type.data == 'CODING' else None,
+                              starter_code=form.starter_code.data if form.challenge_type.data == 'CODING' else None)
         db.session.add(challenge)
         db.session.commit() # Commit to get challenge.id
 
@@ -515,6 +522,21 @@ def update_challenge(challenge_id):
         challenge.is_hidden = form.is_hidden.data
         challenge.has_dynamic_flag = form.has_dynamic_flag.data # Save has_dynamic_flag
         
+        # New fields for coding challenges
+        challenge.challenge_type = form.challenge_type.data
+        if challenge.challenge_type == 'CODING':
+            challenge.language = form.language.data
+            challenge.expected_output = form.expected_output.data
+            challenge.test_case_input = form.test_case_input.data
+            challenge.setup_code = form.setup_code.data
+            challenge.starter_code = form.starter_code.data
+        else:
+            challenge.language = None
+            challenge.expected_output = None
+            challenge.test_case_input = None
+            challenge.setup_code = None
+            challenge.starter_code = None
+
         # Delete existing flags and add new ones
         ChallengeFlag.query.filter_by(challenge_id=challenge.id).delete()
         flags_content = [f.strip() for f in form.flags_input.data.split('\n') if f.strip()]
@@ -538,6 +560,14 @@ def update_challenge(challenge_id):
         form.multi_flag_type.data = challenge.multi_flag_type
         form.multi_flag_threshold.data = challenge.multi_flag_threshold
         form.flags_input.data = "\n".join([f.flag_content for f in challenge.flags])
+
+        # New fields for coding challenges
+        form.challenge_type.data = challenge.challenge_type
+        form.language.data = challenge.language
+        form.expected_output.data = challenge.expected_output
+        form.test_case_input.data = challenge.test_case_input
+        form.setup_code.data = challenge.setup_code
+        form.starter_code.data = challenge.starter_code
 
         form.unlock_type.data = challenge.unlock_type
         form.prerequisite_percentage_value.data = challenge.prerequisite_percentage_value

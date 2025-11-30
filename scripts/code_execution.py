@@ -15,7 +15,8 @@ BWRAP_COMMON_ARGS = [
     '--dev', '/dev',
     '--tmpfs', '/tmp',
     '--dir', '/sandbox', # A dedicated directory inside the sandbox
-    '--setenv', 'PATH', '/usr/bin:/bin:/usr/local/bin' # Minimal PATH
+    '--setenv', 'PATH', '/usr/bin:/bin:/usr/local/bin:/home/linuxbrew/.linuxbrew/bin', # Added Homebrew bin to PATH
+    '--setenv', 'LD_LIBRARY_PATH', '/home/linuxbrew/.linuxbrew/lib', # Added Homebrew lib to LD_LIBRARY_PATH
     # Removed --rlimit-as, --rlimit-cpu, --rlimit-fsize as they are not supported by some bwrap versions.
     # Proper resource limiting should be handled via cgroups or a bwrap version that supports these flags.
 ]
@@ -36,19 +37,17 @@ LANGUAGE_CONFIGS = {
         ]
     ),
     'nodejs': (
-        '/usr/bin/node', '.js',
-        'node /sandbox/user_code.js',
+        '/home/deck/.nvm/versions/node/v24.11.1/bin/node', '.js',
+        '/home/deck/.nvm/versions/node/v24.11.1/bin/node /sandbox/user_code.js',
         [
-            ('/usr/bin/node', '/usr/bin/node'),
-            # Consider adding /usr/lib/nodejs if it exists on the system, for global npm modules
+            ('/home/deck/.nvm/versions/node/v24.11.1', '/home/deck/.nvm/versions/node/v24.11.1'),
         ]
     ),
     'php': (
-        '/usr/bin/php', '.php',
-        'php /sandbox/user_code.php',
+        '/home/linuxbrew/.linuxbrew/bin/php', '.php',
+        '/home/linuxbrew/.linuxbrew/bin/php /sandbox/user_code.php',
         [
-            ('/usr/bin/php', '/usr/bin/php'),
-            ('/etc/php/', '/etc/php/'), # PHP needs its config
+            ('/home/linuxbrew/.linuxbrew', '/home/linuxbrew/.linuxbrew'),
         ]
     ),
     'bash': (
@@ -64,15 +63,6 @@ LANGUAGE_CONFIGS = {
         [
             ('/opt/dart-sdk', '/sandbox/dart-sdk'), # Bind entire SDK into sandbox
         ]
-    ),
-    'haskell': (
-        '/usr/bin/runghc', '.hs',
-        'runghc /sandbox/user_code.hs',
-        [
-            ('/usr/bin/runghc', '/usr/bin/runghc'),
-            ('/usr/bin/ghc', '/usr/bin/ghc'), # runghc might implicitly need ghc
-            ('/usr/lib/ghc', '/usr/lib/ghc'), # Common GHC library path, typically /usr/lib/ghc
-        ]
     )
 }
 
@@ -81,7 +71,7 @@ LANGUAGE_CONFIGS = {
 LANGUAGE_BLACKLISTS = {
     'python3': {
         'forbidden_imports': [
-            'os', 'subprocess', 'sys', 'socket', 'shutil', 'fcntl', 'resource',
+            'os', 'subprocess', 'socket', 'shutil', 'fcntl', 'resource',
             'ctypes', 'gc', 'mmap', 'multiprocessing', 'threading', 'signal',
             'urllib', 'requests', 'pathlib', 'glob', 'zipfile', 'tarfile', 'sqlite3',
             'pickle', 'marshal', 'http', 'ftplib', 'smtplib', 'poplib', 'imaplib',
@@ -90,8 +80,8 @@ LANGUAGE_BLACKLISTS = {
             'paramiko', 'fabric', 'pexpect', 'select', 'selectors'
         ],
         'forbidden_keywords': [
-            'eval(', 'exec(', 'open(', 'compile(', '__import__', 'getattr(',
-            'setattr(', 'delattr(', 'breakpoint(', 'input(', 'exit(', 'quit(',
+            'eval(', 'exec(', 'compile(', '__import__', 'getattr(',
+            'setattr(', 'delattr(', 'breakpoint(', 'exit(', 'quit(',
             'system(', 'popen(', 'chmod(', 'chown(', 'rmdir(', 'removedirs(',
             'mkdir(', 'makedirs(', 'rename(', 'replace(', 'link(', 'symlink(',
             'walk(', 'fork(', 'kill(', 'alarm(', 'pause(', 'getuid(', 'setuid(',
@@ -125,7 +115,7 @@ LANGUAGE_BLACKLISTS = {
         ],
         'forbidden_keywords': [
             'eval(', 'require(', 'import(', 'spawn(', 'exec(', 'fork(', 'system(',
-            'setTimeout(', 'setInterval(', 'setImmediate(', 'process.exit(', 'console.log(' # Limit logging potentially
+            'setTimeout(', 'setInterval(', 'setImmediate(', 'process.exit(' # Limit logging potentially
         ],
         'forbidden_regex': [
             r'require\s*\([\'"].*[\'"]\)',
@@ -188,25 +178,6 @@ LANGUAGE_BLACKLISTS = {
             r'import\s+[\'"]dart:io[\'"]',
             r'import\s+[\'"]package:.*[\'"]',
             r'new\s+File\s*\('
-        ]
-    },
-    'haskell': {
-        'forbidden_imports': [
-            'System.IO', 'System.Process', 'Network.Socket', 'System.Directory',
-            'System.FilePath', 'GHC.IO', 'Control.Concurrent', 'Foreign.C', 'Foreign.Ptr'
-        ],
-        'forbidden_keywords': [
-            'unsafePerformIO', 'System.cmd', 'System.rawSystem', 'System.process',
-            'openFile', 'readFile', 'writeFile', 'appendFile', 'removeFile',
-            'getContents', 'interact', 'hPutStrLn', 'hGetContents', 'exitWith',
-            'socket', 'bind', 'listen', 'connect', 'send', 'recv', 'forkIO',
-            'System.getEnv', 'System.setEnv', 'System.getArgs'
-        ],
-        'forbidden_regex': [
-            r'import\s+System\.',
-            r'import\s+Network\.',
-            r'import\s+Foreign\.',
-            r'import\s+GHC\.',
         ]
     }
 }
@@ -337,7 +308,7 @@ def execute_code_in_sandbox(language, code, expected_output, setup_code=None, te
         if setup_cmd_in_sandbox:
             command_to_execute_in_sandbox = ['bash', '-c', f"{setup_cmd_in_sandbox} && {execute_cmd_template}"]
         else:
-            command_to_execute_in_sandbox = execute_cmd_template.split()
+            command_to_execute_in_sandbox = ['bash', '-c', execute_cmd_template] # Always use bash -c for execute_cmd_template
 
         bwrap_cmd = bwrap_args + ['--'] + command_to_execute_in_sandbox # Use -- to separate bwrap args from inner command
 

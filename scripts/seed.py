@@ -229,16 +229,6 @@ def seed_database():
                                       starter_code="") # Removed starter_code content
     challenges.append(dart_coding_challenge)
     db.session.add(dart_coding_challenge)
-
-    haskell_coding_challenge = Challenge(name="Haskell: Factorial",
-                                         description="Write a Haskell program to calculate the factorial of a number read from stdin. For example, if input is '5', output should be '120'.",
-                                         points=110, category_id=coding_category.id,
-                                         challenge_type='CODING', language='haskell',
-                                         expected_output='120',
-                                         setup_code=None, test_case_input='5',
-                                         starter_code="") # Removed starter_code content
-    challenges.append(haskell_coding_challenge)
-    db.session.add(haskell_coding_challenge)
     
     for i in range(1, 31): # 30 more challenges
         category_id = categories[(i-1) % len(categories)].id

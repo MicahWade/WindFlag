@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, IntegerField, SelectField, SelectMultipleField, HiddenField
 from wtforms.fields.datetime import DateTimeField, DateField # Import DateField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
-from scripts.models import User, Category, MULTI_FLAG_TYPES, POINT_DECAY_TYPES, UNLOCK_TYPES, DYNAMIC_FLAG_TYPE # Import DYNAMIC_FLAG_TYPE
+from scripts.models import User, Category, MULTI_FLAG_TYPES, POINT_DECAY_TYPES, UNLOCK_TYPES, DYNAMIC_FLAG_TYPE, CHALLENGE_TYPES # Import DYNAMIC_FLAG_TYPE and CHALLENGE_TYPES
 from flask import current_app
 import json
 import pytz # Re-add pytz import
@@ -196,6 +196,14 @@ class ChallengeForm(FlaskForm):
                                     validators=[NumberRange(min=0)],
                                     default=0)
     proactive_decay = BooleanField('Apply decay proactively', default=False)
+    
+    # Challenge Type Selection
+    challenge_type = SelectField('Challenge Type',
+                                choices=[(t, t.title()) for t in CHALLENGE_TYPES],
+                                validators=[DataRequired()],
+                                default='FLAG')
+
+    # Fields for FLAG challenges
     multi_flag_type = SelectField('Flag Type',
                                   choices=[(t, t.replace('_', ' ').title()) for t in MULTI_FLAG_TYPES],
                                   validators=[DataRequired()],
@@ -210,6 +218,25 @@ class ChallengeForm(FlaskForm):
                                 render_kw={"rows": 5, "placeholder": "Enter each flag on a new line"})
 
     case_sensitive = BooleanField('Flags are Case-Sensitive', default=True)
+
+    # Fields for CODING challenges
+    language = SelectField('Language',
+                           choices=[('python3', 'Python 3'),
+                                    ('nodejs', 'Node.js'),
+                                    ('php', 'PHP'),
+                                    ('bash', 'Bash'),
+                                    ('dart', 'Dart')],
+                           default='python3')
+    expected_output = TextAreaField('Expected Output',
+                                    render_kw={"rows": 5, "placeholder": "Exact expected STDOUT from the executed code"})
+    test_case_input = TextAreaField('Test Case Input (Optional)',
+                                    render_kw={"rows": 3, "placeholder": "Input provided to STDIN of the executed code"})
+    setup_code = TextAreaField('Setup Code (Optional)',
+                               render_kw={"rows": 5, "placeholder": "Code/Script to run before the user's code (e.g., database setup)"})
+    starter_code = TextAreaField('Starter Code (Optional)',
+                                 render_kw={"rows": 5, "placeholder": "Default code provided to the user"})
+
+
     category = SelectField('Category', coerce=int, choices=[(0, '--- Create New Category ---')])
     new_category_name = StringField('New Category Name', validators=[Length(max=50)])
 
@@ -264,36 +291,45 @@ class ChallengeForm(FlaskForm):
             self.new_category_name.errors.append('Cannot select an existing category and provide a new category name.')
             return False
         
-        # Validate multi_flag_type and threshold
-        if self.multi_flag_type.data == DYNAMIC_FLAG_TYPE:
-            # For dynamic flags, traditional flags_input and threshold are not required
-            pass # No specific flag input validation for dynamic type
-        elif self.multi_flag_type.data == 'N_OF_M':
-            if not self.multi_flag_threshold.data or self.multi_flag_threshold.data < 1:
-                self.multi_flag_threshold.errors.append('Threshold is required and must be at least 1 for N_OF_M type.')
+        # Validate based on challenge_type
+        if self.challenge_type.data == 'CODING':
+            if not self.language.data:
+                self.language.errors.append('Language is required for Coding challenges.')
                 return False
-            
-            # Count the number of flags provided
-            provided_flags = [f.strip() for f in self.flags_input.data.split('\n') if f.strip()]
-            if self.multi_flag_threshold.data > len(provided_flags):
-                self.multi_flag_threshold.errors.append(f'Threshold ({self.multi_flag_threshold.data}) cannot be greater than the number of provided flags ({len(provided_flags)}).')
+            if not self.expected_output.data:
+                self.expected_output.errors.append('Expected Output is required for Coding challenges.')
                 return False
-            if not provided_flags:
-                self.flags_input.errors.append('At least one flag is required for N_OF_M type.')
-                return False
-        elif self.multi_flag_type.data == 'SINGLE':
-            provided_flags = [f.strip() for f in self.flags_input.data.split('\n') if f.strip()]
-            if len(provided_flags) != 1:
-                self.flags_input.errors.append('SINGLE type challenges must have exactly one flag.')
-                return False
-            if not provided_flags:
-                self.flags_input.errors.append('At least one flag is required for SINGLE type.')
-                return False
-        else: # 'ANY', 'ALL'
-            provided_flags = [f.strip() for f in self.flags_input.data.split('\n') if f.strip()]
-            if not provided_flags:
-                self.flags_input.errors.append('At least one flag is required for this multi-flag type.')
-                return False
+        else: # FLAG type
+            # Validate multi_flag_type and threshold
+            if self.multi_flag_type.data == DYNAMIC_FLAG_TYPE:
+                # For dynamic flags, traditional flags_input and threshold are not required
+                pass # No specific flag input validation for dynamic type
+            elif self.multi_flag_type.data == 'N_OF_M':
+                if not self.multi_flag_threshold.data or self.multi_flag_threshold.data < 1:
+                    self.multi_flag_threshold.errors.append('Threshold is required and must be at least 1 for N_OF_M type.')
+                    return False
+                
+                # Count the number of flags provided
+                provided_flags = [f.strip() for f in self.flags_input.data.split('\n') if f.strip()]
+                if self.multi_flag_threshold.data > len(provided_flags):
+                    self.multi_flag_threshold.errors.append(f'Threshold ({self.multi_flag_threshold.data}) cannot be greater than the number of provided flags ({len(provided_flags)}).')
+                    return False
+                if not provided_flags:
+                    self.flags_input.errors.append('At least one flag is required for N_OF_M type.')
+                    return False
+            elif self.multi_flag_type.data == 'SINGLE':
+                provided_flags = [f.strip() for f in self.flags_input.data.split('\n') if f.strip()]
+                if len(provided_flags) != 1:
+                    self.flags_input.errors.append('SINGLE type challenges must have exactly one flag.')
+                    return False
+                if not provided_flags:
+                    self.flags_input.errors.append('At least one flag is required for SINGLE type.')
+                    return False
+            else: # 'ANY', 'ALL'
+                provided_flags = [f.strip() for f in self.flags_input.data.split('\n') if f.strip()]
+                if not provided_flags:
+                    self.flags_input.errors.append('At least one flag is required for this multi-flag type.')
+                    return False
         
         # Validate unlock fields
         if self.unlock_type.data in ['PREREQUISITE_PERCENTAGE', 'COMBINED']:

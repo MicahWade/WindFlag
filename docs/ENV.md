@@ -91,10 +91,6 @@ These variables control which programming languages are enabled for coding chall
     *   **Default**: `true`
     *   **Example**: `ENABLE_DART=false`
 
-*   `ENABLE_HASKELL` (boolean): Set to `true` to enable Haskell for coding challenges.
-    *   **Default**: `true`
-    *   **Example**: `ENABLE_HASKELL=false`
-
 ## Database Configuration
 
 The WindFlag application primarily uses SQLite for simplicity but can be configured to use external relational databases like PostgreSQL via environment variables.
