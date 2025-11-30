@@ -5,7 +5,7 @@ This module defines the database schema for users, challenges, submissions,
 awards, and other related entities.
 """
 from datetime import datetime, UTC
-from .extensions import db, login_manager
+from .extensions import db, login_manager, bcrypt # Added bcrypt
 from flask_login import UserMixin
 from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM # For PostgreSQL, if needed, but using String for now
 import hashlib # Added for dynamic flag API key hashing
@@ -48,6 +48,12 @@ class User(db.Model, UserMixin):
     submissions = db.relationship('Submission', backref='solver', lazy=True)
     # Modified: Use back_populates for clarity and to resolve SAWarning
     flag_submissions = db.relationship('FlagSubmission', back_populates='user_rel', lazy=True)
+
+    def set_password(self, password):
+        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    def check_password(self, password):
+        return bcrypt.check_password_hash(self.password_hash, password)
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"

@@ -7,13 +7,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleAdminButton = document.getElementById('toggle-admin-button');
     const toggleBanForm = document.getElementById('toggle-ban-form'); // New
     const toggleBanButton = document.getElementById('toggle-ban-button'); // New
+    const resetPasswordForm = document.getElementById('reset-password-form'); // New
+    const resetPasswordButton = document.getElementById('reset-password-button'); // New
     let currentUserId = null;
-
-    // Pass current user's super admin status from Flask
-    // These variables are now defined globally in the HTML template
-    // const isCurrentUserSuperAdmin = {{ is_current_user_super_admin | tojson }};
-    // const usersSuperAdminStatus = {{ users_super_admin_status | tojson }};
-    // const currentLoggedInUserId = {{ current_user.id | tojson }};
 
     userRows.forEach(row => {
         row.addEventListener('click', function(event) {
@@ -61,6 +57,16 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 toggleAdminButton.disabled = false;
                 toggleAdminButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            // Update reset password button
+            resetPasswordForm.action = `/admin/user/${currentUserId}/reset_password`;
+            if (!isCurrentUserSuperAdmin || currentUserId == currentLoggedInUserId) { // Only super admins, and not self
+                resetPasswordButton.disabled = true;
+                resetPasswordButton.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                resetPasswordButton.disabled = false;
+                resetPasswordButton.classList.remove('opacity-50', 'cursor-not-allowed');
             }
 
             // Position and show dropdown

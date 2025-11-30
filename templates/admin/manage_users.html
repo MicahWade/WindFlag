@@ -68,9 +68,22 @@
         <form id="toggle-ban-form" method="POST" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">
             <button type="submit" class="w-full text-left" id="toggle-ban-button"></button>
         </form>
+        <form id="reset-password-form" method="POST" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">
+            <button type="submit" class="w-full text-left" id="reset-password-button">Reset Password</button>
+        </form>
         <form id="toggle-admin-form" method="POST" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">
             <button type="submit" class="w-full text-left" id="toggle-admin-button"></button>
         </form>
     </div>
+    <script>
+        window.isCurrentUserSuperAdmin = {{ is_current_user_super_admin | tojson }};
+        window.usersSuperAdminStatus = {{ users_super_admin_status | tojson }};
+        window.currentLoggedInUserId = {{ current_user.id | tojson }};
+
+        // Generic error logging for debugging
+        window.addEventListener('error', function(event) {
+            console.error('Unhandled JavaScript error:', event.error);
+        });
+    </script>
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 {% endblock %}

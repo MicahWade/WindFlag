@@ -722,6 +722,26 @@ def toggle_user_admin(user_id):
         flash(f'User {user.username} admin status toggled to {user.is_admin}.', 'success')
     return redirect(url_for('admin.manage_users'))
 
+@admin_bp.route('/user/<int:user_id>/reset_password', methods=['POST'])
+@admin_required
+def reset_user_password(user_id):
+    """
+    Resets a user's password to a new randomly generated temporary password.
+    Flashes the new password to the admin.
+    Requires admin privileges.
+    """
+    user = User.query.get_or_404(user_id)
+
+    # Generate a secure random password
+    new_password = secrets.token_urlsafe(16) # 16 bytes = approx 22 characters
+
+    # Set the new password for the user
+    user.set_password(new_password)
+    db.session.commit()
+
+    flash(f'Password for user {user.username} has been reset to: {new_password}', 'warning')
+    return redirect(url_for('admin.manage_users'))
+
 @admin_bp.route('/profile/<username>/give_award_inline', methods=['POST'])
 @admin_required
 def give_award_to_user(username):
