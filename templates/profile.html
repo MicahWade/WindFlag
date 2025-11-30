@@ -222,7 +222,7 @@
                                     <div class="theme-card-body">
                                         <canvas id="pointsOverTimeChart" class="points-over-time-chart"></canvas>
                                         <script type="application/json" id="profile-stats-data">{{ profile_stats_data | tojson }}</script>
-                                        <script type="application/json" id="is-admin-data">{{ current_user.is_admin | tojson }}</script>
+                                        <script type="application/json" id="is-admin-data">{{ is_admin_viewer_for_charts | tojson }}</script>
                                         <script type="application/json" id="profile-charts-data">{{ profile_charts_data | tojson }}</script>
                                     </div>
                                 </div>

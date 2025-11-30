@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (profileChartsDataElement) {
         const profileStatsData = profileStatsDataElement ? JSON.parse(profileStatsDataElement.textContent) : {};
-        const profileChartsData = profileChartsDataElement ? JSON.parse(profileChartsDataElement.textContent) : {}; // New data
+        const profileChartsData = profileChartsDataElement ? JSON.parse(profileChartsDataElement.textContent) : {};
 
         const targetUserScoreHistory = profileChartsData.target_user_score_history;
         const globalStatsOverTime = profileChartsData.global_stats_over_time;
@@ -108,8 +108,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 pointHoverRadius: 7
             }];
 
-            // Add global statistics lines
-            if (globalStatsOverTime && globalStatsOverTime.length > 0) {
+            // Add global statistics lines only if the viewer is an admin
+            const isAdminViewer = document.getElementById('is-admin-data') ? JSON.parse(document.getElementById('is-admin-data').textContent) : false;
+
+            if (isAdminViewer && globalStatsOverTime && globalStatsOverTime.length > 0) {
                 datasets.push({
                     label: 'Average Score',
                     data: globalStatsOverTime.map(d => ({
@@ -254,14 +256,17 @@ document.addEventListener('DOMContentLoaded', function() {
                                 return null; // Hide title for other datasets
                             },
                             label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label === 'User Score') {
+                                const datasetLabel = context.dataset.label || '';
+                                if (datasetLabel === 'User Score') {
                                     if (context.parsed.y !== null) {
-                                        label += ': ' + context.parsed.y;
+                                        return `User Score: ${context.parsed.y}`;
                                     }
-                                    return label;
+                                } else if (isAdminViewer) { // Only show global stats labels if admin viewer
+                                    if (context.parsed.y !== null) {
+                                        return `${datasetLabel}: ${context.parsed.y}`;
+                                    }
                                 }
-                                return null; // Hide other labels
+                                return null;
                             }
                         }
                     },

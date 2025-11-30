@@ -203,7 +203,7 @@ def get_global_score_history_data():
         'user_scores_over_time': final_user_scores_history
     }
 
-def get_profile_points_over_time_data(target_user, db_session, get_setting_func, Submission_model, Challenge_model, Category_model, User_model, UTC_tz, timedelta_obj):
+def get_profile_points_over_time_data(target_user, db_session, get_setting_func, Submission_model, Challenge_model, Category_model, User_model, UTC_tz, timedelta_obj, is_admin_viewer=False):
     """
     Generates data for the 'Points Over Time Chart' and associated statistics for a given user.
 
@@ -217,6 +217,7 @@ def get_profile_points_over_time_data(target_user, db_session, get_setting_func,
         User_model: The User model.
         UTC_tz: The UTC timezone object.
         timedelta_obj: The timedelta object.
+        is_admin_viewer (bool): If True, global stats are included. If False, only user's own score is included.
 
     Returns:
         tuple: A tuple containing:
@@ -253,58 +254,60 @@ def get_profile_points_over_time_data(target_user, db_session, get_setting_func,
         
         profile_charts_data['points_over_time'] = points_over_time_data
 
-        global_chart_data = get_global_score_history_data()
-        
-        profile_charts_data['global_stats_over_time'] = global_chart_data['global_stats_over_time']
-        
-        target_user_history = global_chart_data['user_scores_over_time'].get(target_user.username, [])
+        # Always populate target_user_score_history, as it's the user's own data
+        global_chart_data_for_user_history = get_global_score_history_data() # Fetch global data once
+        target_user_history = global_chart_data_for_user_history['user_scores_over_time'].get(target_user.username, [])
         if not target_user_history or target_user_history[0]['y'] != 0:
             target_user_history.insert(0, {'x': datetime.min.replace(tzinfo=UTC_tz).isoformat(), 'y': 0})
         profile_charts_data['target_user_score_history'] = target_user_history
 
-        if all_scores:
-            # Calculate overall statistics from all eligible users
-            eligible_users = db_session.query(User_model)\
-                                       .filter(User_model.hidden == False)\
-                                       .join(Submission_model, User_model.id == Submission_model.user_id)\
-                                       .group_by(User_model.id)\
-                                       .having(func.count(Submission_model.id) > 0)\
-                                       .all()
-            
-            overall_scores_list = []
-            for user in eligible_users:
-                if user.score > 0:
-                    overall_scores_list.append(user.score)
+        if is_admin_viewer:
+            # Only populate global stats if the viewer is an admin
+            profile_charts_data['global_stats_over_time'] = global_chart_data_for_user_history['global_stats_over_time']
 
-            if overall_scores_list:
-                stats = _calculate_stats(overall_scores_list)
-                profile_stats_data['max_score'] = stats['max']
-                profile_stats_data['min_score'] = stats['min']
-                profile_stats_data['average_score'] = stats['mean']
-                profile_stats_data['std_dev'] = stats['std']
-                profile_stats_data['iqr'] = stats['q3'] - stats['q1']
+
+            if all_scores:
+                # Calculate overall statistics from all eligible users
+                eligible_users = db_session.query(User_model)\
+                                           .filter(User_model.hidden == False)\
+                                           .join(Submission_model, User_model.id == Submission_model.user_id)\
+                                           .group_by(User_model.id)\
+                                           .having(func.count(Submission_model.id) > 0)\
+                                           .all()
+                
+                overall_scores_list = []
+                for user in eligible_users:
+                    if user.score > 0:
+                        overall_scores_list.append(user.score)
+
+                if overall_scores_list:
+                    stats = _calculate_stats(overall_scores_list)
+                    profile_stats_data['max_score'] = stats['max']
+                    profile_stats_data['min_score'] = stats['min']
+                    profile_stats_data['average_score'] = stats['mean']
+                    profile_stats_data['std_dev'] = stats['std']
+                    profile_stats_data['iqr'] = stats['q3'] - stats['q1']
+                else:
+                    profile_stats_data['max_score'] = 0.0
+                    profile_stats_data['min_score'] = 0.0
+                    profile_stats_data['average_score'] = 0.0
+                    profile_stats_data['std_dev'] = 0.0
+                    profile_stats_data['iqr'] = 0.0
             else:
                 profile_stats_data['max_score'] = 0.0
                 profile_stats_data['min_score'] = 0.0
                 profile_stats_data['average_score'] = 0.0
                 profile_stats_data['std_dev'] = 0.0
                 profile_stats_data['iqr'] = 0.0
-        else:
-            profile_stats_data['max_score'] = 0.0
-            profile_stats_data['min_score'] = 0.0
-            profile_stats_data['average_score'] = 0.0
-            profile_stats_data['std_dev'] = 0.0
-            profile_stats_data['iqr'] = 0.0
-        
-        # Initialize these even if no scores, to prevent KeyError in template
-        profile_charts_data['moving_average'] = []
-        profile_charts_data['plus_one_std_dev'] = []
-        profile_charts_data['minus_one_std_dev'] = []
-        profile_charts_data['moving_max'] = []
-        profile_charts_data['moving_min'] = []
-        profile_charts_data['moving_q1'] = []
-        profile_charts_data['moving_q3'] = []
-
+            
+            # Initialize these even if no scores, to prevent KeyError in template
+            profile_charts_data['moving_average'] = []
+            profile_charts_data['plus_one_std_dev'] = []
+            profile_charts_data['minus_one_std_dev'] = []
+            profile_charts_data['moving_max'] = []
+            profile_charts_data['moving_min'] = []
+            profile_charts_data['moving_q1'] = []
+            profile_charts_data['moving_q3'] = []
     return profile_charts_data, profile_stats_data
 
 def get_profile_fails_vs_succeeds_data(target_user, FlagAttempt_model, get_setting_func):

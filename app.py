@@ -312,9 +312,14 @@ def create_app(config_class=Config):
         profile_stats_data = {}
 
         # 1. Points Over Time Chart and overall statistics
+        is_admin_viewer_for_charts = current_user.is_admin
+        print(f"DEBUG: current_user.is_admin: {current_user.is_admin}")
+        print(f"DEBUG: target_user.id: {target_user.id}, current_user.id: {current_user.id}")
+        print(f"DEBUG: is_admin_viewer_for_charts: {is_admin_viewer_for_charts}")
         points_charts, points_stats = get_profile_points_over_time_data(
             target_user, db.session, get_setting,
-            Submission, Challenge, Category, User, UTC, timedelta
+            Submission, Challenge, Category, User, UTC, timedelta,
+            is_admin_viewer=is_admin_viewer_for_charts
         )
         profile_charts_data.update(points_charts)
         profile_stats_data.update(points_stats)
@@ -340,7 +345,8 @@ def create_app(config_class=Config):
                                profile_charts_data=profile_charts_data,
                                profile_stats_data=profile_stats_data,
                                active_api_key=active_api_key_obj,
-                               enable_api_key_display_template=current_app.config.get('ENABLE_API_KEY_DISPLAY', False))
+                               enable_api_key_display_template=current_app.config.get('ENABLE_API_KEY_DISPLAY', False),
+                               is_admin_viewer_for_charts=is_admin_viewer_for_charts)
 
     @app.route('/generate_api_key', methods=['POST'])
     @login_required
