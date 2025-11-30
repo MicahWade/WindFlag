@@ -1,8 +1,19 @@
 import unittest
 from scripts.code_execution import execute_code_in_sandbox, CodeExecutionResult
 import os
+from flask import Flask
+from scripts.config import Config
 
 class TestLanguageExecution(unittest.TestCase):
+
+    def setUp(self):
+        self.temp_app = Flask(__name__)
+        self.temp_app.config.from_object(Config)
+        self.app_context = self.temp_app.app_context()
+        self.app_context.push()
+
+    def tearDown(self):
+        self.app_context.pop()
 
     def test_python3_execution(self):
         code = "print('Hello, Python!')"

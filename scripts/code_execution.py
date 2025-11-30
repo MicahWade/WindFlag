@@ -4,6 +4,8 @@ import tempfile
 import os
 import secrets
 import shutil
+from flask import current_app
+from scripts.config import get_enabled_language_configs
 
 # Configuration for bwrap paths and language runtimes
 # These should ideally be configurable or checked for existence
@@ -235,6 +237,12 @@ def execute_code_in_sandbox(language, code, expected_output, setup_code=None, te
     CODE_SIZE_LIMIT_BYTES = 200 * 1024 # 0.2 MB
     EXECUTION_TIMEOUT_SECONDS = 5 # Fixed timeout
 
+    # Check if the language is enabled via Flask's current_app.config
+    # This assumes a Flask app context is active when this function is called
+    enabled_languages = get_enabled_language_configs()
+    if language not in enabled_languages:
+        return CodeExecutionResult(False, "", "", f"Unsupported language: {language}")
+
     if language not in LANGUAGE_CONFIGS:
         return CodeExecutionResult(False, "", "", f"Unsupported language: {language}")
 
@@ -278,8 +286,7 @@ def execute_code_in_sandbox(language, code, expected_output, setup_code=None, te
             ('/usr', '/usr'),
             ('/bin', '/bin'),
             ('/lib', '/lib'),
-            ('/lib64', '/lib64'),
-            ('/etc/resolv.conf', '/etc/resolv.conf') # Allow DNS lookups
+            ('/lib64', '/lib64')
         ]:
             if os.path.exists(host_path):
                 bwrap_args.extend(['--ro-bind', host_path, sandbox_path])
@@ -410,12 +417,6 @@ if __name__ == '__main__':
     dart_expected = "Hello, Dart!"
     dart_result = execute_code_in_sandbox('dart', dart_code, dart_expected, timeout=5)
     print(f"Success: {dart_result.success}, Stdout: '{dart_result.stdout}', Stderr: '{dart_result.stderr}', Error: '{dart_result.error_message}'")
-
-    print("\n--- Haskell Test ---")
-    haskell_code = "main = putStrLn \"Hello, Haskell!\""
-    haskell_expected = "Hello, Haskell!"
-    haskell_result = execute_code_in_sandbox('haskell', haskell_code, haskell_expected, timeout=5)
-    print(f"Success: {haskell_result.success}, Stdout: '{haskell_result.stdout}', Stderr: '{haskell_result.stderr}', Error: '{haskell_result.error_message}'")
     
     print("\n--- Python with Input Test ---")
     python_input_code = "import sys; print(f'Input was: {sys.stdin.read().strip()}')"
