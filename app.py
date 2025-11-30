@@ -12,7 +12,7 @@ from dotenv import load_dotenv # Moved to top
 # Load environment variables from .env file in the project root
 load_dotenv(os.path.join(os.path.abspath(os.path.dirname(__file__)), '.env')) # Moved to top
 
-from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, current_app
+from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, current_app, session
 from flask_login import login_user, current_user, logout_user, login_required
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -98,7 +98,7 @@ def create_app(config_class=Config):
     # Note: Flask-RESTX Api is initialized within scripts/api_routes.py
     # and its blueprint (api_bp) is registered here.
 
-    from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission, Award, AwardCategory, FlagAttempt, Hint, UserHint # Import FlagAttempt, Hint, UserHint
+    from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission, Award, AwardCategory, FlagAttempt, Hint, UserHint, ApiKey # Import FlagAttempt, Hint, UserHint, ApiKey
     from scripts.code_execution import execute_code_in_sandbox # New: Import for coding challenges
 
     app.register_blueprint(admin_bp) # Register admin blueprint
@@ -168,6 +168,14 @@ def create_app(config_class=Config):
             user = User(username=new_username, email=email_data, password_hash=hashed_password)
             db.session.add(user)
             db.session.commit()
+            
+            newly_generated_api_key_plain = None
+            # Generate an API key for the new user if enabled by GENERATE_API_KEY_ON_REGISTER
+            if app.config.get('GENERATE_API_KEY_ON_REGISTER', False):
+                db.session.refresh(user) # Ensure user object is fresh for key generation
+                newly_generated_api_key_plain = user.generate_new_api_key() # Generate and store the hashed key
+                flash(f'Your API Key has been generated: {newly_generated_api_key_plain}. Please save it securely!', 'warning')
+            
             flash(f'Your account with username "{new_username}" has been created! You are now able to log in', 'success')
             return redirect(url_for('login'))
         # Pass configuration flags to the template for conditional rendering of fields
@@ -293,6 +301,12 @@ def create_app(config_class=Config):
             give_award_form = InlineGiveAwardForm()
             give_award_form.category.choices = [(ac.id, ac.name) for ac in AwardCategory.query.order_by(AwardCategory.name).all()]
 
+        # API Key information for the profile page
+        active_api_key_obj = None
+        if current_app.config.get('ENABLE_API_KEY_DISPLAY', False):
+            if target_user.id == current_user.id: # Only show current user their own API key info
+                active_api_key_obj = current_user.get_active_api_key()
+
         # --- Chart Data Generation ---
         profile_charts_data = {}
         profile_stats_data = {}
@@ -320,12 +334,27 @@ def create_app(config_class=Config):
             target_user, Submission, UTC, timedelta, get_setting
         ))
 
-
         return render_template('profile.html', title=f"{target_user.username}'s Profile",
                                user=target_user, submissions=user_submissions, user_rank=user_rank,
                                give_award_form=give_award_form, flag_attempts=flag_attempts,
                                profile_charts_data=profile_charts_data,
-                               profile_stats_data=profile_stats_data)
+                               profile_stats_data=profile_stats_data,
+                               active_api_key=active_api_key_obj,
+                               enable_api_key_display_template=current_app.config.get('ENABLE_API_KEY_DISPLAY', False))
+
+    @app.route('/generate_api_key', methods=['POST'])
+    @login_required
+    def generate_api_key_route():
+        """
+        Generates a new API key for the current user and redirects to the profile page.
+        """
+        if not current_app.config.get('ENABLE_API_KEY_DISPLAY', False):
+            flash('API Key generation is not enabled.', 'danger')
+            return redirect(url_for('profile'))
+        
+        newly_generated_api_key_plain = current_user.generate_new_api_key()
+        flash(f'Your new API Key has been generated: {newly_generated_api_key_plain}. Please save it securely!', 'warning')
+        return redirect(url_for('profile'))
 
     @app.route('/challenges')
     @login_required

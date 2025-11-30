@@ -15,6 +15,7 @@ def seed_database():
     flags, hints, submissions, and settings for testing and demonstration.
     Existing data for these models will be cleared before seeding.
     """
+    from flask import current_app # Import current_app inside the function where context is active
     # Clear existing data
     db.session.query(FlagAttempt).delete()
     db.session.query(FlagSubmission).delete()
@@ -49,6 +50,13 @@ def seed_database():
     db.session.add_all([admin1, admin2, test_admin])
     db.session.commit()
 
+    # Generate API keys for admin users if the feature is enabled
+    if current_app.config.get('GENERATE_API_KEY_ON_REGISTER', False):
+        admin1.generate_new_api_key()
+        admin2.generate_new_api_key()
+        test_admin.generate_new_api_key()
+        db.session.commit() # Commit after generating keys
+
     # Create users from the generated usernames
     from scripts.utils import generate_usernames
     from flask import current_app
@@ -71,6 +79,12 @@ def seed_database():
 
     db.session.add_all(users)
     db.session.commit()
+
+    # Generate API keys for regular users if the feature is enabled
+    if current_app.config.get('GENERATE_API_KEY_ON_REGISTER', False):
+        for user in users:
+            user.generate_new_api_key()
+        db.session.commit() # Commit after generating keys
 
     # Set some users to hidden immediately after creation
     # This ensures that eligible_users_for_seeding considers these users as hidden from the start

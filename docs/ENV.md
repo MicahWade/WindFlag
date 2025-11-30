@@ -36,6 +36,14 @@ These variables control general application behavior and display.
 
 These variables control API key functionality, including a special administrative key.
 
+*   `ENABLE_API_KEY_DISPLAY` (boolean): If `true`, the API key management section (display and regenerate button) is shown on the user's profile page.
+    *   **Default**: `false`
+    *   **Example**: `ENABLE_API_KEY_DISPLAY=true`
+
+*   `GENERATE_API_KEY_ON_REGISTER` (boolean): If `true`, a unique API key is automatically generated for new users upon registration. If `false`, users will need to manually generate their API key from their profile page (if `ENABLE_API_KEY_DISPLAY` is also `true`).
+    *   **Default**: `true`
+    *   **Example**: `GENERATE_API_KEY_ON_REGISTER=false`
+
 *   `ADMIN_API_KEY` (string, optional): A special API key that grants full administrative access to all API endpoints without requiring a specific user account. **This key bypasses regular authentication and should be kept extremely confidential.**
     *   **Recommendation**: Generate a long, random string.
     *   **Example**: `ADMIN_API_KEY="your_super_secret_admin_api_key_123"`

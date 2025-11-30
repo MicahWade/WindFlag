@@ -164,7 +164,13 @@ Copy the `.env.template` file to `.env` in the root directory of your project an
 **Language Enablement Flags:** WindFlag supports coding challenges in multiple programming languages. You can enable or disable specific languages by setting `ENABLE_<LANGUAGE_NAME>=True/False` in your `.env` file (e.g., `ENABLE_PYTHON3=True`). By default, all supported languages are enabled. Refer to [ENV.md](docs/ENV.md) for a full list and more details.
 
 #### **API Key Management**
-WindFlag supports API keys for programmatic access. In addition to user-generated API keys, a special `ADMIN_API_KEY` can be configured in your `.env` file to grant administrative access to all API endpoints. This is useful for scripts and automated tasks. For more details, refer to [ENV.md](docs/ENV.md).
+WindFlag supports API keys for programmatic access, primarily for users to interact with challenges. When enabled, a unique API key is generated for each user upon registration, which can then be used to complete specific challenges. This key is displayed to the user via a one-time flash message on registration and is also accessible on their profile page. Users can regenerate their API key from their profile page.
+
+You can enable or disable the display of API key management features on the user profile by setting `ENABLE_API_KEY_DISPLAY=True/False` in your `.env` file.
+
+To control whether an API key is automatically generated when a new user registers, set `GENERATE_API_KEY_ON_REGISTER=True/False` in your `.env` file. If this is `False`, users can still generate an API key from their profile page if `ENABLE_API_KEY_DISPLAY` is `True`.
+
+In addition to user-generated API keys, a special `ADMIN_API_KEY` can be configured in your `.env` file to grant administrative access to all API endpoints. This is useful for scripts and automated tasks. For more details, refer to [ENV.md](docs/ENV.md).
 
 ```bash
 cp .env.template .env
