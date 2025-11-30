@@ -52,24 +52,6 @@
             </div>
         </form>
 
-        {% if config['ENABLE_GITHUB_SSO'] %}
-        <div class="mt-6">
-            <div class="relative flex items-center">
-                <div class="flex-grow border-t border-gray-600"></div>
-                <span class="flex-shrink mx-4 text-gray-400">Or log in with</span>
-                <div class="flex-grow border-t border-gray-600"></div>
-            </div>
-            <div class="mt-4">
-                <a href="{{ url_for('github_login') }}" class="w-full flex items-center justify-center px-4 py-2 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-200 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.83 9.504.475.083.677-.223.677-.492 0-.243-.01-1.05-.015-1.93-2.788.605-3.364-1.34-3.364-1.34-.454-1.158-1.11-1.467-1.11-1.467-.908-.62.069-.608.069-.608 1.006.07 1.533 1.033 1.533 1.033.89 1.523 2.342 1.083 2.91.82.09-.637.349-1.083.636-1.33-2.22-.253-4.555-1.115-4.555-4.954 0-1.09.39-1.984 1.03-2.682-.103-.253-.448-1.27.098-2.65 0 0 .84-.27 2.75 1.025A9.723 9.723 0 0112 6.647c.85.065 1.7.195 2.49.46.29-.693 1.14-1.27 1.14-1.27 1.25-1.04 2.29.544 2.29.544.537 1.38.196 2.396.11 2.65.64.698 1.03 1.592 1.03 2.682 0 3.84-2.336 4.69-4.563 4.948.359.309.673.921.673 1.854 0 1.335-.012 2.41-.012 2.723 0 .268.192.576.685.493C21.13 20.2 24 16.447 24 12.017 24 6.484 19.523 2 14 2h-2z" clip-rule="evenodd" />
-                    </svg>
-                    GitHub
-                </a>
-            </div>
-        </div>
-        {% endif %}
-
         <div class="border-t border-gray-700 pt-4 mt-4 text-center">
             <small class="text-gray-400">
                 Need An Account?

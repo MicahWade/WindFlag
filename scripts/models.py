@@ -44,7 +44,6 @@ class User(db.Model, UserMixin):
     hidden = db.Column(db.Boolean, nullable=False, default=False)
     last_seen = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
     score = db.Column(db.Integer, nullable=False, default=0)
-    github_id = db.Column(db.String(50), unique=True, nullable=True) # New: GitHub ID for SSO
     is_banned = db.Column(db.Boolean, nullable=False, default=False) # New: Field to ban/unban users
     submissions = db.relationship('Submission', backref='solver', lazy=True)
     # Modified: Use back_populates for clarity and to resolve SAWarning

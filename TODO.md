@@ -10,7 +10,6 @@
 *Enhance the solo player experience and administration.*
 
 #### **Step 1: Authentication & Admin**
-* **[ ] Auth:** Install `Authlib` and implement **GitHub SSO** (allow users to log in with GitHub instead of email).
 * **[ ] Admin:** Implement a simple **"Ban User"** button in the Admin panel to invalidate a user's tokens/session.
 
 #### **Step 2: Polish & Real-time (Frontend)**
