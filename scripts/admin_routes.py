@@ -737,6 +737,7 @@ def reset_user_password(user_id):
 
     # Set the new password for the user
     user.set_password(new_password)
+    user.password_reset_required = True # Force user to reset password on next login
     db.session.commit()
 
     flash(f'Password for user {user.username} has been reset to: {new_password}', 'warning')

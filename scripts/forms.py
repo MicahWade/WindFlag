@@ -421,3 +421,12 @@ class InlineGiveAwardForm(FlaskForm):
     points = IntegerField('Points to Award',
                           validators=[DataRequired(), NumberRange(min=1)])
     submit = SubmitField('Give Award')
+
+class PasswordResetForm(FlaskForm):
+    """
+    Form for users to reset their password.
+    """
+    password = PasswordField('New Password', validators=[DataRequired(), Length(min=8)]) # Enforce minimum 8 chars for new password
+    confirm_password = PasswordField('Confirm New Password',
+                                     validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField('Reset Password')

@@ -171,6 +171,10 @@ def create_app(config_class=Config):
         if form.validate_on_submit():
             user = User.query.filter_by(username=form.username.data).first()
             if user and bcrypt.check_password_hash(user.password_hash, form.password.data):
+                if user.password_reset_required:
+                    flash('You must reset your password before continuing.', 'info')
+                    login_user(user, remember=form.remember.data) # Log user in to retain context
+                    return redirect(url_for('reset_password_force'))
                 login_user(user, remember=form.remember.data)
                 next_page = request.args.get('next')
                 return redirect(next_page) if next_page else redirect(url_for('home'))
@@ -185,6 +189,25 @@ def create_app(config_class=Config):
         """
         logout_user()
         return redirect(url_for('home'))
+
+    @app.route('/reset_password_force', methods=['GET', 'POST'])
+    @login_required
+    def reset_password_force():
+        """
+        Forces a user to reset their password if password_reset_required is True.
+        """
+        if not current_user.password_reset_required:
+            flash('Your password does not need to be reset.', 'info')
+            return redirect(url_for('home'))
+
+        form = PasswordResetForm()
+        if form.validate_on_submit():
+            current_user.set_password(form.password.data)
+            current_user.password_reset_required = False
+            db.session.commit()
+            flash('Your password has been reset successfully!', 'success')
+            return redirect(url_for('home'))
+        return render_template('force_password_reset.html', title='Force Password Reset', form=form)
 
     @app.route('/profile')
     @login_required

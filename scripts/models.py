@@ -44,7 +44,8 @@ class User(db.Model, UserMixin):
     hidden = db.Column(db.Boolean, nullable=False, default=False)
     last_seen = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
     score = db.Column(db.Integer, nullable=False, default=0)
-    is_banned = db.Column(db.Boolean, nullable=False, default=False) # New: Field to ban/unban users
+    is_banned = db.Column(db.Boolean, nullable=False, default=False)
+    password_reset_required = db.Column(db.Boolean, nullable=False, default=False) # New: Flag to force password reset
     submissions = db.relationship('Submission', backref='solver', lazy=True)
     # Modified: Use back_populates for clarity and to resolve SAWarning
     flag_submissions = db.relationship('FlagSubmission', back_populates='user_rel', lazy=True)
