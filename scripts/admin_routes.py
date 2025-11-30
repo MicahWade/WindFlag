@@ -420,6 +420,15 @@ def new_challenge():
         for flag_content in flags_content:
             challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
             db.session.add(challenge_flag)
+        
+        # Add hints
+        for hint_form_data in form.hints.entries:
+            hint = Hint(challenge_id=challenge.id,
+                        title=hint_form_data.title.data,
+                        content=hint_form_data.content.data,
+                        cost=hint_form_data.cost.data)
+            db.session.add(hint)
+
         db.session.commit()
 
         flash('Challenge has been created!', 'success')
@@ -543,6 +552,15 @@ def update_challenge(challenge_id):
         for flag_content in flags_content:
             challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
             db.session.add(challenge_flag)
+
+        # Delete existing hints and add new ones
+        Hint.query.filter_by(challenge_id=challenge.id).delete()
+        for hint_form_data in form.hints.entries:
+            hint = Hint(challenge_id=challenge.id,
+                        title=hint_form_data.title.data,
+                        content=hint_form_data.content.data,
+                        cost=hint_form_data.cost.data)
+            db.session.add(hint)
         
         db.session.commit()
         flash('Challenge has been updated!', 'success')
@@ -576,6 +594,16 @@ def update_challenge(challenge_id):
         form.prerequisite_challenge_ids_input.data = challenge.prerequisite_challenge_ids
         form.is_hidden.data = challenge.is_hidden
         form.has_dynamic_flag.data = challenge.dynamic_flag_api_key_hash is not None # Load has_dynamic_flag based on api key hash
+
+        # Clear any default hint forms and populate with existing hints
+        while len(form.hints) > 0:
+            form.hints.pop_entry()
+        for hint in challenge.hints:
+            hint_form = form.hints.append_entry()
+            hint_form.id.data = hint.id
+            hint_form.title.data = hint.title
+            hint_form.content.data = hint.content
+            hint_form.cost.data = hint.cost
 
         # Convert UTC datetimes from DB to local timezone for display
         # Use the default timezone for display if not explicitly set in the form

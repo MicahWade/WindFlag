@@ -259,6 +259,30 @@
                         {{ form.starter_code(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono") }}
                     </div>
                 </div>
+                <fieldset class="border-t border-gray-700 pt-4 mt-4">
+                    <legend class="text-xl font-bold text-gray-100 mb-4">Hints</legend>
+                    <div id="hints-container">
+                        {% for hint_form in form.hints %}
+                            <div class="hint-entry border p-4 rounded mb-4">
+                                {{ hint_form.id }}
+                                <div class="mb-4">
+                                    {{ hint_form.title.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                                    {{ hint_form.title(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                                </div>
+                                <div class="mb-4">
+                                    {{ hint_form.content.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                                    {{ hint_form.content(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                                </div>
+                                <div class="mb-4">
+                                    {{ hint_form.cost.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                                    {{ hint_form.cost(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
+                                </div>
+                                <button type="button" class="remove-hint-button bg-red-600 hover:bg-red-500 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline">Remove Hint</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" id="add-hint-button" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-4">Add Hint</button>
+                </fieldset>
                 <div class="mb-4">
                     {{ form.category.label(class="block text-gray-300 text-sm font-bold mb-2") }}
                     {% if form.category.errors %}

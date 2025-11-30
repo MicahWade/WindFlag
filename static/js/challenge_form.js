@@ -227,4 +227,67 @@ document.addEventListener('DOMContentLoaded', function () {
             timezoneField.style.display = 'none';
         });
     }
+
+    // Dynamic Hint Fields Logic
+    const hintsContainer = document.getElementById('hints-container');
+    const addHintButton = document.getElementById('add-hint-button');
+
+    // Get the initial count of hints
+    let hintCount = hintsContainer ? hintsContainer.children.length : 0;
+
+    function addHintField(title = '', content = '', cost = 0, hintId = '') {
+        const newHintEntry = document.createElement('div');
+        newHintEntry.classList.add('hint-entry', 'border', 'p-4', 'rounded', 'mb-4');
+        newHintEntry.innerHTML = `
+            <input type="hidden" name="hints-${hintCount}-id" value="${hintId}">
+            <div class="mb-4">
+                <label for="hints-${hintCount}-title" class="block text-gray-300 text-sm font-bold mb-2">Hint Title</label>
+                <input type="text" id="hints-${hintCount}-title" name="hints-${hintCount}-title" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline" value="${title}" required>
+            </div>
+            <div class="mb-4">
+                <label for="hints-${hintCount}-content" class="block text-gray-300 text-sm font-bold mb-2">Hint Content</label>
+                <textarea id="hints-${hintCount}-content" name="hints-${hintCount}-content" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline" required>${content}</textarea>
+            </div>
+            <div class="mb-4">
+                <label for="hints-${hintCount}-cost" class="block text-gray-300 text-sm font-bold mb-2">Hint Cost</label>
+                <input type="number" id="hints-${hintCount}-cost" name="hints-${hintCount}-cost" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline" value="${cost}" required min="0">
+            </div>
+            <button type="button" class="remove-hint-button bg-red-600 hover:bg-red-500 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline">Remove Hint</button>
+        `;
+        hintsContainer.appendChild(newHintEntry);
+        hintCount++;
+    }
+
+    function removeHintField(event) {
+        event.target.closest('.hint-entry').remove();
+        // Reindex remaining hints
+        reindexHints();
+    }
+
+    function reindexHints() {
+        const hintEntries = hintsContainer.querySelectorAll('.hint-entry');
+        hintCount = 0;
+        hintEntries.forEach((entry) => {
+            entry.querySelectorAll('[name^="hints-"]').forEach((input) => {
+                const oldName = input.getAttribute('name');
+                const newName = oldName.replace(/hints-\d+-/, `hints-${hintCount}-`);
+                input.setAttribute('name', newName);
+                input.setAttribute('id', newName); // Also update ID for labels
+            });
+            hintCount++;
+        });
+    }
+
+    if (addHintButton) {
+        addHintButton.addEventListener('click', () => addHintField());
+    }
+
+    // Add event listeners to existing remove buttons
+    if (hintsContainer) {
+        hintsContainer.addEventListener('click', (event) => {
+            if (event.target.classList.contains('remove-hint-button')) {
+                removeHintField(event);
+            }
+        });
+    }
 });

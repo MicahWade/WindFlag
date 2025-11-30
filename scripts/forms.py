@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, IntegerField, SelectField, SelectMultipleField, HiddenField
+from wtforms.fields import FieldList, FormField
 from wtforms.fields.datetime import DateTimeField, DateField # Import DateField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
 from scripts.models import User, Category, MULTI_FLAG_TYPES, POINT_DECAY_TYPES, UNLOCK_TYPES, DYNAMIC_FLAG_TYPE, CHALLENGE_TYPES # Import DYNAMIC_FLAG_TYPE and CHALLENGE_TYPES
@@ -184,6 +185,15 @@ class CategoryForm(FlaskForm):
         
         return True
 
+class HintForm(FlaskForm):
+    """
+    Subform for a single hint.
+    """
+    id = HiddenField('Hint ID') # To identify existing hints for editing
+    title = StringField('Hint Title', validators=[DataRequired(), Length(min=1, max=100)])
+    content = TextAreaField('Hint Content', validators=[DataRequired()])
+    cost = IntegerField('Hint Cost', validators=[DataRequired(), NumberRange(min=0)])
+
 class ChallengeForm(FlaskForm):
     """
     Form for creating and updating challenges. Includes fields for multi-flag challenges
@@ -273,6 +283,7 @@ class ChallengeForm(FlaskForm):
 
     is_hidden = BooleanField('Hide Challenge from Users', default=False) # New: Field to hide challenge
     has_dynamic_flag = BooleanField('Has Dynamic Flag', default=False) # New: Field to enable/disable dynamic flag
+    hints = FieldList(FormField(HintForm), min_entries=0, label='Hints') # New: Dynamic hints
     submit = SubmitField('Submit Challenge')
 
     def validate(self, extra_validators=None):
