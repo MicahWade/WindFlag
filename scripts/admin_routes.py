@@ -733,7 +733,7 @@ def reset_user_password(user_id):
     user = User.query.get_or_404(user_id)
 
     # Generate a secure random password
-    new_password = secrets.token_urlsafe(16) # 16 bytes = approx 22 characters
+    new_password = secrets.token_urlsafe(3) # Will generate approx. 4 characters
 
     # Set the new password for the user
     user.set_password(new_password)
