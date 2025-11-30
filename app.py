@@ -17,7 +17,7 @@ from flask_login import login_user, current_user, logout_user, login_required
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from scripts.config import Config
-from scripts.forms import RegistrationForm, LoginForm, FlagSubmissionForm, InlineGiveAwardForm
+from scripts.forms import RegistrationForm, LoginForm, FlagSubmissionForm, InlineGiveAwardForm, PasswordResetForm
 from datetime import datetime, UTC, timedelta
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
