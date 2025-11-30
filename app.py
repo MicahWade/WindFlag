@@ -43,7 +43,7 @@ import os
 import json
 import yaml
 from dotenv import load_dotenv
-from scripts.utils import make_datetime_timezone_aware # New: For timezone handling
+from scripts.utils import make_datetime_timezone_aware, generate_usernames # New: For timezone handling and preset usernames
 
 
 def create_app(config_class=Config):
@@ -145,19 +145,36 @@ def create_app(config_class=Config):
                 flash('Invalid join code.', 'danger')
                 return render_template('register.html', title='Register', form=form,
                                        require_email=app.config['REQUIRE_EMAIL'],
-                                       require_join_code=app.config['REQUIRE_JOIN_CODE'])
+                                       require_join_code=app.config['REQUIRE_JOIN_CODE'],
+                                       preset_usernames_enabled=app.config.get('PRESET_USERNAMES_ENABLED', False))
+            
             hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-            # Conditionally set email data based on REQUIRE_EMAIL config
             email_data = form.email.data if app.config['REQUIRE_EMAIL'] else None
-            user = User(username=form.username.data, email=email_data, password_hash=hashed_password)
+            
+            # Determine username
+            if app.config.get('PRESET_USERNAMES_ENABLED', False):
+                # Generate a unique username
+                generated_username_list = generate_usernames(num_to_generate=1)
+                if not generated_username_list:
+                    flash('Error generating a unique username. Please try again.', 'danger')
+                    return render_template('register.html', title='Register', form=form,
+                                           require_email=app.config['REQUIRE_EMAIL'],
+                                           require_join_code=app.config['REQUIRE_JOIN_CODE'],
+                                           preset_usernames_enabled=app.config.get('PRESET_USERNAMES_ENABLED', False))
+                new_username = generated_username_list[0]
+            else:
+                new_username = form.username.data
+
+            user = User(username=new_username, email=email_data, password_hash=hashed_password)
             db.session.add(user)
             db.session.commit()
-            flash('Your account has been created! You are now able to log in', 'success')
+            flash(f'Your account with username "{new_username}" has been created! You are now able to log in', 'success')
             return redirect(url_for('login'))
         # Pass configuration flags to the template for conditional rendering of fields
         return render_template('register.html', title='Register', form=form,
                                require_email=app.config['REQUIRE_EMAIL'],
-                               require_join_code=app.config['REQUIRE_JOIN_CODE'])
+                               require_join_code=app.config['REQUIRE_JOIN_CODE'],
+                               preset_usernames_enabled=app.config.get('PRESET_USERNAMES_ENABLED', False))
 
     @app.route('/login', methods=['GET', 'POST'])
     @limiter.limit(Config.RATELIMIT_LOGIN)

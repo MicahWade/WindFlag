@@ -5,6 +5,7 @@
             {{ form.hidden_tag() }}
             <fieldset class="border-b border-gray-700 pb-4">
                 <legend class="text-2xl font-bold text-gray-100 mb-4">Join Today</legend>
+                {% if not preset_usernames_enabled %}
                 <div class="mb-4">
                     {{ form.username.label(class="block text-gray-300 text-sm font-bold mb-2") }}
                     {% if form.username.errors %}
@@ -18,6 +19,11 @@
                         {{ form.username(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline") }}
                     {% endif %}
                 </div>
+                {% else %}
+                <div class="mb-4">
+                    <p class="text-gray-300 text-sm font-bold mb-2">Username will be automatically generated.</p>
+                </div>
+                {% endif %}
                 {% if require_email %}
                 <div class="mb-4">
                     {{ form.email.label(class="block text-gray-300 text-sm font-bold mb-2") }}

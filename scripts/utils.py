@@ -9,10 +9,14 @@ import os
 from scripts.extensions import db
 
 
-def generate_usernames():
+def generate_usernames(num_to_generate=None):
     """
-    Generates a list of usernames based on the configuration in the .env file.
+    Generates a list of usernames based on the configuration.
+    If PRESET_USERNAMES_ENABLED is False, returns an empty list.
     """
+    if not current_app.config.get('PRESET_USERNAMES_ENABLED', False):
+        return []
+
     words_file_path = current_app.config.get('WORDS_FILE_PATH', 'words.text')
     if not os.path.exists(words_file_path):
         current_app.logger.error(f"Words file not found at: {words_file_path}")
@@ -27,7 +31,7 @@ def generate_usernames():
 
     num_words = current_app.config.get('USERNAME_WORD_COUNT', 2)
     add_number = current_app.config.get('USERNAME_ADD_NUMBER', True)
-    num_users = current_app.config.get('PRESET_USER_COUNT', 10)
+    num_users = num_to_generate if num_to_generate is not None else current_app.config.get('PRESET_USER_COUNT', 50)
 
     usernames = []
     generated_unique_usernames = set() 

@@ -54,12 +54,15 @@ def seed_database():
     from flask import current_app
     
     users = []
-    generated_usernames = generate_usernames()
-    user_password = bcrypt.generate_password_hash("userpass").decode('utf-8')
+    
+    # Generate preset usernames only if the feature is enabled
+    if current_app.config.get('PRESET_USERNAMES_ENABLED', False):
+        generated_usernames = generate_usernames(num_to_generate=10) # 10 users for seeding
+        user_password = bcrypt.generate_password_hash("userpass").decode('utf-8')
 
-    for i, username in enumerate(generated_usernames):
-        user = User(username=username, email=f"{username}_{i}@example.com", password_hash=user_password, is_admin=False, hidden=False, score=0)
-        users.append(user)
+        for i, username in enumerate(generated_usernames):
+            user = User(username=username, email=f"{username}_{i}@example.com", password_hash=user_password, is_admin=False, hidden=False, score=0)
+            users.append(user)
     
     # Add specific user "zen" as a non-admin user
     zen_password = bcrypt.generate_password_hash("zen").decode('utf-8')

@@ -18,8 +18,7 @@ class RegistrationForm(FlaskForm):
     Form for user registration. Dynamically sets validators for email and join code
     based on application configuration.
     """
-    username = StringField('Username',
-                           validators=[DataRequired(), Length(min=2, max=20)])
+    # username field is handled dynamically in __init__
     email = StringField('Email') # Define email field, validators set dynamically
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password',
@@ -31,12 +30,24 @@ class RegistrationForm(FlaskForm):
         """
         Initializes the RegistrationForm and dynamically sets validators
         for email and join_code based on the provided application configuration.
+        It also conditionally includes the username field.
 
         Args:
             config (dict): The application configuration dictionary.
         """
         super(RegistrationForm, self).__init__(*args, **kwargs)
         self.config = config
+
+        # Conditionally add username field and its validation
+        if not self.config.get('PRESET_USERNAMES_ENABLED', False):
+            self.username = StringField('Username',
+                                        validators=[DataRequired(), Length(min=2, max=20)])
+            # Dynamically add the validate_username method if the field is present
+            setattr(self, 'validate_username', self._validate_dynamic_username)
+        else:
+            # If PRESET_USERNAMES_ENABLED is true, remove the username field if it exists
+            if hasattr(self, 'username'):
+                delattr(self, 'username')
 
         # Dynamically set validators for the email field based on app configuration
         email_validators = []
@@ -50,18 +61,13 @@ class RegistrationForm(FlaskForm):
         if self.config['REQUIRE_JOIN_CODE']:
             join_code_validators.append(DataRequired())
         self.join_code.validators = join_code_validators
-
-    def validate_username(self, username):
+    
+    def _validate_dynamic_username(self, field):
         """
         Validates that the chosen username is not already taken.
-
-        Args:
-            username (StringField): The username field from the form.
-
-        Raises:
-            ValidationError: If the username already exists.
+        This method is dynamically added if PRESET_USERNAMES_ENABLED is False.
         """
-        user = User.query.filter_by(username=username.data).first()
+        user = User.query.filter_by(username=field.data).first()
         if user:
             raise ValidationError('That username is taken. Please choose a different one.')
 
