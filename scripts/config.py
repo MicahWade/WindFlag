@@ -33,6 +33,9 @@ class Config:
     WORDS_FILE_PATH = os.environ.get('WORDS_FILE_PATH', 'words.text')
     ACTIVE_THEME = os.environ.get('ACTIVE_THEME', 'default')
 
+    # Admin API Key
+    ADMIN_API_KEY = os.environ.get('ADMIN_API_KEY')
+
     # Language Execution Enable/Disable Flags
     ENABLE_PYTHON3 = os.environ.get('ENABLE_PYTHON3', 'True').lower() == 'true'
     ENABLE_NODEJS = os.environ.get('ENABLE_NODEJS', 'True').lower() == 'true'

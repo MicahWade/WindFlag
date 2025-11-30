@@ -72,6 +72,19 @@ def api_key_required(f):
             current_app.logger.warning("API key missing from request headers.")
             return jsonify({'message': 'API Key is missing'}), 401
 
+        # Check against ADMIN_API_KEY first
+        admin_api_key_config = current_app.config.get('ADMIN_API_KEY')
+        if admin_api_key_config and api_key_header == admin_api_key_config:
+            # If it's the admin key, find an admin user and set g.current_api_user
+            admin_user = User.query.filter_by(is_admin=True).first()
+            if admin_user:
+                g.current_api_user = admin_user
+                current_app.logger.info(f"Admin API key used by user: {admin_user.username}")
+                return f(*args, **kwargs)
+            else:
+                current_app.logger.error("ADMIN_API_KEY used, but no admin user found in database.")
+                return jsonify({'message': 'ADMIN_API_KEY is configured but no admin user exists to grant permissions'}), 500
+
         # Hash the incoming API key for comparison
         incoming_key_hash = hashlib.sha256(api_key_header.encode('utf-8')).hexdigest()
         

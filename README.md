@@ -163,6 +163,9 @@ Copy the `.env.template` file to `.env` in the root directory of your project an
 
 **Language Enablement Flags:** WindFlag supports coding challenges in multiple programming languages. You can enable or disable specific languages by setting `ENABLE_<LANGUAGE_NAME>=True/False` in your `.env` file (e.g., `ENABLE_PYTHON3=True`). By default, all supported languages are enabled. Refer to [ENV.md](docs/ENV.md) for a full list and more details.
 
+#### **API Key Management**
+WindFlag supports API keys for programmatic access. In addition to user-generated API keys, a special `ADMIN_API_KEY` can be configured in your `.env` file to grant administrative access to all API endpoints. This is useful for scripts and automated tasks. For more details, refer to [ENV.md](docs/ENV.md).
+
 ```bash
 cp .env.template .env
 # Open .env with a text editor and fill in necessary values.

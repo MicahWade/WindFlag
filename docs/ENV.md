@@ -32,6 +32,14 @@ These variables control general application behavior and display.
     *   **Default**: `false`
     *   **Example**: `DISABLE_SIGNUP=true`
 
+## API Key Settings
+
+These variables control API key functionality, including a special administrative key.
+
+*   `ADMIN_API_KEY` (string, optional): A special API key that grants full administrative access to all API endpoints without requiring a specific user account. **This key bypasses regular authentication and should be kept extremely confidential.**
+    *   **Recommendation**: Generate a long, random string.
+    *   **Example**: `ADMIN_API_KEY="your_super_secret_admin_api_key_123"`
+
 ## User Management Settings
 
 These variables relate to user registration and authentication processes.
