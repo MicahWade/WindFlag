@@ -248,53 +248,53 @@
                     <div class="mb-4">
                         {{ form.expected_output.label(class="block text-gray-300 text-sm font-bold mb-2") }}
                         {% if form.expected_output.errors %}
-                            <textarea id="expected_output_editor" name="{{ form.expected_output.name }}" class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor" rows="5">{{ form.expected_output.data or '' }}</textarea>
+                            <textarea id="expected_output_editor" name="{{ form.expected_output.name }}" class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor codemirror-challenge-style" rows="5">{{ form.expected_output.data or '' }}</textarea>
                             <p class="text-red-400 text-xs italic">
                                 {% for error in form.expected_output.errors %}
                                     <span>{{ error }}</span>
                                 {% endfor %}
                             </p>
                         {% else %}
-                            <textarea id="expected_output_editor" name="{{ form.expected_output.name }}" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor" rows="5">{{ form.expected_output.data or '' }}</textarea>
+                            <textarea id="expected_output_editor" name="{{ form.expected_output.name }}" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor codemirror-challenge-style" rows="5">{{ form.expected_output.data or '' }}</textarea>
                         {% endif %}
                     </div>
                     <div class="mb-4">
                         {{ form.test_case_input.label(class="block text-gray-300 text-sm font-bold mb-2") }}
                         {% if form.test_case_input.errors %}
-                            <textarea id="test_case_input_editor" name="{{ form.test_case_input.name }}" class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor" rows="5">{{ form.test_case_input.data or '' }}</textarea>
+                            <textarea id="test_case_input_editor" name="{{ form.test_case_input.name }}" class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor codemirror-challenge-style" rows="5">{{ form.test_case_input.data or '' }}</textarea>
                             <p class="text-red-400 text-xs italic">
                                 {% for error in form.test_case_input.errors %}
                                     <span>{{ error }}</span>
                                 {% endfor %}
                             </p>
                         {% else %}
-                            <textarea id="test_case_input_editor" name="{{ form.test_case_input.name }}" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor" rows="5">{{ form.test_case_input.data or '' }}</textarea>
+                            <textarea id="test_case_input_editor" name="{{ form.test_case_input.name }}" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor codemirror-challenge-style" rows="5">{{ form.test_case_input.data or '' }}</textarea>
                         {% endif %}
                     </div>
                     <div class="mb-4">
                         {{ form.setup_code.label(class="block text-gray-300 text-sm font-bold mb-2") }}
                         {% if form.setup_code.errors %}
-                            <textarea id="setup_code_editor" name="{{ form.setup_code.name }}" class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor" rows="10">{{ form.setup_code.data or '' }}</textarea>
+                            <textarea id="setup_code_editor" name="{{ form.setup_code.name }}" class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor codemirror-challenge-style" rows="10">{{ form.setup_code.data or '' }}</textarea>
                             <p class="text-red-400 text-xs italic">
                                 {% for error in form.setup_code.errors %}
                                     <span>{{ error }}</span>
                                 {% endfor %}
                             </p>
                         {% else %}
-                            <textarea id="setup_code_editor" name="{{ form.setup_code.name }}" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor" rows="10">{{ form.setup_code.data or '' }}</textarea>
+                            <textarea id="setup_code_editor" name="{{ form.setup_code.name }}" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor codemirror-challenge-style" rows="10">{{ form.setup_code.data or '' }}</textarea>
                         {% endif %}
                     </div>
                     <div class="mb-4">
                         {{ form.starter_code.label(class="block text-gray-300 text-sm font-bold mb-2") }}
                         {% if form.starter_code.errors %}
-                            <textarea id="starter_code_editor" name="{{ form.starter_code.name }}" class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor" rows="10">{{ form.starter_code.data or '' }}</textarea>
+                            <textarea id="starter_code_editor" name="{{ form.starter_code.name }}" class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor codemirror-challenge-style" rows="10">{{ form.starter_code.data or '' }}</textarea>
                             <p class="text-red-400 text-xs italic">
                                 {% for error in form.starter_code.errors %}
                                     <span>{{ error }}</span>
                                 {% endfor %}
                             </p>
                         {% else %}
-                            <textarea id="starter_code_editor" name="{{ form.starter_code.name }}" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor" rows="10">{{ form.starter_code.data or '' }}</textarea>
+                            <textarea id="starter_code_editor" name="{{ form.starter_code.name }}" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor codemirror-challenge-style" rows="10">{{ form.starter_code.data or '' }}</textarea>
                         {% endif %}
                     </div>
                     <div class="mb-4">
@@ -307,14 +307,14 @@
                         </div>
                         <div class="flex items-center space-x-2"> {# Wrapper div for textarea and button #}
                             {% if form.reference_solution.errors %}
-                                <textarea id="reference_solution_editor" name="{{ form.reference_solution.name }}" class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor" rows="10">{{ form.reference_solution.data or '' }}</textarea>
+                                <textarea id="reference_solution_editor" name="{{ form.reference_solution.name }}" class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor codemirror-challenge-style" rows="10">{{ form.reference_solution.data or '' }}</textarea>
                                 <p class="text-red-400 text-xs italic">
                                     {% for error in form.reference_solution.errors %}
                                         <span>{{ error }}</span>
                                     {% endfor %}
                                 </p>
                             {% else %}
-                                <textarea id="reference_solution_editor" name="{{ form.reference_solution.name }}" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor" rows="10">{{ form.reference_solution.data or '' }}</textarea>
+                                <textarea id="reference_solution_editor" name="{{ form.reference_solution.name }}" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor codemirror-challenge-style" rows="10">{{ form.reference_solution.data or '' }}</textarea>
                             {% endif %}
                             <button type="button" id="verify_solution_button" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline shadow-md transform hover:scale-105 transition duration-300 ease-in-out flex-shrink-0">Verify Solution</button>
                         </div>

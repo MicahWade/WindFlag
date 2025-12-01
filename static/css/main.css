@@ -159,10 +159,10 @@
     appearance: none;
     border-radius: 0.25rem; /* rounded */
     width: 100%; /* w-full */
-    height: 12rem; /* h-48 */
+    /* Set a min-height for initial display and allow it to grow */
+    min-height: 5rem; /* Roughly 5 lines */
     
-    /* Ensure padding and line-height are applied to inner CodeMirror elements */
-    padding: 0; 
+    /* CodeMirror handles its own padding */
     line-height: normal;
 
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* font-mono */
@@ -215,4 +215,10 @@
 .CodeMirror-scroll {
     max-height: 12rem; /* h-48 for scrolling */
     overflow-y: auto;
+}
+
+/* Further adjustments for CodeMirror height to remove dead space */
+.CodeMirror {
+    height: auto !important; /* Force CodeMirror to auto-adjust height */
+    min-height: 5rem; /* Ensure a minimum visible area */
 }

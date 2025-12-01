@@ -159,7 +159,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     theme: "dracula",
                     indentUnit: 4,
                     tabSize: 4,
-                    indentWithTabs: false
+                    indentWithTabs: false,
+                    viewportMargin: Infinity
                 });
                 adminCodeMirrorEditors[elementId].getWrapperElement().classList.add('codemirror-themed-input');
             } else {
