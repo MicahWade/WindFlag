@@ -11,3 +11,5 @@ python-engineio
 python-socketio
 Flask-Limiter
 psycopg2-binary
+pytz
+flask_wtf
