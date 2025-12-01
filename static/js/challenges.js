@@ -85,8 +85,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                     tabSize: 4,
                                     indentWithTabs: false
                                 });
+                                codeMirrorEditor.getWrapperElement().classList.add('codemirror-themed-input');
                             } else {
                                 codeMirrorEditor.setOption('mode', currentChallengeLanguage);
+                                codeMirrorEditor.getWrapperElement().classList.add('codemirror-themed-input'); // Ensure class is applied on re-use
                             }
                             codeMirrorEditor.setValue(data.starter_code || '');
                             if (isCompleted) {

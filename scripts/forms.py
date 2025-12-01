@@ -251,7 +251,8 @@ class ChallengeForm(FlaskForm):
                                render_kw={"rows": 5, "placeholder": "Code/Script to run before the user's code (e.g., database setup)"})
     starter_code = TextAreaField('Starter Code (Optional)',
                                  render_kw={"rows": 5, "placeholder": "Default code provided to the user"})
-
+    reference_solution = TextAreaField('Reference Solution',
+                                   render_kw={"rows": 5, "placeholder": "Reference solution to verify solvability"})
 
     category = SelectField('Category', coerce=int, choices=[(0, '--- Create New Category ---')])
     new_category_name = StringField('New Category Name', validators=[Length(max=50)])
@@ -286,6 +287,10 @@ class ChallengeForm(FlaskForm):
     hints = FieldList(FormField(HintForm), min_entries=0, label='Hints') # New: Dynamic hints
     submit = SubmitField('Submit Challenge')
 
+    def __init__(self, *args, **kwargs):
+        super(ChallengeForm, self).__init__(*args, **kwargs)
+        self.timezone.choices = _get_timezone_choices()
+
     def validate(self, extra_validators=None):
         """
         Performs custom validation for the ChallengeForm, including category selection,
@@ -315,6 +320,9 @@ class ChallengeForm(FlaskForm):
                 return False
             if not self.expected_output.data:
                 self.expected_output.errors.append('Expected Output is required for Coding challenges.')
+                return False
+            if not self.reference_solution.data:
+                self.reference_solution.errors.append('Reference Solution is required for Coding challenges.')
                 return False
         else: # FLAG type
             # Validate multi_flag_type and threshold
@@ -378,6 +386,55 @@ class ChallengeForm(FlaskForm):
         
         return True
 
+class CategoryForm(FlaskForm):
+    """
+    Form for creating and updating challenge categories.
+    """
+    name = StringField('Category Name',
+                       validators=[DataRequired(), Length(min=2, max=50)])
+    
+    # New fields for category unlocking (similar to ChallengeForm)
+    unlock_type = SelectField('Unlock Type',
+                              choices=[(t, t.replace('_', ' ').title()) for t in UNLOCK_TYPES],
+                              validators=[DataRequired()],
+                              default='NONE')
+    prerequisite_percentage_value = IntegerField('Prerequisite Percentage Value',
+                                                 validators=[NumberRange(min=0, max=100)],
+                                                 render_kw={"placeholder": "e.g., 50 for 50% of challenges"})
+    prerequisite_count_value = IntegerField('Prerequisite Count Value',
+                                            validators=[NumberRange(min=0)],
+                                            render_kw={"placeholder": "e.g., 5 for 5 challenges"})
+    prerequisite_count_category_ids_input = HiddenField('Prerequisite Count Categories') # Populated by JS
+    prerequisite_challenge_ids_input = HiddenField('Prerequisite Challenge IDs') # Populated by JS
+    timezone = SelectField('Timezone', choices=[], default='Australia/Sydney') # New timezone field
+    unlock_date_time = DateField('Unlock Date', format='%Y-%m-%d',
+                                     render_kw={"placeholder": "YYYY-MM-DD"})
+    is_hidden = BooleanField('Hide Category from Users', default=False) # New: Field to hide category
+
+    submit = SubmitField('Submit Category')
+
+    def __init__(self, *args, **kwargs):
+        super(CategoryForm, self).__init__(*args, **kwargs)
+        self.timezone.choices = _get_timezone_choices()
+
+    def validate_name(self, name):
+        """
+        Validates that the chosen category name is not already taken.
+
+        Args:
+            name (StringField): The name field from the form.
+
+        Raises:
+            ValidationError: If the category name already exists.
+        """
+        # Import here to avoid circular dependency
+        from scripts.models import Category
+        category = Category.query.filter_by(name=name.data).first()
+        if category and category.id != self.category_id.data: # Allow updating existing category with same name
+            raise ValidationError('That category name is taken. Please choose a different one.')
+    
+    # Add a HiddenField for category_id to allow validation during updates
+    category_id = HiddenField()
 
 class AdminSettingsForm(FlaskForm):
     """
@@ -403,7 +460,6 @@ class AdminSettingsForm(FlaskForm):
     enable_live_score_graph = BooleanField('Enable Live Scoreboard Graph', default=True)
 
     submit = SubmitField('Save Settings')
-
 class AwardCategoryForm(FlaskForm):
     """
     Form for creating and updating award categories.

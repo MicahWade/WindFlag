@@ -324,6 +324,54 @@ def update_challenge_api(challenge_id):
     db.session.commit()
     return jsonify({'message': 'Challenge updated successfully'})
 
+@api_bp.route('/admin/verify_coding_challenge', methods=['POST'])
+@admin_api_required
+def verify_coding_challenge():
+    """
+    Verifies a coding challenge solution for administrators.
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({'message': 'Request body must be JSON'}), 400
+
+    required_fields = ['language', 'setup_code', 'test_case_input', 'reference_solution', 'expected_output']
+    if not all(field in data for field in required_fields):
+        return jsonify({'message': 'Missing required fields for verification'}), 400
+
+    language = data['language']
+    setup_code = data['setup_code']
+    test_case_input = data['test_case_input']
+    reference_solution = data['reference_solution']
+    expected_output = data['expected_output']
+
+    # Execute the reference solution in the sandbox
+    execution_result = execute_code_in_sandbox(
+        language=language,
+        code=reference_solution,
+        setup_code=setup_code,
+        test_case_input=test_case_input,
+        expected_output=expected_output, # Pass expected output for direct comparison
+        is_admin_check=True # Indicate this is an admin check, possibly for different timeout/resource limits
+    )
+
+    if execution_result.is_correct:
+        return jsonify({
+            'message': 'Reference solution verified successfully.',
+            'is_correct': True,
+            'stdout': execution_result.stdout,
+            'stderr': execution_result.stderr,
+            'is_timeout': execution_result.is_timeout
+        }), 200
+    else:
+        return jsonify({
+            'message': 'Reference solution verification failed.',
+            'is_correct': False,
+            'stdout': execution_result.stdout,
+            'stderr': execution_result.stderr,
+            'error_message': execution_result.error_message,
+            'is_timeout': execution_result.is_timeout
+        }), 200
+
 
 @api_bp.route('/challenges/<int:challenge_id>/submit_code', methods=['POST'])
 @login_required # User must be logged in
