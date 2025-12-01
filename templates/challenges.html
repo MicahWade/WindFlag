@@ -1,7 +1,107 @@
 {% extends "base.html" %}
 {% block head %}
     {{ super() }}
-    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/codemirror.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/dracula.min.css') }}">
 {% endblock %}
 {% block content %}
+    <h1 class="theme-page-title text-3xl font-bold mb-6">Challenges</h1>
+    <div id="challenge-container" class="space-y-6">
+        <!-- Loading Spinner -->
+        <div id="loading" class="flex justify-center items-center h-64">
+            <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-900"></div>
+        </div>
+        <!-- Categories and challenges will be dynamically inserted here -->
+    </div>
+
+    <!-- Challenge Modal -->
+    <div id="challengeModal" class="fixed inset-0 flex items-center justify-center overflow-y-auto h-full w-full opacity-0 pointer-events-none transition-opacity duration-300 z-50 modal-overlay">
+        <div class="relative p-5 w-96 theme-modal-card transform -translate-y-full transition-transform duration-300 ease-out">
+            <div class="flex justify-between items-center pb-3">
+                <h3 class="theme-modal-title text-2xl leading-6 font-medium" id="modalChallengeName"></h3>
+                <button class="theme-challenge-status-text close-modal">
+                    <span class="sr-only">Close</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="mt-2 px-7 py-3">
+                <div id="challengeContent">
+                    <p class="theme-modal-description text-sm" id="modalChallengeDescription"></p>
+                    <p class="theme-modal-points text-lg font-bold mt-4" id="modalChallengePoints"></p>
+                    <div id="modalChallengeStatus" class="mt-2 text-green-400 font-semibold hidden"></div>
+                    <div id="modalFlagProgress" class="mt-2 theme-challenge-status-text text-sm hidden"></div>
+                    
+                    <div id="modalHintsSection" class="mt-4 pt-4" style="border-top: 1px solid var(--border-color);">
+                        <h4 class="theme-modal-title text-lg font-semibold mb-2">Hints</h4>
+                        <div id="hintsList">
+                            {# Hints will be dynamically added here by JavaScript #}
+                            {# The structure below is a placeholder for what JS will generate #}
+                            {#
+                            <div class="hint-item mb-2 p-3 theme-modal-hint-item">
+                                <p class="theme-modal-description">Hint content goes here.</p>
+                            </div>
+                            <div class="hint-item mb-2 p-3 theme-modal-hint-item flex justify-between items-center">
+                                <span class="theme-modal-description">Cost: 50 pts</span>
+                                <button class="reveal-hint-btn theme-modal-button-primary font-bold py-1 px-3 rounded text-xs" data-hint-id="1">Reveal Hint</button>
+                            </div>
+                            #}
+                        </div>
+                    </div>
+
+                    {# Conditional forms based on challenge type #}
+                    <div id="flagSubmissionSection">
+                        <form method="POST" action="" class="space-y-2 mt-4" id="modalFlagForm">
+                            {{ flag_form.hidden_tag() }}
+                            <div>
+                                {{ flag_form.flag(class="theme-modal-input shadow appearance-none rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline text-sm codemirror-editor", placeholder="Enter flag", id="modalFlagInput", rows="5") }}
+                            </div>
+                            {{ flag_form.submit(class="theme-modal-button-primary font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm shadow-md", id="modalSubmitButton") }}
+                        </form>
+                    </div>
+
+                    <div id="codeSubmissionSection" class="hidden">
+                        <label for="codeEditor" class="theme-modal-description block text-sm font-bold mb-2 mt-4">Your Code:</label>
+                        <textarea id="codeEditor" class="theme-modal-input shadow appearance-none rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline h-48 font-mono text-sm"></textarea>
+                        <button id="modalRunCodeButton" class="theme-modal-button-primary font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm shadow-md mt-2">Run Code</button>
+                        <div id="codeResult" class="theme-code-block mt-4 p-3 rounded-md text-sm font-mono whitespace-pre-wrap hidden"></div>
+                    </div>
+
+                </div>
+                <div id="solversContent" class="hidden">
+                    <h3 class="theme-modal-title text-2xl leading-6 font-medium mt-4">Solvers (<span id="solverCount">0</span>)</h3>
+                    <ul id="solversList" class="theme-modal-description list-disc list-inside mt-4">
+                        <!-- Solvers will be dynamically added here -->
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-4">
+                <button id="viewSolversBtn" class="theme-modal-button-secondary font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full text-sm shadow-md">
+                    View Solvers
+                </button>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block scripts %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/codemirror.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/dracula.min.css') }}">
+    <script src="{{ url_for('static', filename='codemirror/codemirror.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='codemirror/shell.min.js') }}"></script> {# Bash #}
+    <script src="{{ url_for('static', filename='codemirror/dart.min.js') }}"></script> {# Dart #}
+    <script src="{{ url_for('static', filename='codemirror/haskell.min.js') }}"></script> {# Haskell #}
+    <script src="{{ url_for('static', filename='codemirror/javascript.min.js') }}"></script> {# Node/JavaScript #}
+    <script src="{{ url_for('static', filename='codemirror/php.min.js') }}"></script> {# PHP (includes JS dependency) #}
+    <script src="{{ url_for('static', filename='codemirror/python.min.js') }}"></script> {# Python #}
+    <script src="{{ url_for('static', filename='js/challenges.js') }}"></script>
+    <script>
+        // Add a Jinja2 filter for datetime formatting
+        function datetimeformat(value) {
+            if (!value) return '';
+            const date = new Date(value);
+            return date.toLocaleString(); // Adjust format as needed
+        }
+        // Make the filter available in the template context
+        // This is a workaround as Jinja2 filters are server-side.
+        // For client-side rendering, you'd typically format in JS.
+        // For now, we'll rely on the server-side formatting for the initial render.
+        // If the modal needs dynamic updates, JS will handle formatting.
+    </script>
+{% endblock scripts %}
