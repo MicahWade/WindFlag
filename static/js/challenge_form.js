@@ -194,10 +194,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateSubmitButtonState() {
         const challengeTypeSelect = document.getElementById('challenge_type_select');
-        if (challengeTypeSelect.value === 'CODING') {
-            challengeSubmitButton.disabled = !isSolutionVerified;
-        } else {
-            challengeSubmitButton.disabled = false; // Always enabled for non-coding challenges
+        if (challengeSubmitButton) { // Add null check here
+            if (challengeTypeSelect.value === 'CODING') {
+                challengeSubmitButton.disabled = !isSolutionVerified;
+            } else {
+                challengeSubmitButton.disabled = false; // Always enabled for non-coding challenges
+            }
         }
     }
 
