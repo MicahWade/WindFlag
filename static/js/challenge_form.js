@@ -131,6 +131,55 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let isSolutionVerified = false; // Flag to track if the coding solution has been verified
     const challengeSubmitButton = document.getElementById('challenge_submit_button');
+    const languageSelect = document.getElementById('language');
+
+    // CodeMirror Integration for Admin Challenge Form
+    const adminCodeMirrorEditors = {}; // Object to hold CodeMirror instances
+
+    function getCodeMirrorMode(language) {
+        const lowerCaseLang = language.toLowerCase();
+        if (lowerCaseLang.includes('python')) return 'python';
+        if (lowerCaseLang.includes('javascript') || lowerCaseLang.includes('node')) return 'javascript';
+        if (lowerCaseLang.includes('php')) return 'php';
+        if (lowerCaseLang.includes('shell') || lowerCaseLang.includes('bash')) return 'shell';
+        if (lowerCaseLang.includes('haskell')) return 'haskell';
+        if (lowerCaseLang.includes('dart')) return 'dart';
+        // Add more language mappings as needed
+        return null; // Default to no specific mode
+    }
+
+    function initializeAdminCodeMirrorEditor(elementId) {
+        const textarea = document.getElementById(elementId);
+        if (textarea && typeof CodeMirror !== 'undefined') {
+            if (!adminCodeMirrorEditors[elementId]) {
+                const mode = getCodeMirrorMode(languageSelect ? languageSelect.value : '');
+                adminCodeMirrorEditors[elementId] = CodeMirror.fromTextArea(textarea, {
+                    lineNumbers: true,
+                    mode: mode,
+                    theme: "dracula",
+                    indentUnit: 4,
+                    tabSize: 4,
+                    indentWithTabs: false
+                });
+                adminCodeMirrorEditors[elementId].getWrapperElement().classList.add('codemirror-themed-input');
+            } else {
+                // If editor already exists, ensure theme and class are applied
+                adminCodeMirrorEditors[elementId].getWrapperElement().classList.add('codemirror-themed-input');
+            }
+        }
+    }
+
+    function updateCodeEditorsMode() {
+        const selectedLanguage = languageSelect ? languageSelect.value : '';
+        const mode = getCodeMirrorMode(selectedLanguage);
+
+        for (const editorId in adminCodeMirrorEditors) {
+            if (adminCodeMirrorEditors.hasOwnProperty(editorId)) {
+                adminCodeMirrorEditors[editorId].setOption('mode', mode);
+                adminCodeMirrorEditors[editorId].refresh();
+            }
+        }
+    }
 
     function updateSubmitButtonState() {
         const challengeTypeSelect = document.getElementById('challenge_type_select');
@@ -153,10 +202,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (flagFields) flagFields.style.display = 'none';
                 if (codingFields) codingFields.style.display = 'block';
                 isSolutionVerified = false; // Reset verification status for coding challenges
+
+                // Initialize CodeMirror for coding fields if not already done
+                initializeAdminCodeMirrorEditor('expected_output_editor');
+                initializeAdminCodeMirrorEditor('test_case_input_editor');
+                initializeAdminCodeMirrorEditor('setup_code_editor');
+                initializeAdminCodeMirrorEditor('starter_code_editor');
+                initializeAdminCodeMirrorEditor('reference_solution_editor');
+                updateCodeEditorsMode(); // Set initial mode
+                
             } else {
                 if (flagFields) flagFields.style.display = 'block';
                 if (codingFields) codingFields.style.display = 'none';
                 isSolutionVerified = true; // Not a coding challenge, so no verification needed
+
+                // Destroy CodeMirror instances for coding fields
+                for (const editorId in adminCodeMirrorEditors) {
+                    if (adminCodeMirrorEditors.hasOwnProperty(editorId)) {
+                        adminCodeMirrorEditors[editorId].toTextArea();
+                        delete adminCodeMirrorEditors[editorId];
+                    }
+                }
             }
         }
         updateSubmitButtonState(); // Update button state after changing challenge type
@@ -166,6 +232,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (challengeTypeSelect) {
         challengeTypeSelect.addEventListener('change', updateChallengeTypeFields);
         updateChallengeTypeFields(); // Initial call
+    }
+
+    // Event listener for language select to update CodeMirror modes
+    if (languageSelect) {
+        languageSelect.addEventListener('change', updateCodeEditorsMode);
     }
 
     // Dynamic Hint Fields Logic
