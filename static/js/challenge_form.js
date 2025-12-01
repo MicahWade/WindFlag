@@ -129,66 +129,6 @@ document.addEventListener('DOMContentLoaded', function () {
         updateCategoryFields(); // Initial call
     }
 
-    // CodeMirror Integration
-    const CODE_MIRROR_MODES = {
-        'python3': { mode: 'python', lineNumbers: true },
-        'nodejs': { mode: 'javascript', lineNumbers: true },
-        'php': { mode: 'php', lineNumbers: true },
-        'bash': { mode: 'shell', lineNumbers: true },
-        'dart': { mode: 'dart', lineNumbers: true },
-        'haskell': { mode: 'haskell', lineNumbers: true },
-        // For description, using a generic code mode or null for plain text
-        'default': { mode: null, lineNumbers: true }
-    };
-
-    let codeMirrorEditors = {}; // Store CodeMirror instances
-
-    function initializeCodeMirrorEditors() {
-        document.querySelectorAll('.codemirror-editor').forEach(textarea => {
-            const editorId = textarea.id;
-            if (editorId && !codeMirrorEditors[editorId]) { // Avoid re-initializing
-                let config = CODE_MIRROR_MODES['default'];
-                const codingLanguageSelectElement = document.getElementById('coding_challenge_language');
-                if (textarea.id !== 'description' && codingLanguageSelectElement) { // Language-specific for coding fields, if element exists
-                    const selectedLanguage = codingLanguageSelectElement.value;
-                    config = CODE_MIRROR_MODES[selectedLanguage] || CODE_MIRROR_MODES['default'];
-                }
-                const editor = CodeMirror.fromTextArea(textarea, {
-                    lineNumbers: config.lineNumbers,
-                    mode: config.mode,
-                    theme: 'dracula',
-                    indentUnit: 4,
-                    tabSize: 4,
-                    indentWithTabs: false,
-                    lineWrapping: true,
-                });
-                // Add the themed input class to the CodeMirror wrapper
-                editor.getWrapperElement().classList.add('codemirror-themed-input');
-                codeMirrorEditors[editorId] = editor;
-            } else if (editorId && codeMirrorEditors[editorId]) {
-                // If already initialized, ensure its value is updated from the textarea
-                codeMirrorEditors[editorId].setValue(textarea.value);
-            }
-        });
-    }
-
-    function updateCodeMirrorModes(language) {
-        const config = CODE_MIRROR_MODES[language] || CODE_MIRROR_MODES['default'];
-        for (const editorId in codeMirrorEditors) {
-            // Only update coding challenge specific editors, not description
-            if (editorId !== 'description') {
-                codeMirrorEditors[editorId].setOption('mode', config.mode);
-            }
-        }
-    }
-
-    const codingChallengeLanguageSelect = document.getElementById('coding_challenge_language');
-    if (codingChallengeLanguageSelect) {
-        codingChallengeLanguageSelect.addEventListener('change', function() {
-            updateCodeMirrorModes(this.value);
-        });
-    }
-
     let isSolutionVerified = false; // Flag to track if the coding solution has been verified
     const challengeSubmitButton = document.getElementById('challenge_submit_button');
 
@@ -212,13 +152,10 @@ document.addEventListener('DOMContentLoaded', function () {
              if (challengeTypeSelect.value === 'CODING') {
                 if (flagFields) flagFields.style.display = 'none';
                 if (codingFields) codingFields.style.display = 'block';
-                initializeCodeMirrorEditors(); // Initialize/show CodeMirror for coding fields
                 isSolutionVerified = false; // Reset verification status for coding challenges
             } else {
                 if (flagFields) flagFields.style.display = 'block';
                 if (codingFields) codingFields.style.display = 'none';
-                // Optional: Hide CodeMirror elements or destroy them if not needed
-                // For now, just hide the parent container
                 isSolutionVerified = true; // Not a coding challenge, so no verification needed
             }
         }
@@ -229,84 +166,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (challengeTypeSelect) {
         challengeTypeSelect.addEventListener('change', updateChallengeTypeFields);
         updateChallengeTypeFields(); // Initial call
-    }
-    initializeCodeMirrorEditors(); // Initial call for description and if coding is default
-
-    // Custom logic for prerequisite_challenge_ids_input_field (checkboxes)
-    const prerequisiteChallengeCheckboxes = document.querySelectorAll('input[name="prerequisite_challenge_ids_checkbox"]');
-    const prerequisiteChallengeHiddenInput = document.getElementById('prerequisite_challenge_ids_hidden');
-
-    function updateHiddenPrerequisiteChallenges() {
-        const selectedIds = Array.from(prerequisiteChallengeCheckboxes)
-            .filter(checkbox => checkbox.checked)
-            .map(checkbox => parseInt(checkbox.value));
-        prerequisiteChallengeHiddenInput.value = JSON.stringify(selectedIds);
-    }
-
-    // Add event listeners to checkboxes
-    prerequisiteChallengeCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', updateHiddenPrerequisiteChallenges);
-    });
-
-    // Initialize checkboxes based on hidden input's initial value
-    if (prerequisiteChallengeHiddenInput && prerequisiteChallengeHiddenInput.value !== undefined) {
-        try {
-            const initialSelectedIds = JSON.parse(prerequisiteChallengeHiddenInput.value || '[]');
-            if (Array.isArray(initialSelectedIds)) {
-                prerequisiteChallengeCheckboxes.forEach(checkbox => {
-                    if (initialSelectedIds.includes(parseInt(checkbox.value))) {
-                        checkbox.checked = true;
-                    }
-                });
-            }
-        } catch (e) {
-            console.error("Error parsing initial prerequisite challenge IDs:", e);
-        }
-    }
-
-    // Custom logic for prerequisite_count_category_ids_input_field (checkboxes)
-    const prerequisiteCountCategoryCheckboxes = document.querySelectorAll('input[name="prerequisite_count_category_ids_checkbox"]');
-    const prerequisiteCountCategoryHiddenInput = document.getElementById('prerequisite_count_category_ids_hidden');
-
-    function updateHiddenPrerequisiteCountCategories() {
-        const selectedIds = Array.from(prerequisiteCountCategoryCheckboxes)
-            .filter(checkbox => checkbox.checked)
-            .map(checkbox => parseInt(checkbox.value));
-        prerequisiteCountCategoryHiddenInput.value = JSON.stringify(selectedIds);
-    }
-
-    // Add event listeners to checkboxes
-    prerequisiteCountCategoryCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', updateHiddenPrerequisiteCountCategories);
-    });
-
-    // Initialize checkboxes based on hidden input's initial value
-    if (prerequisiteCountCategoryHiddenInput && prerequisiteCountCategoryHiddenInput.value !== undefined) {
-        try {
-            const initialSelectedIds = JSON.parse(prerequisiteCountCategoryHiddenInput.value || '[]');
-            if (Array.isArray(initialSelectedIds)) {
-                prerequisiteCountCategoryCheckboxes.forEach(checkbox => {
-                    if (initialSelectedIds.includes(parseInt(checkbox.value))) {
-                        checkbox.checked = true;
-                    }
-                });
-            }
-        } catch (e) {
-            console.error("Error parsing initial prerequisite count category IDs:", e);
-        }
-    }
-
-    // Timezone field visibility on hover
-    const timezoneTooltipIcon = document.getElementById('timezone_tooltip_icon');
-    const timezoneField = document.getElementById('timezone_field');
-
-    if (timezoneTooltipIcon && timezoneField) {
-        timezoneTooltipIcon.addEventListener('mouseenter', function() {
-            timezoneField.style.display = 'block';
-        });
-        timezoneField.addEventListener('mouseleave', function() {
-            timezoneField.style.display = 'none';
-        });
     }
 
     // Dynamic Hint Fields Logic
