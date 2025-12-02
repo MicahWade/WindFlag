@@ -9,18 +9,24 @@ import os
 from scripts.extensions import db
 
 
-def generate_usernames(num_to_generate=None):
+def generate_usernames(num_to_generate=None, force_enabled=False):
     """
     Generates a list of usernames based on the configuration.
-    If PRESET_USERNAMES_ENABLED is False, returns an empty list.
+    If PRESET_USERNAMES_ENABLED is False, returns an empty list unless force_enabled is True.
     """
-    if not current_app.config.get('PRESET_USERNAMES_ENABLED', False):
+    if not current_app.config.get('PRESET_USERNAMES_ENABLED', False) and not force_enabled:
         return []
 
     words_file_path = current_app.config.get('WORDS_FILE_PATH', 'words.txt')
     if not os.path.exists(words_file_path):
-        current_app.logger.error(f"Words file not found at: {words_file_path}")
-        return []
+        # Fallback: try to find it relative to this file or the project root
+        basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        fallback_path = os.path.join(basedir, 'words.txt')
+        if os.path.exists(fallback_path):
+            words_file_path = fallback_path
+        else:
+            current_app.logger.error(f"Words file not found at: {words_file_path} or {fallback_path}")
+            return []
 
     with open(words_file_path, 'r') as f:
         words = [line.strip() for line in f if line.strip()]
@@ -36,7 +42,15 @@ def generate_usernames(num_to_generate=None):
     usernames = []
     generated_unique_usernames = set() 
 
+    attempts = 0
+    max_attempts = num_users * 50 # Safety limit
+
     while len(usernames) < num_users:
+        attempts += 1
+        if attempts > max_attempts:
+            current_app.logger.warning(f"Could only generate {len(usernames)} unique usernames out of {num_users} requested after {max_attempts} attempts.")
+            break
+
         username_words = random.choices(words, k=num_words)
         username_base = "".join(word.capitalize() for word in username_words)
         

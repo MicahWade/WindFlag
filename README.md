@@ -142,6 +142,9 @@ To control whether an API key is automatically generated when a new user registe
 
 In addition to user-generated API keys, a special `ADMIN_API_KEY` can be configured in your `.env` file to grant administrative access to all API endpoints. This is useful for scripts and automated tasks. For more details, refer to [ENV.md](docs/ENV.md).
 
+**API Key Cookie:**
+For convenience in local development and integrated challenges (e.g., "Dynamic Flag" challenges hosted on the same domain or accessible via browser), WindFlag sets a browser cookie named `api_key` containing the user's active plaintext API key upon successful login or key generation. External challenge applications can read this cookie to authenticate the user without requiring manual key entry.
+
 ```bash
 cp .env.template .env
 # Open .env with a text editor and fill in necessary values.

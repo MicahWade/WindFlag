@@ -12,7 +12,7 @@ from dotenv import load_dotenv # Moved to top
 # Load environment variables from .env file in the project root
 load_dotenv(os.path.join(os.path.abspath(os.path.dirname(__file__)), '.env')) # Moved to top
 
-from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, current_app, session
+from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, current_app, session, make_response
 from flask_login import login_user, current_user, logout_user, login_required
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -203,7 +203,14 @@ def create_app(config_class=Config):
                     return redirect(url_for('reset_password_force'))
                 login_user(user, remember=form.remember.data)
                 next_page = request.args.get('next')
-                return redirect(next_page) if next_page else redirect(url_for('home'))
+                response = make_response(redirect(next_page) if next_page else redirect(url_for('home')))
+                
+                # Set API key cookie if available
+                active_key = user.get_active_api_key()
+                if active_key and active_key.api_key_plain:
+                    response.set_cookie('api_key', active_key.api_key_plain)
+                
+                return response
             else:
                 flash('Login Unsuccessful. Please check username/email and password', 'danger')
         return render_template('login.html', title='Login', form=form)
@@ -361,7 +368,10 @@ def create_app(config_class=Config):
         
         newly_generated_api_key_plain = current_user.generate_new_api_key()
         flash(f'Your new API Key has been generated: {newly_generated_api_key_plain}. Please save it securely!', 'warning')
-        return redirect(url_for('profile'))
+        
+        response = make_response(redirect(url_for('profile')))
+        response.set_cookie('api_key', newly_generated_api_key_plain)
+        return response
 
     @app.route('/challenges')
     @login_required
