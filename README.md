@@ -69,56 +69,27 @@ pip install -r requirements.txt
 
 ### 5. Download Frontend Assets (For Offline Use)
 
-To enable full offline functionality, download the required frontend libraries. These files are excluded from Git for regular development but are essential for the application to function without internet access.
+To enable full offline functionality, download the required frontend libraries. A helper script is provided to automate this process.
 
-First, create the necessary directories:
 ```bash
-mkdir -p static/codemirror static/vendor/font-awesome/css static/vendor/font-awesome/webfonts static/vendor/tailwindcss static/vendor/socket.io static/vendor/chart.js static/vendor/luxon static/vendor/chartjs-adapter-luxon static/vendor/chartjs-adapter-date-fns static/vendor/chartjs-plugin-annotation static/vendor/jquery-datatables
-```
-
-Then, download the assets using `wget` (ensure `wget` is installed on your system; e.g., `sudo apt install wget` on Ubuntu):
-```bash
-# CodeMirror
-wget -O static/codemirror/codemirror.min.css https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.css
-wget -O static/codemirror/dracula.min.css https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/theme/dracula.min.css
-wget -O static/codemirror/codemirror.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.js
-wget -O static/codemirror/shell.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/shell/shell.min.js
-wget -O static/codemirror/dart.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/dart/dart.min.js
-wget -O static/codemirror/javascript.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/javascript/javascript.min.js
-wget -O static/codemirror/php.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/php/php.min.js
-wget -O static/codemirror/python.min.js https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/python/python.min.js
-
-# Font Awesome
-wget -O static/vendor/font-awesome/css/all.min.css https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css
-# Download Font Awesome webfonts
-wget -O static/vendor/font-awesome/webfonts/fa-solid-900.woff2 https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/webfonts/fa-solid-900.woff2
-wget -O static/vendor/font-awesome/webfonts/fa-solid-900.ttf https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/webfonts/fa-solid-900.ttf
-
-# TailwindCSS
-wget -O static/vendor/tailwindcss/browser.js https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4
-
-# Socket.IO
-wget -O static/vendor/socket.io/socket.io.min.js https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js
-
-# Chart.js and related libraries
-wget -O static/vendor/chart.js/chart.min.js https://cdn.jsdelivr.net/npm/chart.js
-wget -O static/vendor/luxon/luxon.min.js https://cdn.jsdelivr.net/npm/luxon@3.x/build/global/luxon.min.js
-wget -O static/vendor/chartjs-adapter-luxon/chartjs-adapter-luxon.min.js https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.x/dist/chartjs-adapter-luxon.min.js
-wget -O static/vendor/chartjs-adapter-date-fns/chartjs-adapter-date-fns.min.js https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3
-wget -O static/vendor/chartjs-plugin-annotation/chartjs-plugin-annotation.min.js https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0
-
-# jQuery and DataTables
-wget -O static/vendor/jquery-datatables/jquery.dataTables.min.css https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css
-wget -O static/vendor/jquery-datatables/jquery-3.7.1.min.js https://code.jquery.com/jquery-3.7.1.min.js
-wget -O static/vendor/jquery-datatables/jquery.dataTables.min.js https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js
-
-# marked.js
-wget -O static/js/marked.min.js https://cdn.jsdelivr.net/npm/marked@latest/marked.min.js
+chmod +x download_assets.sh
+./download_assets.sh
 ```
 
 ### 6. Code Execution Sandbox (Optional)
 
-WindFlag supports executing user-submitted code for challenges in a secure, isolated environment using `bwrap` (Bubblewrap). This is highly recommended for any production deployment where users can submit code. If you plan to host challenges that require code execution (e.g., Python, Node.js, PHP, Bash, Dart, Haskell), you need to install `bwrap` and the respective language runtimes.
+WindFlag supports executing user-submitted code for challenges in a secure, isolated environment using `bwrap` (Bubblewrap). This is highly recommended for any production deployment where users can submit code.
+
+**Automated Configuration:**
+A script is provided to detect installed language runtimes (Python, Node.js, PHP, Bash, Dart) and `bwrap` on your system and configure WindFlag to use them.
+
+```bash
+chmod +x setup_code_execution.sh
+./setup_code_execution.sh
+```
+
+**Manual Setup & Requirements:**
+If you prefer to set up manually or need to verify dependencies:
 
 #### **Install Bubblewrap (`bwrap`)**
 `bwrap` is primarily a Linux-specific sandboxing tool.
