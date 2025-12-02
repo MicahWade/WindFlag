@@ -37,10 +37,13 @@ def update_config(content, key, executable_path):
         # Node usually needs its install dir bound
         install_dir = os.path.dirname(os.path.dirname(executable_path))
         # Construct the new config block
-        new_config = f"'" + key + "': (\n        '" + executable_path + "', '.js',\n        '" + executable_path + " /sandbox/user_code.js',\n        [
-            ('" + install_dir + "', '" + install_dir + "'),
+        new_config = f"""'{key}': (
+        '{executable_path}', '.js',
+        '{executable_path} /sandbox/user_code.js',
+        [
+            ('{install_dir}', '{install_dir}'),
         ]
-    )"
+    )"""
         # Regex to match the existing block. This is tricky with multi-line.
         # We assume standard indentation.
         # Match from key start to the closing parenthesis of the tuple.
@@ -60,9 +63,13 @@ def update_config(content, key, executable_path):
     elif key == 'dart':
         # Dart needs sdk bind
         install_dir = os.path.dirname(os.path.dirname(executable_path))
-        new_config = f"'" + key + "': (\n        '" + executable_path + "', '.dart', # Actual executable path on host\n        '/sandbox/dart-sdk/bin/dart run /sandbox/user_code.dart', # Command to execute inside sandbox\n        [
-            ('" + install_dir + "', '/sandbox/dart-sdk'), # Bind entire SDK into sandbox\n        ]
-    )"
+        new_config = f"""'{key}': (
+        '{executable_path}', '.dart', # Actual executable path on host
+        '/sandbox/dart-sdk/bin/dart run /sandbox/user_code.dart', # Command to execute inside sandbox
+        [
+            ('{install_dir}', '/sandbox/dart-sdk'), # Bind entire SDK into sandbox
+        ]
+    )"""
         regex = r"'" + re.escape(key) + r"': \(\s*'[^']+', '[^']+',\s*.* # Actual executable path on host\s*'[^']+', # Command to execute inside sandbox\s*\[\s*\('[^']+', '[^']+'\), # Bind entire SDK into sandbox\s*\]\s*\)"
         
         match = re.search(regex, content, re.DOTALL)
