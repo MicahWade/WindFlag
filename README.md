@@ -81,11 +81,10 @@ chmod +x download_assets.sh
 WindFlag supports executing user-submitted code for challenges in a secure, isolated environment using `bwrap` (Bubblewrap). This is highly recommended for any production deployment where users can submit code.
 
 **Automated Configuration:**
-A script is provided to detect installed language runtimes (Python, Node.js, PHP, Bash, Dart) and `bwrap` on your system and configure WindFlag to use them.
+A Python script is provided to detect installed language runtimes (Python, Node.js, PHP, Bash, Dart) and `bwrap` on your system and configure WindFlag to use them.
 
 ```bash
-chmod +x setup_code_execution.sh
-./setup_code_execution.sh
+python3 scripts/configure_runtimes.py
 ```
 
 **Manual Setup & Requirements:**
@@ -269,6 +268,10 @@ CREATE USER windflag_user WITH PASSWORD 'your_strong_password';
 # Grant all privileges on the new database to the new user
 GRANT ALL PRIVILEGES ON DATABASE windflag_db TO windflag_user;
 GRANT CREATE ON SCHEMA public TO windflag_user;
+
+# Connect to the new database and alter public schema owner
+\c windflag_db
+ALTER SCHEMA public OWNER TO windflag_user;
 
 # Exit psql
 \q
