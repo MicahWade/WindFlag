@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, IntegerField, SelectField, SelectMultipleField, HiddenField
 from wtforms.fields import FieldList, FormField
 from wtforms.fields.datetime import DateTimeField, DateField # Import DateField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
+from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange, Optional
 from scripts.models import User, Category, MULTI_FLAG_TYPES, POINT_DECAY_TYPES, UNLOCK_TYPES, DYNAMIC_FLAG_TYPE, CHALLENGE_TYPES # Import DYNAMIC_FLAG_TYPE and CHALLENGE_TYPES
 from flask import current_app
 import json
@@ -209,7 +209,7 @@ class ChallengeForm(FlaskForm):
                                    validators=[DataRequired()],
                                    default='STATIC')
     point_decay_rate = IntegerField('Point Decay Rate',
-                                    validators=[NumberRange(min=0)],
+                                    validators=[Optional(), NumberRange(min=0)],
                                     default=0)
     proactive_decay = BooleanField('Apply decay proactively', default=False)
     
@@ -225,7 +225,7 @@ class ChallengeForm(FlaskForm):
                                   validators=[DataRequired()],
                                   default='SINGLE')
     multi_flag_threshold = IntegerField('N of M Threshold (for N_OF_M type)',
-                                        validators=[NumberRange(min=1)],
+                                        validators=[Optional(), NumberRange(min=1)],
                                         render_kw={"placeholder": "Required for N_OF_M type"},
                                         default=1) # Default to 1, but will be validated based on type
     
@@ -263,15 +263,16 @@ class ChallengeForm(FlaskForm):
                               validators=[DataRequired()],
                               default='NONE')
     prerequisite_percentage_value = IntegerField('Prerequisite Percentage Value',
-                                                 validators=[NumberRange(min=0, max=100)],
+                                                 validators=[Optional(), NumberRange(min=0, max=100)],
                                                  render_kw={"placeholder": "e.g., 50 for 50% of challenges"})
     prerequisite_count_value = IntegerField('Prerequisite Count Value',
-                                            validators=[NumberRange(min=0)],
+                                            validators=[Optional(), NumberRange(min=0)],
                                             render_kw={"placeholder": "e.g., 5 for 5 challenges"})
     prerequisite_count_category_ids_input = HiddenField('Prerequisite Count Categories') # Changed to HiddenField
     prerequisite_challenge_ids_input = HiddenField('Prerequisite Challenge IDs') # Changed to HiddenField
     timezone = SelectField('Timezone', choices=[], default='Australia/Sydney') # New timezone field
     unlock_date_time = DateField('Unlock Date', format='%Y-%m-%d',
+                                     validators=[Optional()],
                                      render_kw={"placeholder": "YYYY-MM-DD"})
     unlock_point_reduction_type = SelectField('Unlock Point Reduction Type',
                                                choices=[('NONE', 'None'), ('PERCENTAGE', 'Percentage'), ('FIXED', 'Fixed')],
@@ -284,6 +285,7 @@ class ChallengeForm(FlaskForm):
 
     is_hidden = BooleanField('Hide Challenge from Users', default=False) # New: Field to hide challenge
     has_dynamic_flag = BooleanField('Has Dynamic Flag', default=False) # New: Field to enable/disable dynamic flag
+    solution_verified = HiddenField('Solution Verified', default='false') # New: Track verification status
     hints = FieldList(FormField(HintForm), min_entries=0, label='Hints') # New: Dynamic hints
     submit = SubmitField('Submit Challenge')
 
@@ -323,6 +325,11 @@ class ChallengeForm(FlaskForm):
                 return False
             if not self.reference_solution.data:
                 self.reference_solution.errors.append('Reference Solution is required for Coding challenges.')
+                return False
+            
+            # Validate that solution has been verified
+            if self.solution_verified.data != 'true':
+                self.solution_verified.errors.append('You must verify the reference solution before submitting.')
                 return False
         else: # FLAG type
             # Validate multi_flag_type and threshold
