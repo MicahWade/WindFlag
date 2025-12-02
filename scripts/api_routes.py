@@ -325,11 +325,14 @@ def update_challenge_api(challenge_id):
     return jsonify({'message': 'Challenge updated successfully'})
 
 @api_bp.route('/admin/verify_coding_challenge', methods=['POST'])
-@admin_api_required
+@login_required
 def verify_coding_challenge():
     """
     Verifies a coding challenge solution for administrators.
     """
+    if not current_user.is_admin:
+        return jsonify({'message': 'Administrator access required'}), 403
+
     data = request.get_json()
     if not data:
         return jsonify({'message': 'Request body must be JSON'}), 400
@@ -350,11 +353,9 @@ def verify_coding_challenge():
         code=reference_solution,
         setup_code=setup_code,
         test_case_input=test_case_input,
-        expected_output=expected_output, # Pass expected output for direct comparison
-        is_admin_check=True # Indicate this is an admin check, possibly for different timeout/resource limits
+        expected_output=expected_output # Pass expected output for direct comparison
     )
-
-    if execution_result.is_correct:
+    if execution_result.success:
         return jsonify({
             'message': 'Reference solution verified successfully.',
             'is_correct': True,

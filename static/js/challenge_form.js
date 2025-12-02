@@ -240,6 +240,74 @@ document.addEventListener('DOMContentLoaded', function () {
         languageSelect.addEventListener('change', updateCodeEditorsMode);
     }
 
+    // Verify Solution Button Logic
+    const verifySolutionButton = document.getElementById('verify_solution_button');
+    if (verifySolutionButton) {
+        verifySolutionButton.addEventListener('click', function () {
+            const language = languageSelect.value;
+            const setupCode = adminCodeMirrorEditors['setup_code_editor'] ? adminCodeMirrorEditors['setup_code_editor'].getValue() : '';
+            const testCaseInput = adminCodeMirrorEditors['test_case_input_editor'] ? adminCodeMirrorEditors['test_case_input_editor'].getValue() : '';
+            const referenceSolution = adminCodeMirrorEditors['reference_solution_editor'] ? adminCodeMirrorEditors['reference_solution_editor'].getValue() : '';
+            const expectedOutput = adminCodeMirrorEditors['expected_output_editor'] ? adminCodeMirrorEditors['expected_output_editor'].getValue() : '';
+            const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
+
+            // Disable button and show loading state
+            const originalButtonText = verifySolutionButton.textContent;
+            verifySolutionButton.disabled = true;
+            verifySolutionButton.textContent = 'Verifying...';
+            verifySolutionButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+            fetch('/api/admin/verify_coding_challenge', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    language: language,
+                    setup_code: setupCode,
+                    test_case_input: testCaseInput,
+                    reference_solution: referenceSolution,
+                    expected_output: expectedOutput
+                })
+            })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP Error: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.is_correct) {
+                    isSolutionVerified = true;
+                    updateSubmitButtonState();
+                    alert('Success: Reference solution verified!');
+                } else {
+                    isSolutionVerified = false;
+                    updateSubmitButtonState();
+                    let errorMessage = 'Verification Failed:\n';
+                    if (data.message) errorMessage += data.message + '\n';
+                    if (data.stderr) errorMessage += 'Stderr:\n' + data.stderr + '\n';
+                    if (data.stdout) errorMessage += 'Stdout:\n' + data.stdout + '\n';
+                    alert(errorMessage);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during verification.');
+                isSolutionVerified = false;
+                updateSubmitButtonState();
+            })
+            .finally(() => {
+                // Restore button state
+                verifySolutionButton.disabled = false;
+                verifySolutionButton.textContent = originalButtonText;
+                verifySolutionButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            });
+        });
+    }
+
     // Dynamic Hint Fields Logic
     const hintsContainer = document.getElementById('hints-container');
     const addHintButton = document.getElementById('add-hint-button');
