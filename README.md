@@ -84,7 +84,7 @@ WindFlag supports executing user-submitted code for challenges in a secure, isol
 A Python script is provided to detect installed language runtimes (Python, Node.js, PHP, Bash, Dart) and `bwrap` on your system and configure WindFlag to use them.
 
 ```bash
-python3 scripts/configure_runtimes.py
+python3 configure_runtimes.py
 ```
 
 **Manual Setup & Requirements:**
