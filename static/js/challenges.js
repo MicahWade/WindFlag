@@ -180,14 +180,20 @@ document.addEventListener('DOMContentLoaded', function() {
         codeResult.classList.remove('hidden');
         codeResult.textContent = 'Running code...';
 
-        fetch(`/submit_code/${currentChallengeId}`, {
+        fetch(`/api/challenges/${currentChallengeId}/submit_code`, { // Fixed URL
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ code: userCode, language: currentChallengeLanguage })
         })
-        .then(response => response.json())
+        .then(async response => {
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP Error: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
             codeResult.textContent = data.output;
             if (data.success) {
@@ -270,14 +276,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         solvedCount++;
                     }
                     challengesHtml += `
-                        <div class="theme-challenge-card theme-hover-card p-6 challenge-card cursor-pointer transform hover:scale-105 transition duration-300 ease-in-out ${challenge.solved ? 'theme-completed-challenge' : ''}"
+                        <div class="theme-challenge-card theme-hover-card p-6 challenge-card cursor-pointer transform hover:scale-105 transition duration-300 ease-in-out ${challenge.solved ? 'theme-completed-challenge completed-challenge-line' : ''}"
                              data-id="${challenge.id}"
                              data-name="${challenge.name}"
                              data-description="${challenge.description}"
                              data-points="${challenge.points}"
                              data-completed="${challenge.solved}"
                              data-solves="${challenge.solves}">
-                            <h5 class="theme-challenge-title text-xl font-bold mb-2">${challenge.name}</h5>
+                            <h5 class="theme-challenge-title text-xl font-bold mb-2">
+                                ${challenge.name}
+                            </h5>
                             <p class="theme-challenge-points">${challenge.points} pts</p>
                         </div>
                     `;
