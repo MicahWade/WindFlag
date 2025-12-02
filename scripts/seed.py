@@ -64,13 +64,18 @@ def seed_database():
     users = []
     
     # Generate preset usernames only if the feature is enabled
-    if current_app.config.get('PRESET_USERNAMES_ENABLED', False):
-        generated_usernames = generate_usernames(num_to_generate=10) # 10 users for seeding
-        user_password = bcrypt.generate_password_hash("userpass").decode('utf-8')
+    # For seeding/demo purposes, temporarily enable this if not enabled, to ensure we get users
+    original_preset_setting = current_app.config.get('PRESET_USERNAMES_ENABLED', False)
+    current_app.config['PRESET_USERNAMES_ENABLED'] = True # Force true for seeding
+    
+    generated_usernames = generate_usernames(num_to_generate=10) # 10 users for seeding
+    user_password = bcrypt.generate_password_hash("userpass").decode('utf-8')
 
-        for i, username in enumerate(generated_usernames):
-            user = User(username=username, email=f"{username}_{i}@example.com", password_hash=user_password, is_admin=False, hidden=False, score=0)
-            users.append(user)
+    for i, username in enumerate(generated_usernames):
+        user = User(username=username, email=f"{username}_{i}@example.com", password_hash=user_password, is_admin=False, hidden=False, score=0)
+        users.append(user)
+    
+    current_app.config['PRESET_USERNAMES_ENABLED'] = original_preset_setting # Restore original setting
     
     # Add specific user "zen" as a non-admin user
     zen_password = bcrypt.generate_password_hash("zen").decode('utf-8')

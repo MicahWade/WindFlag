@@ -258,9 +258,12 @@ def import_challenges_from_yaml(app, yaml_source, is_file=True):
             category_name = challenge_data.get('category', 'Uncategorized')
             category = Category.query.filter_by(name=category_name).first()
             if not category:
+                print(f"Creating new category: '{category_name}'")
                 category = Category(name=category_name)
                 db.session.add(category)
                 db.session.commit()
+            else:
+                print(f"Using existing category: '{category_name}'")
 
             challenge_name = challenge_data.get('name')
             if not challenge_name:
