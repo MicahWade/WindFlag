@@ -11,16 +11,14 @@ from scripts.config import get_enabled_language_configs
 # These should ideally be configurable or checked for existence
 BWRAP_PATH = '/usr/bin/bwrap'
 BWRAP_COMMON_ARGS = [
-    '--unshare-all',
+    '--unshare-pid',
     '--die-with-parent',
     '--proc', '/proc',
     '--dev', '/dev',
     '--tmpfs', '/tmp',
-    '--dir', '/sandbox', # A dedicated directory inside the sandbox
-    '--setenv', 'PATH', '/usr/bin:/bin:/usr/local/bin:/home/linuxbrew/.linuxbrew/bin', # Added Homebrew bin to PATH
-    '--setenv', 'LD_LIBRARY_PATH', '/home/linuxbrew/.linuxbrew/lib', # Added Homebrew lib to LD_LIBRARY_PATH
-    # Removed --rlimit-as, --rlimit-cpu, --rlimit-fsize as they are not supported by some bwrap versions.
-    # Proper resource limiting should be handled via cgroups or a bwrap version that supports these flags.
+    '--dir', '/sandbox',
+    '--setenv', 'PATH', '/usr/bin:/bin:/usr/local/bin:/home/linuxbrew/.linuxbrew/bin',
+    '--setenv', 'LD_LIBRARY_PATH', '/home/linuxbrew/.linuxbrew/lib',
 ]
 
 # Max output size for stdout/stderr
