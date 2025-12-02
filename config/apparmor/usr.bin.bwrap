@@ -23,6 +23,15 @@ profile bwrap /usr/bin/bwrap flags=(unconfined) {
   /usr/bin/bwrap mr,
   /usr/lib/x86_64-linux-gnu/bubblewrap/bwrap mr, # Common path for bwrap helper on Ubuntu
 
+  # Allow bwrap to read its own shared libraries from standard paths
+  # This was identified as a missing permission when libselinux.so.1 could not be opened.
+  /lib/x86_64-linux-gnu/lib*.so* r,
+  /usr/lib/x86_64-linux-gnu/lib*.so* r,
+
+  # Explicitly allow access to libselinux.so.1 which was causing an error
+  /lib/x86_64-linux-gnu/libselinux.so.1 r,
+  /usr/lib/x86_64-linux-gnu/libselinux.so.1 r,
+
   # Allow capabilities needed by bwrap to set up the sandbox
   capability sys_admin, # Needed for various namespace operations, including user namespaces
   capability setuid,   # Needed for user namespace uid mapping
