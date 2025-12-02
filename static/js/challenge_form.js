@@ -250,12 +250,34 @@ document.addEventListener('DOMContentLoaded', function () {
             const referenceSolution = adminCodeMirrorEditors['reference_solution_editor'] ? adminCodeMirrorEditors['reference_solution_editor'].getValue() : '';
             const expectedOutput = adminCodeMirrorEditors['expected_output_editor'] ? adminCodeMirrorEditors['expected_output_editor'].getValue() : '';
             const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
+            const statusDiv = document.getElementById('verify_solution_status');
+
+            // Client-side validation for empty fields
+            if (!language || !referenceSolution || !expectedOutput) {
+                if (statusDiv) {
+                    statusDiv.textContent = 'Error: Language, Reference Solution, and Expected Output cannot be empty.';
+                    statusDiv.classList.add('text-red-500');
+                }
+                isSolutionVerified = false;
+                updateSubmitButtonState();
+                // Re-enable button immediately as no fetch was made
+                verifySolutionButton.disabled = false;
+                verifySolutionButton.textContent = originalButtonText;
+                verifySolutionButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                return; // Stop execution
+            }
 
             // Disable button and show loading state
             const originalButtonText = verifySolutionButton.textContent;
             verifySolutionButton.disabled = true;
             verifySolutionButton.textContent = 'Verifying...';
             verifySolutionButton.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            // Reset status
+            if (statusDiv) {
+                statusDiv.textContent = '';
+                statusDiv.className = 'ml-4 text-sm font-bold'; // Reset classes
+            }
 
             fetch('/api/admin/verify_coding_challenge', {
                 method: 'POST',
@@ -282,20 +304,32 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.is_correct) {
                     isSolutionVerified = true;
                     updateSubmitButtonState();
-                    alert('Success: Reference solution verified!');
+                    if (statusDiv) {
+                        statusDiv.textContent = 'Success: Reference solution verified!';
+                        statusDiv.classList.add('text-green-500');
+                    }
                 } else {
                     isSolutionVerified = false;
                     updateSubmitButtonState();
-                    let errorMessage = 'Verification Failed:\n';
-                    if (data.message) errorMessage += data.message + '\n';
-                    if (data.stderr) errorMessage += 'Stderr:\n' + data.stderr + '\n';
-                    if (data.stdout) errorMessage += 'Stdout:\n' + data.stdout + '\n';
-                    alert(errorMessage);
+                    let errorMessage = 'Verification Failed: ';
+                    if (data.message) errorMessage += data.message;
+                    
+                    // Log details to console
+                    if (data.stderr) console.error('Verification Stderr:', data.stderr);
+                    if (data.stdout) console.log('Verification Stdout:', data.stdout);
+
+                    if (statusDiv) {
+                        statusDiv.textContent = errorMessage + (data.stderr ? ' (Check console for details)' : '');
+                        statusDiv.classList.add('text-red-500');
+                    }
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred during verification.');
+                if (statusDiv) {
+                    statusDiv.textContent = 'An error occurred: ' + error.message;
+                    statusDiv.classList.add('text-red-500');
+                }
                 isSolutionVerified = false;
                 updateSubmitButtonState();
             })

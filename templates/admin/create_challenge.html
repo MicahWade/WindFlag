@@ -317,7 +317,10 @@
                                 <textarea id="reference_solution_editor" name="{{ form.reference_solution.name }}" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline font-mono codemirror-editor codemirror-challenge-style" rows="10">{{ form.reference_solution.data or '' }}</textarea>
                             {% endif %}
                         </div>
-                        <button type="button" id="verify_solution_button" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline shadow-md transform hover:scale-105 transition duration-300 ease-in-out flex-shrink-0 mt-2">Verify Solution</button>
+                        <div class="flex items-center mt-2">
+                            <button type="button" id="verify_solution_button" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline shadow-md transform hover:scale-105 transition duration-300 ease-in-out flex-shrink-0">Verify Solution</button>
+                            <div id="verify_solution_status" class="ml-4 text-sm font-bold"></div>
+                        </div>
                     </div>
                 </div>
                 <fieldset class="border-t border-gray-700 pt-4 mt-4">
