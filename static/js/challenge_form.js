@@ -174,81 +174,55 @@ document.addEventListener('DOMContentLoaded', function () {
                     indentUnit: 4,
                     tabSize: 4,
                     indentWithTabs: false,
-                    viewportMargin: Infinity
+                    viewportMargin: Infinity,
+                    fullScreen: false // Ensure CodeMirror is NOT fullscreen by default
                 });
                 adminCodeMirrorEditors[elementId].getWrapperElement().classList.add('codemirror-themed-input');
                 
-                // Add fullscreen button
-                const fullscreenButton = createFullscreenButton(adminCodeMirrorEditors[elementId]);
+                // Dynamically create and append fullscreen button
+                const fullscreenButton = document.createElement('button');
+                fullscreenButton.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                    </svg>
+                `;
+                fullscreenButton.title = "Enter Fullscreen (F11)";
+                // Use a class for styling consistent with CodeMirror's own fullscreen button
+                fullscreenButton.className = "CodeMirror-fullscreen-button-custom absolute top-2 right-2 p-1 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white z-10";
+                
+                fullscreenButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    adminCodeMirrorEditors[elementId].setOption("fullScreen", !adminCodeMirrorEditors[elementId].getOption("fullScreen"));
+                });
                 adminCodeMirrorEditors[elementId].getWrapperElement().appendChild(fullscreenButton);
 
                 // Add change listener to reset verification
                 adminCodeMirrorEditors[elementId].on('change', resetVerification);
+
+                // Add an event listener to update the button icon when fullscreen state changes
+                adminCodeMirrorEditors[elementId].on('optionChange', (cm, option) => {
+                    if (option === 'fullScreen') {
+                        if (cm.getOption("fullScreen")) {
+                            fullscreenButton.innerHTML = `Exit`;
+                            fullscreenButton.title = "Exit Fullscreen (Esc)";
+                            fullscreenButton.classList.add('text-lg', 'px-3'); // Make it bigger and more visible
+                        } else {
+                            fullscreenButton.innerHTML = `
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                                </svg>
+                            `;
+                            fullscreenButton.title = "Enter Fullscreen (F11)";
+                            fullscreenButton.classList.remove('text-lg', 'px-3');
+                        }
+                    }
+                });
             } else {
                 // If editor already exists, ensure theme and class are applied
                 adminCodeMirrorEditors[elementId].getWrapperElement().classList.add('codemirror-themed-input');
             }
         }
     }
-
-    let fullscreenEditor = null; // To keep track of the editor in fullscreen mode
-
-    function createFullscreenButton(editor) {
-        const button = document.createElement('button');
-        button.innerHTML = `
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
-            </svg>
-        `;
-        button.title = "Toggle Fullscreen";
-        button.className = "CodeMirror-fullscreen-button absolute top-2 right-2 p-1 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white z-10";
-        button.onclick = (event) => {
-            event.preventDefault();
-            toggleFullscreen(editor);
-        };
-        return button;
-    }
-
-    function toggleFullscreen(editor) {
-        const wrapper = editor.getWrapperElement();
-        wrapper.classList.toggle('CodeMirror-fullscreen');
-        
-        if (wrapper.classList.contains('CodeMirror-fullscreen')) {
-            fullscreenEditor = editor;
-            document.body.style.overflow = 'hidden'; // Hide body scrollbar
-            // Update button icon to shrink
-            const button = wrapper.querySelector('.CodeMirror-fullscreen-button');
-            if (button) {
-                button.innerHTML = `
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 21V9m0 0l-5-5m5 5L12 9m-5 5H3m0 0l5 5m-5-5l5-5m0-11h8m0 0H8"></path>
-                    </svg>
-                `;
-                button.title = "Exit Fullscreen";
-            }
-        } else {
-            fullscreenEditor = null;
-            document.body.style.overflow = ''; // Restore body scrollbar
-            // Update button icon to expand
-            const button = wrapper.querySelector('.CodeMirror-fullscreen-button');
-            if (button) {
-                button.innerHTML = `
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
-                    </svg>
-                `;
-                button.title = "Toggle Fullscreen";
-            }
-        }
-        editor.refresh(); // Important to refresh CodeMirror to adjust layout
-    }
-
-    // Handle Escape key to exit fullscreen
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape' && fullscreenEditor) {
-            toggleFullscreen(fullscreenEditor);
-        }
-    });
 
     function updateCodeEditorsMode() {
         const selectedLanguage = languageSelect ? languageSelect.value : '';
@@ -312,6 +286,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 initializeAdminCodeMirrorEditor('starter_code_editor');
                 initializeAdminCodeMirrorEditor('reference_solution_editor');
                 updateCodeEditorsMode(); // Set initial mode
+                setupFullscreenButtons(); // Call to setup buttons after editors are initialized
                 
             } else {
                 if (flagFields) flagFields.style.display = 'block';

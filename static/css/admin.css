@@ -37,30 +37,81 @@
     opacity: 1;
 }
 
-/* CodeMirror Fullscreen Styles */
-.CodeMirror-fullscreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw !important; /* Use 100vw to ensure it covers the entire viewport width */
-    height: 100vh !important; /* Use 100vh to ensure it covers the entire viewport height */
-    z-index: 9999; /* High z-index to be on top of everything */
-    background-color: #1a202c; /* Ensure background matches dracula theme or is dark */
-    margin: 0 !important; /* Remove any external margins */
-    padding: 0 !important; /* Remove any external padding */
-}
-
-/* Ensure CodeMirror scrollable content fills the fullscreen wrapper */
-.CodeMirror-fullscreen .CodeMirror-scroll {
-    width: 100% !important;
-    height: 100% !important;
-}
-
-/* Ensure the editor wrapper itself is positioned relatively for the button */
+/* Base CodeMirror Styles - keep CodeMirror-wrap for button positioning */
 .CodeMirror-wrap {
-    position: relative;
+    position: relative; /* Needed for positioning the custom button */
 }
 
-.CodeMirror-fullscreen-button {
-    z-index: 10000; /* Ensure button is above the editor content */
+/* Custom Fullscreen button styles */
+.CodeMirror-fullscreen-button-custom { /* Use this class for our dynamically created button */
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    padding: 4px; /* Default size for icon */
+    border-radius: 9999px; /* rounded-full */
+    background-color: #4a5568; /* bg-gray-700 */
+    color: #cbd5e0; /* text-gray-300 */
+    cursor: pointer;
+    z-index: 100; /* Ensure button is above editor content */
+    display: flex; /* To center SVG/text */
+    align-items: center;
+    justify-content: center;
+    border: none; /* Remove default button border */
+}
+
+.CodeMirror-fullscreen-button-custom svg {
+    width: 16px; /* Default SVG size */
+    height: 16px; /* Default SVG size */
+    vertical-align: middle; /* Align SVG nicely */
+}
+
+.CodeMirror-fullscreen-button-custom:hover {
+    background-color: #2d3748; /* hover:bg-gray-600 */
+    color: #ffffff; /* hover:text-white */
+}
+
+/* Increase font size in fullscreen mode */
+html.CodeMirror-fullscreen .CodeMirror {
+    font-size: 1.2em; /* Adjust as needed */
+    line-height: 1.5; /* Adjust as needed for readability */
+}
+
+/* Ensure the code content itself also scales */
+html.CodeMirror-fullscreen .CodeMirror-code {
+    font-size: 1.2em; /* Ensure text within also increases */
+}
+
+/* Adjust button position within the fullscreen editor for better visibility and size */
+html.CodeMirror-fullscreen .CodeMirror-fullscreen-button-custom {
+    position: absolute !important; /* Ensure it stays absolute within the fullscreen editor */
+    top: 10px !important;
+    right: 10px !important;
+    padding: 10px 20px !important; /* Bigger padding for text, more horizontal */
+    background-color: #4a5568 !important; /* Ensure background in fullscreen */
+    color: #ffffff !important; /* Ensure text color in fullscreen */
+    z-index: 100000 !important; /* Highest z-index for the button */
+    border-radius: 5px !important; /* More rectangular for text */
+    min-width: 80px; /* Ensure enough width for text */
+}
+
+/* Hide SVG when button contains text (in fullscreen mode) */
+html.CodeMirror-fullscreen .CodeMirror-fullscreen-button-custom svg {
+    display: none !important;
+}
+
+/* When the button is NOT in fullscreen, ensure the SVG is visible */
+.CodeMirror-fullscreen-button-custom:not(html.CodeMirror-fullscreen .CodeMirror-fullscreen-button-custom) svg {
+    display: inline-block;
+}
+
+/* When the button contains text (e.g., "Exit"), hide the SVG if it's there */
+.CodeMirror-fullscreen-button-custom:not(:has(svg)) { /* Select button if it doesn't contain an SVG */
+    padding: 10px 20px !important; /* Adapt padding for text */
+    border-radius: 5px !important;
+    min-width: 80px;
+}
+
+/* If CodeMirror's own fullscreen addon adds a default button, hide it */
+.CodeMirror-fullscreen .CodeMirror-closefullscreen {
+    display: none !important;
 }

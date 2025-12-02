@@ -40,6 +40,10 @@ download "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/javascr
 download "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/php/php.min.js" "static/codemirror/php.min.js"
 download "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/python/python.min.js" "static/codemirror/python.min.js"
 
+# CodeMirror Fullscreen Addon
+download "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/addon/display/fullscreen.min.css" "static/codemirror/fullscreen.min.css"
+download "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/addon/display/fullscreen.min.js" "static/codemirror/fullscreen.min.js"
+
 # Font Awesome
 download "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" "static/vendor/font-awesome/css/all.min.css"
 download "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/webfonts/fa-solid-900.woff2" "static/vendor/font-awesome/webfonts/fa-solid-900.woff2"

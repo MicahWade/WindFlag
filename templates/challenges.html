@@ -83,6 +83,7 @@
 {% block scripts %}
     <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/codemirror.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/dracula.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/fullscreen.min.css') }}"> {# CodeMirror Fullscreen Addon CSS #}
     <script src="{{ url_for('static', filename='codemirror/codemirror.min.js') }}"></script>
     <script src="{{ url_for('static', filename='codemirror/shell.min.js') }}"></script> {# Bash #}
     <script src="{{ url_for('static', filename='codemirror/dart.min.js') }}"></script> {# Dart #}
@@ -90,6 +91,7 @@
     <script src="{{ url_for('static', filename='codemirror/javascript.min.js') }}"></script> {# Node/JavaScript #}
     <script src="{{ url_for('static', filename='codemirror/php.min.js') }}"></script> {# PHP (includes JS dependency) #}
     <script src="{{ url_for('static', filename='codemirror/python.min.js') }}"></script> {# Python #}
+    <script src="{{ url_for('static', filename='codemirror/fullscreen.min.js') }}"></script> {# CodeMirror Fullscreen Addon JS #}
     <script src="{{ url_for('static', filename='js/challenges.js') }}"></script>
     <script>
         // Add a Jinja2 filter for datetime formatting
