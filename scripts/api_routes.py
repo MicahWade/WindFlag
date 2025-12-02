@@ -168,11 +168,15 @@ def get_public_challenges():
     for sub in all_submissions:
         solves_per_challenge[sub.challenge_id] = solves_per_challenge.get(sub.challenge_id, 0) + 1
 
+    # Create a cache for the current user's completed challenges to pass to is_unlocked_for_user
+    user_completed_challenges_cache = {current_user.id: solved_challenges}
+
     category_data = []
     for category in categories:
         challenges_data = []
         for challenge in category.challenges:
-            if not challenge.is_hidden:
+            # Use the model's logic to determine if the challenge should be visible
+            if challenge.is_unlocked_for_user(current_user, user_completed_challenges_cache):
                 challenges_data.append({
                     'id': challenge.id,
                     'name': challenge.name,
@@ -399,7 +403,7 @@ def submit_code_challenge(challenge_id):
         test_case_input=challenge.test_case_input,
     )
 
-    if execution_result.is_correct:
+    if execution_result.success:
         # Check if the user has already solved this challenge
         existing_submission = Submission.query.filter_by(
             user_id=current_user.id,

@@ -130,11 +130,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     let isSolutionVerified = false; // Flag to track if the coding solution has been verified
+    const solutionVerifiedField = document.getElementById('solution_verified');
+    // Initialize verification status from hidden field (server-side memory)
+    if (solutionVerifiedField && solutionVerifiedField.value === 'true') {
+        isSolutionVerified = true;
+    }
+
     const challengeSubmitButton = document.getElementById('challenge_submit_button');
     const languageSelect = document.getElementById('language');
 
     // CodeMirror Integration for Admin Challenge Form
     const adminCodeMirrorEditors = {}; // Object to hold CodeMirror instances
+
+    function resetVerification() {
+        isSolutionVerified = false;
+        if (solutionVerifiedField) {
+            solutionVerifiedField.value = 'false';
+        }
+        updateSubmitButtonState();
+    }
 
     function getCodeMirrorMode(language) {
         const lowerCaseLang = language.toLowerCase();
@@ -163,6 +177,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     viewportMargin: Infinity
                 });
                 adminCodeMirrorEditors[elementId].getWrapperElement().classList.add('codemirror-themed-input');
+                
+                // Add change listener to reset verification
+                adminCodeMirrorEditors[elementId].on('change', resetVerification);
             } else {
                 // If editor already exists, ensure theme and class are applied
                 adminCodeMirrorEditors[elementId].getWrapperElement().classList.add('codemirror-themed-input');
@@ -184,11 +201,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateSubmitButtonState() {
         const challengeTypeSelect = document.getElementById('challenge_type_select');
+        const submitStatusMessageDiv = document.getElementById('submit_status_message');
+
         if (challengeSubmitButton) { // Add null check here
             if (challengeTypeSelect.value === 'CODING') {
                 challengeSubmitButton.disabled = !isSolutionVerified;
+                if (submitStatusMessageDiv) {
+                    if (!isSolutionVerified) {
+                        submitStatusMessageDiv.textContent = 'Please verify the reference solution before submitting.';
+                        submitStatusMessageDiv.classList.add('text-red-500');
+                    } else {
+                        submitStatusMessageDiv.textContent = '';
+                        submitStatusMessageDiv.classList.remove('text-red-500');
+                    }
+                }
             } else {
                 challengeSubmitButton.disabled = false; // Always enabled for non-coding challenges
+                if (submitStatusMessageDiv) {
+                    submitStatusMessageDiv.textContent = '';
+                    submitStatusMessageDiv.classList.remove('text-red-500');
+                }
             }
         }
     }
@@ -202,7 +234,13 @@ document.addEventListener('DOMContentLoaded', function () {
              if (challengeTypeSelect.value === 'CODING') {
                 if (flagFields) flagFields.style.display = 'none';
                 if (codingFields) codingFields.style.display = 'block';
-                isSolutionVerified = false; // Reset verification status for coding challenges
+                
+                // Only reset verification if not already verified (e.g., from hidden field on load)
+                if (!solutionVerifiedField || solutionVerifiedField.value !== 'true') {
+                    isSolutionVerified = false; 
+                } else {
+                    isSolutionVerified = true;
+                }
 
                 // Initialize CodeMirror for coding fields if not already done
                 initializeAdminCodeMirrorEditor('expected_output_editor');
@@ -303,6 +341,9 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (data.is_correct) {
                     isSolutionVerified = true;
+                    if (solutionVerifiedField) {
+                        solutionVerifiedField.value = 'true';
+                    }
                     updateSubmitButtonState();
                     if (statusDiv) {
                         statusDiv.textContent = 'Success: Reference solution verified!';
@@ -403,5 +444,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 removeHintField(event);
             }
         });
+    }
+
+    // Scroll preservation logic
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            sessionStorage.setItem('scrollPosition', window.scrollY);
+        });
+    }
+
+    const savedScrollPosition = sessionStorage.getItem('scrollPosition');
+    if (savedScrollPosition) {
+        window.scrollTo(0, parseInt(savedScrollPosition));
+        sessionStorage.removeItem('scrollPosition');
     }
 });
