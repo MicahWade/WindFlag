@@ -144,3 +144,48 @@ These variables are typically used during development.
 2.  **Use `.env.template`**: Provide a `.env.template` (as WindFlag does) that outlines all possible environment variables without their values. This helps new developers or deployers understand what variables are needed.
 3.  **Secure Your `.env` File**: Ensure that the `.env` file on your server has restricted file system permissions to prevent unauthorized access.
 4.  **Restart Application on Changes**: Most applications (including Flask) require a restart to pick up changes made to the `.env` file.
+
+## bwrap Sandboxing Configuration (Linux)
+
+WindFlag uses `bwrap` (Bubblewrap) for secure code execution sandboxing. On some Linux distributions, particularly Ubuntu, `bwrap` may encounter a "Permission denied" error when "setting up uid map." This usually indicates that unprivileged user namespaces, which `bwrap` relies on, are disabled or restricted by default for security reasons.
+
+To enable `bwrap` functionality for code challenges, you need to enable unprivileged user namespaces on your system.
+
+### Enabling Unprivileged User Namespaces
+
+**Warning:** Modifying kernel parameters can affect system security. Ensure your system is kept up-to-date.
+
+1.  **Check Current Status (Optional):**
+    You can check if unprivileged user namespaces are currently enabled with:
+    ```bash
+    sysctl kernel.unprivileged_userns_clone
+    ```
+    A value of `0` means disabled, `1` means enabled.
+
+2.  **Enable Temporarily (until next reboot):**
+    To enable them until the next system reboot, run:
+    ```bash
+    sudo sysctl -w kernel.unprivileged_userns_clone=1
+    ```
+
+3.  **Enable Permanently (persists across reboots):**
+    To make the change permanent, you need to edit your `/etc/sysctl.conf` file.
+
+    a. Open the file with a text editor (e.g., `nano` or `vim`):
+    ```bash
+    sudo nano /etc/sysctl.conf
+    ```
+
+    b. Add the following line to the end of the file. If `kernel.unprivileged_userns_clone` already exists in the file (possibly commented out), uncomment it and ensure its value is `1`.
+    ```
+    kernel.unprivileged_userns_clone=1
+    ```
+
+    c. Save the file and exit the editor.
+
+    d. Apply the changes immediately without rebooting:
+    ```bash
+    sudo sysctl -p
+    ```
+
+After performing these steps, `bwrap` should be able to function correctly. You may need to log out and log back in, or reboot your system, for the changes to take full effect for your user session.
