@@ -194,7 +194,8 @@ def create_app(config_class=Config):
             return redirect(url_for('home'))
         form = LoginForm()
         if form.validate_on_submit():
-            user = User.query.filter_by(username=form.username.data).first()
+            # Check if the input is an email or username
+            user = User.query.filter((User.username == form.username.data) | (User.email == form.username.data)).first()
             if user and bcrypt.check_password_hash(user.password_hash, form.password.data):
                 if user.password_reset_required:
                     flash('You must reset your password before continuing.', 'info')
@@ -204,7 +205,7 @@ def create_app(config_class=Config):
                 next_page = request.args.get('next')
                 return redirect(next_page) if next_page else redirect(url_for('home'))
             else:
-                flash('Login Unsuccessful. Please check username and password', 'danger')
+                flash('Login Unsuccessful. Please check username/email and password', 'danger')
         return render_template('login.html', title='Login', form=form)
 
     @app.route('/logout')

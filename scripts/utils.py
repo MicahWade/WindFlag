@@ -17,7 +17,7 @@ def generate_usernames(num_to_generate=None):
     if not current_app.config.get('PRESET_USERNAMES_ENABLED', False):
         return []
 
-    words_file_path = current_app.config.get('WORDS_FILE_PATH', 'words.text')
+    words_file_path = current_app.config.get('WORDS_FILE_PATH', 'words.txt')
     if not os.path.exists(words_file_path):
         current_app.logger.error(f"Words file not found at: {words_file_path}")
         return []

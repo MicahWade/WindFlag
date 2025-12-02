@@ -33,7 +33,7 @@ class Config:
     ENABLE_API_KEY_DISPLAY = os.environ.get('ENABLE_API_KEY_DISPLAY', 'False').lower() == 'true'
     GENERATE_API_KEY_ON_REGISTER = os.environ.get('GENERATE_API_KEY_ON_REGISTER', 'True').lower() == 'true'
     PRESET_USER_COUNT = 50
-    WORDS_FILE_PATH = os.environ.get('WORDS_FILE_PATH', 'words.text')
+    WORDS_FILE_PATH = os.environ.get('WORDS_FILE_PATH', 'words.txt')
     ACTIVE_THEME = os.environ.get('ACTIVE_THEME', 'default')
 
     # Admin API Key

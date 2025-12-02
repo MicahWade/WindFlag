@@ -92,7 +92,7 @@ class LoginForm(FlaskForm):
     """
     Form for user login.
     """
-    username = StringField('Username',
+    username = StringField('Username or Email',
                            validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     remember = BooleanField('Remember Me')

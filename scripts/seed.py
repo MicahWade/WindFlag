@@ -358,16 +358,17 @@ def seed_database():
             continue # Skip submission generation for these
 
         solve_percentage = 0
-        if challenge.id == yellow_prereq_id: # Control solve rate for yellow prerequisite
-            solve_percentage = 1.0 / len(eligible_users_for_seeding) # Exactly one user solves this
-        elif challenge.id == blue_prereq_id: # Control solve rate for blue prerequisite
-            solve_percentage = 0.65
-        elif challenge.id == yellow_id:
-            solve_percentage = 1.0 
-        elif challenge.id == blue_id:
-            solve_percentage = 1.0 
-        else:
-            solve_percentage = random.uniform(0.3, 0.9) # General challenges: 30-90% solves
+        if eligible_users_for_seeding: # Ensure we have users to solve challenges
+            if challenge.id == yellow_prereq_id: # Control solve rate for yellow prerequisite
+                solve_percentage = 1.0 / len(eligible_users_for_seeding) # Exactly one user solves this
+            elif challenge.id == blue_prereq_id: # Control solve rate for blue prerequisite
+                solve_percentage = 0.65
+            elif challenge.id == yellow_id:
+                solve_percentage = 1.0 
+            elif challenge.id == blue_id:
+                solve_percentage = 1.0 
+            else:
+                solve_percentage = random.uniform(0.3, 0.9) # General challenges: 30-90% solves
 
         # Use eligible_users_for_seeding for sampling solvers
         num_solvers = int(len(eligible_users_for_seeding) * solve_percentage)
@@ -453,8 +454,10 @@ def seed_database():
     # --- End of specific failed flag attempt ---
 
     # Set some users to hidden
-    users[0].hidden = True
-    users[1].hidden = True
+    if len(users) > 0:
+        users[0].hidden = True
+    if len(users) > 1:
+        users[1].hidden = True
     db.session.commit()
 
     # Add settings
