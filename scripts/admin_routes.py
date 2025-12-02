@@ -411,7 +411,9 @@ def new_challenge():
                               expected_output=form.expected_output.data if form.challenge_type.data == 'CODING' else None,
                               test_case_input=form.test_case_input.data if form.challenge_type.data == 'CODING' else None,
                               setup_code=form.setup_code.data if form.challenge_type.data == 'CODING' else None,
-                              starter_code=form.starter_code.data if form.challenge_type.data == 'CODING' else None)
+                              starter_code=form.starter_code.data if form.challenge_type.data == 'CODING' else None,
+                              reference_solution=form.reference_solution.data if form.challenge_type.data == 'CODING' else None, # Always pass reference_solution for coding challenges
+                              solution_verified=form.solution_verified.data == 'true') # Convert 'true'/'false' string to boolean
         db.session.add(challenge)
         db.session.commit() # Commit to get challenge.id
 

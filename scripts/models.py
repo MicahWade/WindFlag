@@ -312,6 +312,7 @@ class Challenge(db.Model):
     test_case_input = db.Column(db.Text, nullable=True)
     starter_code = db.Column(db.Text, nullable=True) # New: Default code for coding challenges
     reference_solution = db.Column(db.Text, nullable=True)
+    solution_verified = db.Column(db.Boolean, nullable=False, default=False)
     
     flags = db.relationship('ChallengeFlag', backref='challenge', lazy=True, cascade="all, delete-orphan")
 
