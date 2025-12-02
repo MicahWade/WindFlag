@@ -145,47 +145,60 @@ These variables are typically used during development.
 3.  **Secure Your `.env` File**: Ensure that the `.env` file on your server has restricted file system permissions to prevent unauthorized access.
 4.  **Restart Application on Changes**: Most applications (including Flask) require a restart to pick up changes made to the `.env` file.
 
-## bwrap Sandboxing Configuration (Linux)
+## bwrap Sandboxing Configuration (Linux - Ubuntu 23.10+ / 24.04+)
 
-WindFlag uses `bwrap` (Bubblewrap) for secure code execution sandboxing. On some Linux distributions, particularly Ubuntu, `bwrap` may encounter a "Permission denied" error when "setting up uid map." This usually indicates that unprivileged user namespaces, which `bwrap` relies on, are disabled or restricted by default for security reasons.
+WindFlag uses `bwrap` (Bubblewrap) for secure code execution sandboxing. On Ubuntu 23.10, 24.04, and newer versions, `bwrap` may encounter a "Permission denied" error when "setting up uid map." This is due to stricter security measures implemented via **AppArmor**, which restricts unprivileged user namespace creation by default.
 
-To enable `bwrap` functionality for code challenges, you need to enable unprivileged user namespaces on your system.
+This section provides solutions to enable `bwrap` functionality.
 
-### Enabling Unprivileged User Namespaces
+### Temporary Workaround (For Testing & Quick Fix)
 
-**Warning:** Modifying kernel parameters can affect system security. Ensure your system is kept up-to-date.
+This method temporarily disables the AppArmor restriction on unprivileged user namespaces. It's useful for quickly testing if AppArmor is the cause, but it is **not recommended for permanent production use** as it reduces system security.
 
-1.  **Check Current Status (Optional):**
-    You can check if unprivileged user namespaces are currently enabled with:
-    ```bash
-    sysctl kernel.unprivileged_userns_clone
-    ```
-    A value of `0` means disabled, `1` means enabled.
+On the problematic PC, run the following command in a terminal:
+```bash
+sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+```
+This change will revert after a system reboot.
 
-2.  **Enable Temporarily (until next reboot):**
-    To enable them until the next system reboot, run:
-    ```bash
-    sudo sysctl -w kernel.unprivileged_userns_clone=1
-    ```
+### Permanent & Secure Solution (AppArmor Profile)
 
-3.  **Enable Permanently (persists across reboots):**
-    To make the change permanent, you need to edit your `/etc/sysctl.conf` file.
+The recommended long-term solution is to create a specific AppArmor profile for `/usr/bin/bwrap` that grants it the necessary permissions to create user namespaces.
 
-    a. Open the file with a text editor (e.g., `nano` or `vim`):
-    ```bash
-    sudo nano /etc/sysctl.conf
-    ```
+1.  **Understand the AppArmor Profile:**
+    A dedicated AppArmor profile (`config/apparmor/usr.bin.bwrap`) has been provided within this project. This profile explicitly allows `/usr/bin/bwrap` to perform operations required for user namespace creation, including `userns` permission and necessary capabilities (`sys_admin`, `setuid`, `setgid`, `setpcap`).
 
-    b. Add the following line to the end of the file. If `kernel.unprivileged_userns_clone` already exists in the file (possibly commented out), uncomment it and ensure its value is `1`.
-    ```
-    kernel.unprivileged_userns_clone=1
-    ```
+    *   **Important Note:** This profile confines the `bwrap` executable itself, allowing it to *create* the sandboxed environment. The actual code executed within `bwrap` is then isolated by `bwrap`'s own mechanisms (filesystem, network, process separation).
 
-    c. Save the file and exit the editor.
+2.  **Use the Management Script:**
+    A helper script, `scripts/manage_apparmor_bwrap.sh`, is provided to simplify the installation and management of this AppArmor profile.
 
-    d. Apply the changes immediately without rebooting:
-    ```bash
-    sudo sysctl -p
-    ```
+    a.  **Make the script executable:**
+        ```bash
+chmod +x scripts/manage_apparmor_bwrap.sh
+        ```
 
-After performing these steps, `bwrap` should be able to function correctly. You may need to log out and log back in, or reboot your system, for the changes to take full effect for your user session.
+    b.  **Install and enforce the AppArmor profile:**
+        ```bash
+sudo ./scripts/manage_apparmor_bwrap.sh install
+        ```
+        This command will:
+        *   Copy the `usr.bin.bwrap` profile to `/etc/apparmor.d/`.
+        *   Load the profile using `apparmor_parser -r`.
+        *   Enforce the profile using `aa-enforce`.
+
+    c.  **Verify the profile status (optional):**
+        ```bash
+sudo ./scripts/manage_apparmor_bwrap.sh status
+        ```
+        You can also check with `sudo aa-status`.
+
+    d.  **To remove the profile (if needed):**
+        ```bash
+sudo ./scripts/manage_apparmor_bwrap.sh remove
+        ```
+
+3.  **Reboot or Re-login:**
+    After installing and enforcing the AppArmor profile, it is highly recommended to **reboot the PC** or at least **log out and log back in** for the changes to take full effect.
+
+After following these steps, `bwrap` should be able to function correctly for code execution challenges in WindFlag on Ubuntu 23.10+ / 24.04+ systems.

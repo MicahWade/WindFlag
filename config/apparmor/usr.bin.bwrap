@@ -1,0 +1,54 @@
+# /etc/apparmor.d/usr.bin.bwrap
+# Profile to allow bwrap to create user namespaces on Ubuntu 23.10+ (and 24.04+)
+# This profile is specifically for the bwrap executable itself.
+
+abi <abi/4.0>,
+include <tunables/global>
+
+profile bwrap /usr/bin/bwrap flags=(unconfined) {
+  userns, # Allow user namespace creation - CRITICAL for Ubuntu 23.10/24.04+
+
+  # Deny network access by default, unless explicitly required
+  # This can be uncommented if bwrap processes need network access within the sandbox.
+  # If the sandboxed application needs network, it should be granted via bwrap arguments
+  # and potentially a separate AppArmor profile for the sandboxed application if it's not
+  # fully confined by bwrap's network namespace.
+  # network,
+
+  # Allow bwrap to access necessary files and capabilities to set up the sandbox
+  # The 'flags=(unconfined)' for the bwrap profile is a common approach as bwrap's purpose
+  # is to create a new, more confined environment.
+
+  # Basic file access for bwrap to function
+  /usr/bin/bwrap mr,
+  /usr/lib/x86_64-linux-gnu/bubblewrap/bwrap mr, # Common path for bwrap helper on Ubuntu
+
+  # Allow capabilities needed by bwrap to set up the sandbox
+  capability sys_admin, # Needed for various namespace operations, including user namespaces
+  capability setuid,   # Needed for user namespace uid mapping
+  capability setgid,   # Needed for user namespace gid mapping
+  capability setpcap,  # Needed for capability management within the namespace
+
+  # Allow access to /proc entries for namespace setup and management
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/{gid,uid}_map rw,
+  @{PROC}/sys/kernel/overflow{gid,uid} r, # For older kernels, though 24.04 is new
+
+  # Allow necessary access for /dev/pts and /dev/shm if used within sandbox
+  /dev/pts/ rwk,
+  /dev/shm/ rwk,
+
+  # Allow access to fuse/fusectl if bwrap uses it for certain operations (e.g. for FUSE mounts)
+  /dev/fuse rw,
+  @{PROC}/fs/fuse/connections r,
+
+  # Allow access to common system directories needed for basic environment setup
+  # This list might need to be refined based on what the sandboxed application requires
+  # from the host system. Bwrap typically binds these in.
+  @{PROC}/sys/kernel/osrelease r,
+  @{PROC}/sys/kernel/version r,
+
+  # Include site-specific additions (optional)
+  include if exists <local/usr.bin.bwrap>
+}
