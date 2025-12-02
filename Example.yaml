@@ -1,0 +1,107 @@
+# ==========================================
+# EXAMPLE 1 & 6: Categories
+# ==========================================
+categories:
+  # [Example 1] Hidden & Timed Category
+  - name: "Halloween Special"
+    description: "Spooky challenges that only appear on October 31st."
+    unlock_type: "TIMED"
+    unlock_date_time: "2025-10-31T00:00:00Z" 
+    is_hidden: true 
+
+  # [Example 6] Combined Unlock Criteria Category
+  - name: "The Final Boss"
+    description: "Only for the elite."
+    unlock_type: "COMBINED" 
+    prerequisite_percentage_value: 80 
+    prerequisite_challenge_names:
+      - "Gatekeeper Challenge"
+
+# ==========================================
+# ALL CHALLENGES
+# ==========================================
+challenges:
+  # [Example 1] Challenge for the Hidden Category
+  - name: "Ghost in the Shell"
+    description: "Find the hidden process."
+    points: 500
+    category: "Halloween Special"
+    flags:
+      - "flag{boo}"
+
+  # [Example 2] Logarithmic & Proactive Decay
+  - name: "Impossible Reverse Engineering"
+    description: "The hardest binary you will ever see."
+    points: 1000
+    category: "Reverse Engineering"
+    point_decay_type: "LOGARITHMIC"
+    point_decay_rate: 10
+    minimum_points: 100
+    proactive_decay: true
+    multi_flag_type: SINGLE
+    flags:
+      - "flag{math_is_hard_but_reversing_is_harder}"
+
+  # [Example 3] N-of-M Flags (Scavenger Hunt)
+  - name: "OSINT Scavenger Hunt"
+    description: |
+      We left 5 flags scattered across our social media profiles. 
+      You only need to find **3** of them to prove you are tracking us.
+    points: 200
+    category: "OSINT"
+    multi_flag_type: "N_OF_M"
+    multi_flag_threshold: 3
+    case_sensitive: false
+    flags:
+      - "flag{twitter_bio}"
+      - "flag{instagram_post}"
+      - "flag{linkedin_comment}"
+      - "flag{discord_status}"
+      - "flag{facebook_photo}"
+
+  # [Example 4] Coding Challenge (Automated Execution)
+  - name: "Palindrome Checker"
+    description: "Write a script that prints 'True' if the input is a palindrome, and 'False' otherwise."
+    points: 100
+    category: "Programming"
+    challenge_type: "CODING"
+    language: "python3"
+    test_case_input: "racecar"
+    expected_output: "True"
+    starter_code: |
+      def is_palindrome(s):
+          # Your code here
+          pass
+
+      if __name__ == "__main__":
+          user_input = input()
+          print(is_palindrome(user_input))
+
+  # [Example 5] Linear Progression & Tiered Hint Costs
+  - name: "Buffer Overflow Part 2"
+    description: "Now that you know the basics, exploit the heap."
+    points: 300
+    category: "Binary Exploitation"
+    prerequisites:
+      - "Buffer Overflow Part 1" # Note: Ensure 'Buffer Overflow Part 1' exists or this line will warn on import
+    hint_cost: 50
+    hints:
+      - title: "Vague Clue"
+        content: "Look at the malloc implementation."
+        cost: 10
+      - title: "Dead Giveaway"
+        content: "The vulnerability is a use-after-free in the login function."
+        cost: 100
+    flags:
+      - "flag{heap_management_is_tricky}"
+
+  # [Example 6] Multi-Stage 'ALL' Flags
+  - name: "Multi-Stage Payload"
+    description: "You need to submit the header flag, the body flag, and the footer flag."
+    points: 1000
+    category: "The Final Boss"
+    multi_flag_type: "ALL"
+    flags:
+      - "flag{header_part}"
+      - "flag{body_part}"
+      - "flag{footer_part}"
