@@ -36,3 +36,31 @@
     visibility: visible;
     opacity: 1;
 }
+
+/* CodeMirror Fullscreen Styles */
+.CodeMirror-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw !important; /* Use 100vw to ensure it covers the entire viewport width */
+    height: 100vh !important; /* Use 100vh to ensure it covers the entire viewport height */
+    z-index: 9999; /* High z-index to be on top of everything */
+    background-color: #1a202c; /* Ensure background matches dracula theme or is dark */
+    margin: 0 !important; /* Remove any external margins */
+    padding: 0 !important; /* Remove any external padding */
+}
+
+/* Ensure CodeMirror scrollable content fills the fullscreen wrapper */
+.CodeMirror-fullscreen .CodeMirror-scroll {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Ensure the editor wrapper itself is positioned relatively for the button */
+.CodeMirror-wrap {
+    position: relative;
+}
+
+.CodeMirror-fullscreen-button {
+    z-index: 10000; /* Ensure button is above the editor content */
+}
