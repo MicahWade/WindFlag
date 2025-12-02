@@ -80,7 +80,7 @@ These variables relate to user registration and authentication processes.
     *   **Example**: `PRESET_USER_COUNT=50`
 
 *   `WORDS_FILE_PATH` (string): The relative or absolute path to a text file containing a list of words. These words are used by the application for generating usernames when `USERNAME_WORD_COUNT` is active. Each word should be on a new line.
-    *   **Default**: `words.text` (located in the project root)
+    *   **Default**: `words.txt` (located in the project root)
     *   **Example**: `WORDS_FILE_PATH="data/custom_words.txt"`
 
 ## Programming Language Enablement
