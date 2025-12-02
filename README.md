@@ -98,6 +98,12 @@ If you prefer to set up manually or need to verify dependencies:
     sudo apt update
     sudo apt install bubblewrap
     ```
+    **Note for Ubuntu 23.10, 24.04, and newer:**
+    Due to stricter AppArmor policies, `bwrap` may encounter "Permission denied" errors related to user namespaces. You will need to configure AppArmor to allow `bwrap` to function correctly. Please refer to the **"bwrap Sandboxing Configuration (Linux - Ubuntu 23.10+ / 24.04+)" section in [ENV.md](docs/ENV.md)** for detailed instructions and a helper script.
+*   **Arch Linux:**
+    ```bash
+    sudo pacman -S bubblewrap
+    ```
 *   **Arch Linux:**
     ```bash
     sudo pacman -S bubblewrap
