@@ -248,13 +248,18 @@ def import_challenges_from_yaml(app, yaml_source, is_file=True):
             print(f"Error parsing YAML: {e}")
             return
 
-        if not data or 'challenges' not in data:
-            print("Error: YAML source must contain a 'challenges' key.")
+        challenges_list = []
+        if isinstance(data, list):
+            challenges_list = data
+        elif isinstance(data, dict) and 'challenges' in data:
+            challenges_list = data['challenges']
+        else:
+            print("Error: YAML source must contain a 'challenges' key or be a list of challenges.")
             return
 
         challenges_to_process_prerequisites = []
 
-        for challenge_data in data['challenges']:
+        for challenge_data in challenges_list:
             category_name = challenge_data.get('category', 'Uncategorized')
             category = Category.query.filter_by(name=category_name).first()
             if not category:
@@ -285,7 +290,13 @@ def import_challenges_from_yaml(app, yaml_source, is_file=True):
                 multi_flag_threshold=challenge_data.get('multi_flag_threshold'),
                 hint_cost=challenge_data.get('hint_cost', 0),
                 unlock_type='ALWAYS_UNLOCKED',
-                prerequisite_challenge_ids=[]
+                prerequisite_challenge_ids=[],
+                challenge_type=challenge_data.get('challenge_type', 'FLAG'),
+                language=challenge_data.get('language'),
+                starter_code=challenge_data.get('starter_code'),
+                expected_output=challenge_data.get('expected_output'),
+                test_case_input=challenge_data.get('test_case_input'),
+                setup_code=challenge_data.get('setup_code')
             )
             db.session.add(challenge)
             db.session.flush()
