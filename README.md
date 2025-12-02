@@ -297,6 +297,7 @@ CREATE USER windflag_user WITH PASSWORD 'your_strong_password';
 
 # Grant all privileges on the new database to the new user
 GRANT ALL PRIVILEGES ON DATABASE windflag_db TO windflag_user;
+GRANT CREATE ON SCHEMA public TO windflag_user;
 
 # Exit psql
 \q
