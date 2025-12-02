@@ -153,7 +153,7 @@ This section provides solutions to enable `bwrap` functionality.
 
 ### Temporary Workaround (For Testing & Quick Fix)
 
-This method temporarily disables the AppArmor restriction on unprivileged user namespaces. It's useful for quickly testing if AppArmor is the cause, but it is **not recommended for permanent production use** as it reduces system security.
+This method temporarily disables the AppArmor restriction on unprivileged user namespaces. It's useful for quickly testing if AppArmor is the cause, but this is strictly for testing and **MUST NOT be used in production environments** due to significant security risks.
 
 On the problematic PC, run the following command in a terminal:
 ```bash
