@@ -5,7 +5,7 @@
 abi <abi/4.0>,
 include <tunables/global>
 
-profile bwrap /usr/bin/bwrap flags=(unconfined) {
+profile bwrap /usr/bin/bwrap flags=(unconfined) { # CRITICAL: flags=(unconfined) allows bwrap to operate
   userns, # Allow user namespace creation - CRITICAL for Ubuntu 23.10/24.04+
 
   # Deny network access by default, unless explicitly required
