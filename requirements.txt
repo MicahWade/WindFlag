@@ -13,3 +13,4 @@ Flask-Limiter
 psycopg2-binary
 pytz
 flask_wtf
+email_validator
