@@ -277,7 +277,7 @@ class Challenge(db.Model):
     hint_cost = db.Column(db.Integer, nullable=False, default=0)
     case_sensitive = db.Column(db.Boolean, nullable=False, default=True)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
-    submissions = db.relationship('Submission', back_populates='challenge_rel', lazy=True, primaryjoin="Challenge.id == Submission.challenge_id")
+    submissions = db.relationship('Submission', back_populates='challenge_rel', lazy=True, primaryjoin="Challenge.id == Submission.challenge_id", cascade="all, delete-orphan")
     multi_flag_type = db.Column(db.String(10), nullable=False, default='SINGLE') # e.g., 'SINGLE', 'ANY', 'ALL', 'N_OF_M'
     multi_flag_threshold = db.Column(db.Integer, nullable=True) # For 'N_of_M' type, stores N
     point_decay_type = db.Column(db.String(20), nullable=False, default='STATIC') # STATIC, LINEAR, LOGARITHMIC
@@ -686,7 +686,7 @@ class FlagAttempt(db.Model):
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
 
     user = db.relationship('User', backref='flag_attempts')
-    challenge = db.relationship('Challenge', backref='flag_attempts_for_challenge')
+    challenge = db.relationship('Challenge', backref=db.backref('flag_attempts_for_challenge', cascade="all, delete-orphan"))
 
     def __repr__(self):
         return f"FlagAttempt(User: {self.user_id}, Challenge: {self.challenge_id}, Correct: {self.is_correct})"
