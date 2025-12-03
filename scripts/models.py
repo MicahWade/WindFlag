@@ -515,7 +515,7 @@ class Challenge(db.Model):
         return self.computed_blue_stripe
 
     # New method to calculate all stripe statuses
-    def _calculate_stripe_status(self):
+    def _calculate_stripe_status(self, eligible_users_cache, user_completed_challenges_cache):
         """
         Calculates all stripe statuses based on current challenge and global state.
         This method is for internal use by `update_stripe_status`.
@@ -523,7 +523,7 @@ class Challenge(db.Model):
         now = datetime.now(UTC)
 
         # Calculate unlocked percentage once
-        unlocked_percentage = self.get_unlocked_percentage_for_eligible_users()
+        unlocked_percentage = self.get_unlocked_percentage_for_eligible_users(eligible_users_cache, user_completed_challenges_cache)
 
         # RED STRIPE Logic
         red = self.is_hidden or (self.category and self.category.is_hidden)
@@ -559,7 +559,17 @@ class Challenge(db.Model):
         Recalculates and updates the stored stripe statuses for this challenge.
         This method should be called when challenge properties or user submissions change.
         """
-        red, orange, yellow, blue = self._calculate_stripe_status()
+        # Prepare caches needed for stripe calculation
+        # Fetch eligible users (non-admin, non-hidden) once
+        eligible_users_cache = User.query.filter_by(is_admin=False, hidden=False).all()
+
+        # Fetch all submissions by all users and build a cache: {user_id: {challenge_id, ...}}
+        all_submissions = Submission.query.with_entities(Submission.user_id, Submission.challenge_id).all()
+        user_completed_challenges_cache = {}
+        for user_id, challenge_id_val in all_submissions:
+            user_completed_challenges_cache.setdefault(user_id, set()).add(challenge_id_val)
+
+        red, orange, yellow, blue = self._calculate_stripe_status(eligible_users_cache, user_completed_challenges_cache)
 
         self.computed_red_stripe = red
         self.computed_orange_stripe = orange
