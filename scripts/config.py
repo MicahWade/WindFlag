@@ -47,10 +47,10 @@ class Config:
     ENABLE_DART = os.environ.get('ENABLE_DART', 'True').lower() == 'true'
 
     # Rate Limiting Configuration
-    RATELIMIT_DEFAULT = os.environ.get('RATELIMIT_DEFAULT', '200 per day, 50 per hour')
-    RATELIMIT_LOGIN = os.environ.get('RATELIMIT_LOGIN', '5 per minute')
-    RATELIMIT_REGISTER = os.environ.get('RATELIMIT_REGISTER', '5 per hour')
-    RATELIMIT_SUBMIT_FLAG = os.environ.get('RATELIMIT_SUBMIT_FLAG', '10 per minute')
+    RATELIMIT_DEFAULT = os.environ.get('RATELIMIT_DEFAULT', '1000 per day, 500 per hour')
+    RATELIMIT_LOGIN = os.environ.get('RATELIMIT_LOGIN', '50 per minute')
+    RATELIMIT_REGISTER = os.environ.get('RATELIMIT_REGISTER', '50 per hour')
+    RATELIMIT_SUBMIT_FLAG = os.environ.get('RATELIMIT_SUBMIT_FLAG', '100 per minute')
 
     UPLOAD_FOLDER = os.path.join(basedir, 'instance', 'uploads')
 
