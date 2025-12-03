@@ -95,6 +95,16 @@ def create_app(config_class=Config):
         strategy="moving-window"
     )
 
+    @app.errorhandler(429)
+    def ratelimit_handler(e):
+        return jsonify({'message': f"Ratelimit exceeded: {e.description}"}), 429
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        # Log the full exception for debugging server-side
+        current_app.logger.exception(f"Internal Server Error: {e}")
+        return jsonify({'message': 'Internal Server Error', 'details': str(e)}), 500
+
     # Note: Flask-RESTX Api is initialized within scripts/api_routes.py
     # and its blueprint (api_bp) is registered here.
 
