@@ -658,8 +658,8 @@ class FlagSubmission(db.Model):
     # Modified: Use back_populates for clarity and to resolve SAWarning
     user_rel = db.relationship('User', back_populates='flag_submissions')
     # Modified: Use distinct backref names to avoid conflicts
-    challenge = db.relationship('Challenge', backref='flag_submissions_for_challenge', foreign_keys=[challenge_id])
-    challenge_flag = db.relationship('ChallengeFlag', backref='flag_submissions_for_flag', foreign_keys=[challenge_flag_id])
+    challenge = db.relationship('Challenge', backref=db.backref('flag_submissions_for_challenge', cascade="all, delete-orphan"), foreign_keys=[challenge_id])
+    challenge_flag = db.relationship('ChallengeFlag', backref=db.backref('flag_submissions_for_flag', cascade="all, delete-orphan"), foreign_keys=[challenge_flag_id])
 
     def __repr__(self):
         return f"FlagSubmission(User: {self.user_id}, Challenge: {self.challenge_id}, Flag: {self.challenge_flag_id})"
