@@ -412,8 +412,14 @@ def create_app(config_class=Config):
         if form.validate_on_submit():
             challenge = Challenge.query.options(joinedload(Challenge.flags)).get_or_404(challenge_id)
 
+            # Create a cache of completed challenge IDs for the current user
+            # This is required by the updated is_unlocked_for_user method
+            user_completed_challenges_cache = {
+                current_user.id: {sub.challenge_id for sub in current_user.submissions}
+            }
+
             # Check if the challenge is unlocked for the current user
-            if not challenge.is_unlocked_for_user(current_user):
+            if not challenge.is_unlocked_for_user(current_user, user_completed_challenges_cache):
                 return jsonify({'success': False, 'message': 'This challenge is currently locked.'})
 
             # 1. Check if challenge is already fully solved
