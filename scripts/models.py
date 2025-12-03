@@ -770,7 +770,7 @@ class Hint(db.Model):
     title = db.Column(db.String(100), nullable=False, default="Hint")
     content = db.Column(db.Text, nullable=False)
     cost = db.Column(db.Integer, nullable=False, default=0)
-    challenge = db.relationship('Challenge', backref='hints', lazy=True)
+    challenge = db.relationship('Challenge', backref=db.backref('hints', lazy=True, cascade="all, delete-orphan"))
 
     def __repr__(self):
         return f"Hint(Challenge ID: {self.challenge_id}, Cost: {self.cost})"
