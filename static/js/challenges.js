@@ -168,6 +168,35 @@ document.addEventListener('DOMContentLoaded', function() {
                                     modalFlagProgress.classList.remove('hidden');
                                 }
                             }
+
+                            // --- Add Switchboard Button Logic Here ---
+                            if (typeof window.enableSwitchboard !== 'undefined' && window.enableSwitchboard) {
+                                let switchboardButton = document.getElementById('switchboardButton');
+                                if (!switchboardButton) {
+                                    switchboardButton = document.createElement('a');
+                                    switchboardButton.id = 'switchboardButton';
+                                    switchboardButton.textContent = 'Go to Challenge';
+                                    switchboardButton.target = '_blank'; // Open in new tab
+                                    switchboardButton.className = 'theme-modal-button-secondary font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm shadow-md ml-2';
+                                    submitButton.parentNode.insertBefore(switchboardButton, submitButton.nextSibling);
+                                }
+
+                                // Ensure category_name exists in data. If not, default to an empty string to avoid errors.
+                                const categoryName = data.category_name || '';
+                                const challengeName = data.name || '';
+
+                                const categoryNameFormatted = categoryName.replace(/ /g, '_');
+                                const challengeNameFormatted = challengeName.replace(/ /g, '_');
+                                switchboardButton.href = `${window.switchboardBaseUrl}/${categoryNameFormatted}/${challengeNameFormatted}`;
+                                switchboardButton.classList.remove('hidden'); // Ensure it's visible if enabled
+                            } else {
+                                // If switchboard is not enabled, hide the button if it exists
+                                const switchboardButton = document.getElementById('switchboardButton');
+                                if (switchboardButton) {
+                                    switchboardButton.classList.add('hidden');
+                                }
+                            }
+                            // --- End Switchboard Button Logic ---
                         }
     
                         if (data.hints && data.hints.length > 0) {

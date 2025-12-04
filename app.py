@@ -124,7 +124,8 @@ def create_app(config_class=Config):
             A dictionary containing global configuration variables.
         """
         return dict(disable_signup=app.config['DISABLE_SIGNUP'],
-                    active_theme=get_active_theme())
+                    active_theme=get_active_theme(),
+                    enable_switchboard=app.config['ENABLE_SWITCHBOARD'])
 
     @app.route('/')
     @app.route('/home')
@@ -708,7 +709,7 @@ def create_app(config_class=Config):
             challenge_id (int): The ID of the challenge.
         """
         try:
-            challenge = Challenge.query.options(joinedload(Challenge.hints)).get_or_404(challenge_id)
+            challenge = Challenge.query.options(joinedload(Challenge.hints), joinedload(Challenge.category)).get_or_404(challenge_id)
             
             # Fetch all submissions by all users and build a cache: {user_id: {challenge_id, ...}}
             all_submissions = Submission.query.with_entities(Submission.user_id, Submission.challenge_id).all()
@@ -742,6 +743,7 @@ def create_app(config_class=Config):
                 'id': challenge.id,
                 'name': challenge.name,
                 'description': challenge.description,
+                'category_name': challenge.category.name, # Added category name
                 'points': challenge.calculated_points, # Use the calculated_points property
                 'is_completed': is_completed,
                 'multi_flag_type': challenge.multi_flag_type,

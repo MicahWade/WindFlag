@@ -46,6 +46,9 @@ class Config:
     ENABLE_BASH = os.environ.get('ENABLE_BASH', 'True').lower() == 'true'
     ENABLE_DART = os.environ.get('ENABLE_DART', 'True').lower() == 'true'
 
+    # Switchboard Integration
+    ENABLE_SWITCHBOARD = os.environ.get('ENABLE_SWITCHBOARD', 'False').lower() == 'true'
+
     # Rate Limiting Configuration
     RATELIMIT_DEFAULT = os.environ.get('RATELIMIT_DEFAULT', '1000 per day, 500 per hour')
     RATELIMIT_LOGIN = os.environ.get('RATELIMIT_LOGIN', '50 per minute')

@@ -94,6 +94,12 @@
     <script src="{{ url_for('static', filename='codemirror/fullscreen.min.js') }}"></script> {# CodeMirror Fullscreen Addon JS #}
     <script src="{{ url_for('static', filename='js/challenges.js') }}"></script>
     <script>
+        const enableSwitchboard = {{ enable_switchboard | tojson }};
+        // Construct switchboard base URL: take current host, replace port with 7878
+        const currentUrl = new URL("{{ request.url_root }}");
+        const switchboardBaseUrl = `${currentUrl.protocol}//${currentUrl.hostname}:7878`;
+    </script>
+    <script>
         // Add a Jinja2 filter for datetime formatting
         function datetimeformat(value) {
             if (!value) return '';
