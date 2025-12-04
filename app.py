@@ -9,6 +9,7 @@ and admin user creation.
 """
 import os # Moved to top
 from dotenv import load_dotenv # Moved to top
+import json # Ensure json is imported
 # Load environment variables from .env file in the project root
 load_dotenv(os.path.join(os.path.abspath(os.path.dirname(__file__)), '.env')) # Moved to top
 
@@ -709,15 +710,17 @@ def create_app(config_class=Config):
         Args:
             challenge_id (int): The ID of the challenge.
         """
-        print(f"DEBUG (app.py): Current Working Directory: {os.getcwd()}") # Added debug print
         try:
             challenge = Challenge.query.options(joinedload(Challenge.hints), joinedload(Challenge.category)).get_or_404(challenge_id)
             
-            print(f"DEBUG (app.py): Retrieved Challenge ID: {challenge.id}, Name: {challenge.name}") # Added debug print
+            print(f"DEBUG (app.py): Processing Challenge ID: {challenge.id}, Name: {challenge.name}")
+            
+            category_name_for_response = None
             if challenge.category:
-                print(f"DEBUG (app.py): Challenge Category: {challenge.category.name}")
+                category_name_for_response = challenge.category.name
+                print(f"DEBUG (app.py): Found Challenge Category: {category_name_for_response}")
             else:
-                print(f"DEBUG (app.py): Challenge Category is None for Challenge ID: {challenge.id}")
+                print(f"DEBUG (app.py): Challenge Category is None for Challenge ID: {challenge.id}. Check database relations.")
 
             # Fetch all submissions by all users and build a cache: {user_id: {challenge_id, ...}}
             all_submissions = Submission.query.with_entities(Submission.user_id, Submission.challenge_id).all()
@@ -751,7 +754,7 @@ def create_app(config_class=Config):
                 'id': challenge.id,
                 'name': challenge.name,
                 'description': challenge.description,
-                'category_name': challenge.category.name if challenge.category else None, # Use None if category is missing
+                'category_name': category_name_for_response, # Use the derived variable
                 'points': challenge.calculated_points, # Use the calculated_points property
                 'is_completed': is_completed,
                 'multi_flag_type': challenge.multi_flag_type,
@@ -762,10 +765,10 @@ def create_app(config_class=Config):
                 'language': challenge.language, # New: Pass challenge language for CodeMirror
                 'starter_code': challenge.starter_code # New: Pass starter code for CodeMirror
             }
-            print(f"DEBUG (app.py): JSON Response Data: {response_data}") # Added debug print
+            print(f"DEBUG (app.py): JSON Response Data (sent to frontend): {json.dumps(response_data, indent=2)}")
             return jsonify(response_data)
         except Exception as e:
-            current_app.logger.error(f"Error in get_challenge_details for challenge_id {challenge_id}: {e}")
+            current_app.logger.error(f"Error in get_challenge_details for challenge_id {challenge_id}: {e}", exc_info=True) # Log full traceback
             return jsonify({'success': False, 'message': f'Internal server error: {e}'}), 500
     @app.route('/scoreboard')
     @login_required
