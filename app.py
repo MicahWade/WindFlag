@@ -709,10 +709,16 @@ def create_app(config_class=Config):
         Args:
             challenge_id (int): The ID of the challenge.
         """
+        print(f"DEBUG (app.py): Current Working Directory: {os.getcwd()}") # Added debug print
         try:
             challenge = Challenge.query.options(joinedload(Challenge.hints), joinedload(Challenge.category)).get_or_404(challenge_id)
-            print(f"DEBUG: Challenge ID {challenge.id}, Category Name: {challenge.category.name if challenge.category else 'None'}") # Debug log
             
+            print(f"DEBUG (app.py): Retrieved Challenge ID: {challenge.id}, Name: {challenge.name}") # Added debug print
+            if challenge.category:
+                print(f"DEBUG (app.py): Challenge Category: {challenge.category.name}")
+            else:
+                print(f"DEBUG (app.py): Challenge Category is None for Challenge ID: {challenge.id}")
+
             # Fetch all submissions by all users and build a cache: {user_id: {challenge_id, ...}}
             all_submissions = Submission.query.with_entities(Submission.user_id, Submission.challenge_id).all()
             user_completed_challenges_cache = {}
@@ -741,11 +747,11 @@ def create_app(config_class=Config):
             submitted_flags_count = FlagSubmission.query.filter_by(user_id=current_user.id, challenge_id=challenge.id).count()
             total_flags = len(challenge.flags)
 
-            return jsonify({
+            response_data = {
                 'id': challenge.id,
                 'name': challenge.name,
                 'description': challenge.description,
-                'category_name': challenge.category.name, # Added category name
+                'category_name': challenge.category.name if challenge.category else None, # Use None if category is missing
                 'points': challenge.calculated_points, # Use the calculated_points property
                 'is_completed': is_completed,
                 'multi_flag_type': challenge.multi_flag_type,
@@ -755,7 +761,9 @@ def create_app(config_class=Config):
                 'current_user_score': current_user.score, # Pass current user's score for client-side checks
                 'language': challenge.language, # New: Pass challenge language for CodeMirror
                 'starter_code': challenge.starter_code # New: Pass starter code for CodeMirror
-            })
+            }
+            print(f"DEBUG (app.py): JSON Response Data: {response_data}") # Added debug print
+            return jsonify(response_data)
         except Exception as e:
             current_app.logger.error(f"Error in get_challenge_details for challenge_id {challenge_id}: {e}")
             return jsonify({'success': False, 'message': f'Internal server error: {e}'}), 500
