@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let codeMirrorEditor = null; // Initialize CodeMirror editor here
 
     function initChallengeCards() {
-        console.log('initChallengeCards called'); // Debug log
         const challengeCards = document.querySelectorAll('.challenge-card');
         challengeCards.forEach(card => {
             card.addEventListener('click', function() {
@@ -40,7 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetch(`/api/challenge_details/${currentChallengeId}`)
                     .then(response => response.json())
                     .then(data => {
-                        console.log('API response data for challenge details:', data); // Debug log
                         if (data.success === false) {
                             showFlashMessage(data.message, 'danger');
                             challengeModal.classList.add('opacity-0', 'pointer-events-none');
@@ -172,9 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
 
                             // --- Add Switchboard Button Logic Here ---
-                            console.log('Checking window.enableSwitchboard:', window.enableSwitchboard); // Debug log
                             if (typeof window.enableSwitchboard !== 'undefined' && window.enableSwitchboard) {
-                                console.log('window.enableSwitchboard is true. Attempting to create button.'); // Debug log
                                 let switchboardButton = document.getElementById('switchboardButton');
                                 if (!switchboardButton) {
                                     switchboardButton = document.createElement('a');
@@ -183,7 +179,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                     switchboardButton.target = '_blank'; // Open in new tab
                                     switchboardButton.className = 'theme-modal-button-secondary font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm shadow-md ml-2';
                                     submitButton.parentNode.insertBefore(switchboardButton, submitButton.nextSibling);
-                                    console.log('Switchboard button created and inserted.'); // Debug log
                                 }
 
                                 // Directly use data.category_name from the API response, which is assumed to be
@@ -191,23 +186,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const categoryName = data.category_name || '';
                                 const challengeName = data.name || '';
 
-                                console.log('Raw Category Name (from API):', categoryName, 'Raw Challenge Name:', challengeName); // Debug log
-
                                 const categoryNameFormatted = categoryName.replace(/ /g, '_');
                                 const challengeNameFormatted = challengeName.replace(/ /g, '_');
-                                console.log('Formatted Category Name:', categoryNameFormatted, 'Formatted Challenge Name:', challengeNameFormatted); // Debug log
 
                                 switchboardButton.href = `${window.switchboardBaseUrl}/${categoryNameFormatted}/${challengeNameFormatted}`;
-                                console.log('Switchboard button href set to:', switchboardButton.href); // Debug log
                                 switchboardButton.classList.remove('hidden'); // Ensure it's visible if enabled
-                                console.log('Switchboard button visibility set to visible.'); // Debug log
                             } else {
-                                console.log('window.enableSwitchboard is false or undefined. Hiding button if exists.'); // Debug log
                                 // If switchboard is not enabled, hide the button if it exists
                                 const switchboardButton = document.getElementById('switchboardButton');
                                 if (switchboardButton) {
                                     switchboardButton.classList.add('hidden');
-                                    console.log('Existing Switchboard button hidden.'); // Debug log
                                 }
                             }
                             // --- End Switchboard Button Logic ---
