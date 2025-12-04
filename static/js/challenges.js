@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
             card.addEventListener('click', function() {
                 currentChallengeId = this.dataset.id;
                 
+                fetch(`/api/challenge_details/${currentChallengeId}`)
                     .then(response => response.json())
                     .then(data => {
                         console.log('DEBUG: Challenge Details API response data:', data);
