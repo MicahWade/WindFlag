@@ -172,7 +172,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
 
                             // --- Add Switchboard Button Logic Here ---
+                            console.log('Checking window.enableSwitchboard:', window.enableSwitchboard); // Debug log
                             if (typeof window.enableSwitchboard !== 'undefined' && window.enableSwitchboard) {
+                                console.log('window.enableSwitchboard is true. Attempting to create button.'); // Debug log
                                 let switchboardButton = document.getElementById('switchboardButton');
                                 if (!switchboardButton) {
                                     switchboardButton = document.createElement('a');
@@ -181,21 +183,31 @@ document.addEventListener('DOMContentLoaded', function() {
                                     switchboardButton.target = '_blank'; // Open in new tab
                                     switchboardButton.className = 'theme-modal-button-secondary font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm shadow-md ml-2';
                                     submitButton.parentNode.insertBefore(switchboardButton, submitButton.nextSibling);
+                                    console.log('Switchboard button created and inserted.'); // Debug log
                                 }
 
-                                // Ensure category_name exists in data. If not, default to an empty string to avoid errors.
+                                // Directly use data.category_name from the API response, which is assumed to be
+                                // in a human-readable, correctly cased format (e.g., "Linux Basics").
                                 const categoryName = data.category_name || '';
                                 const challengeName = data.name || '';
 
+                                console.log('Raw Category Name (from API):', categoryName, 'Raw Challenge Name:', challengeName); // Debug log
+
                                 const categoryNameFormatted = categoryName.replace(/ /g, '_');
                                 const challengeNameFormatted = challengeName.replace(/ /g, '_');
+                                console.log('Formatted Category Name:', categoryNameFormatted, 'Formatted Challenge Name:', challengeNameFormatted); // Debug log
+
                                 switchboardButton.href = `${window.switchboardBaseUrl}/${categoryNameFormatted}/${challengeNameFormatted}`;
+                                console.log('Switchboard button href set to:', switchboardButton.href); // Debug log
                                 switchboardButton.classList.remove('hidden'); // Ensure it's visible if enabled
+                                console.log('Switchboard button visibility set to visible.'); // Debug log
                             } else {
+                                console.log('window.enableSwitchboard is false or undefined. Hiding button if exists.'); // Debug log
                                 // If switchboard is not enabled, hide the button if it exists
                                 const switchboardButton = document.getElementById('switchboardButton');
                                 if (switchboardButton) {
                                     switchboardButton.classList.add('hidden');
+                                    console.log('Existing Switchboard button hidden.'); // Debug log
                                 }
                             }
                             // --- End Switchboard Button Logic ---
@@ -379,6 +391,20 @@ document.addEventListener('DOMContentLoaded', function() {
             challengeContainer.innerHTML = html;
             initChallengeCards();
             initAccordion();
+
+            // NEW: Check for challenge_id in URL query parameter and open modal
+            const urlParams = new URLSearchParams(window.location.search);
+            const challengeIdFromUrl = urlParams.get('challenge_id');
+            if (challengeIdFromUrl) {
+                // Find the challenge card and simulate a click to open the modal
+                // Use a slight delay to ensure all event listeners are fully active
+                setTimeout(() => {
+                    const targetCard = document.querySelector(`.challenge-card[data-id="${challengeIdFromUrl}"]`);
+                    if (targetCard) {
+                        targetCard.click(); // This will trigger the existing modal opening logic
+                    }
+                }, 100); // Small delay
+            }
         })
         .catch(error => {
             console.error('There has been a problem with your fetch operation:', error);

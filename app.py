@@ -397,6 +397,34 @@ def create_app(config_class=Config):
         accordion_display_style = get_setting('ACCORDION_DISPLAY_STYLE', 'boxes')
         return render_template('challenges.html', title='Challenges', flag_form=flag_form, current_user_score=current_user.score, accordion_display_style=accordion_display_style)
 
+    @app.route('/<category_name>/<challenge_name>')
+    @login_required
+    def view_challenge_by_name(category_name, challenge_name):
+        """
+        Redirects to the challenges page with a specific challenge modal opened,
+        identified by category name and challenge name from the URL.
+        """
+        # Convert URL-friendly names back to database format
+        # e.g., "Linux_Basics" -> "Linux Basics"
+        # e.g., "CD_to_Cat_the_Flag" -> "CD to Cat the Flag"
+        formatted_category_name = category_name.replace('_', ' ')
+        formatted_challenge_name = challenge_name.replace('_', ' ')
+
+        category = Category.query.filter_by(name=formatted_category_name).first()
+        if not category:
+            flash(f"Category '{formatted_category_name}' not found.", 'danger')
+            return redirect(url_for('challenges'))
+
+        challenge = Challenge.query.filter_by(name=formatted_challenge_name, category_id=category.id).first()
+        if not challenge:
+            flash(f"Challenge '{formatted_challenge_name}' not found in category '{formatted_category_name}'.", 'danger')
+            return redirect(url_for('challenges'))
+        
+        # Redirect to the challenges page with the challenge_id as a query parameter
+        # The frontend JS (challenges.js) will pick this up and open the modal
+        return redirect(url_for('challenges', challenge_id=challenge.id))
+
+
     # The calculate_points function is now integrated into the Challenge model as a property.
     # This function is no longer needed here.
     # def calculate_points(challenge):
