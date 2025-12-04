@@ -711,6 +711,7 @@ def create_app(config_class=Config):
         """
         try:
             challenge = Challenge.query.options(joinedload(Challenge.hints), joinedload(Challenge.category)).get_or_404(challenge_id)
+            print(f"DEBUG: Challenge ID {challenge.id}, Category Name: {challenge.category.name if challenge.category else 'None'}") # Debug log
             
             # Fetch all submissions by all users and build a cache: {user_id: {challenge_id, ...}}
             all_submissions = Submission.query.with_entities(Submission.user_id, Submission.challenge_id).all()
