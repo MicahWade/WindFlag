@@ -62,6 +62,8 @@ def create_app(config_class=Config):
     load_dotenv(os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), '.env'))
     app.config.from_object(config_class)
     app.config['APP_NAME'] = os.getenv('APP_NAME', 'WindFlag')
+    print(f"DEBUG: ENABLE_SWITCHBOARD is set to: {app.config.get('ENABLE_SWITCHBOARD')}")
+    
     
     # Initialize extensions with the app instance *before* entering app context
     # if those extensions are used within that context.
