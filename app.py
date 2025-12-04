@@ -14,10 +14,6 @@ import json # Ensure json is imported
 # Load environment variables from .env file in the project root
 load_dotenv(os.path.join(os.path.abspath(os.path.dirname(__file__)), '.env')) # Moved to top
 
-# Configure logging to a file
-logging.basicConfig(filename='app.log', level=logging.INFO,
-                    format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
-
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, current_app, session, make_response
 from flask_login import login_user, current_user, logout_user, login_required
 from flask_limiter import Limiter
@@ -64,6 +60,13 @@ def create_app(config_class=Config):
         A Flask application instance.
     """
     app = Flask(__name__)
+    # Configure app.logger to write to a file
+    file_handler = logging.FileHandler('app.log')
+    file_handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
+    file_handler.setFormatter(formatter)
+    app.logger.addHandler(file_handler)
+    app.logger.setLevel(logging.INFO) # Ensure Flask's logger is set to INFO level
     # Load environment variables from .env file in the project root
     load_dotenv(os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), '.env'))
     app.config.from_object(config_class)
