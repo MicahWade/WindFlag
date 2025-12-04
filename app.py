@@ -61,7 +61,7 @@ def create_app(config_class=Config):
     """
     app = Flask(__name__)
     # Configure app.logger to write to a file
-    file_handler = logging.FileHandler('app.log')
+    file_handler = logging.FileHandler('/tmp/app.log')
     file_handler.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
     file_handler.setFormatter(formatter)
