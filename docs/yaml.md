@@ -2,6 +2,8 @@
 
 This document describes the YAML format for defining challenges and how to import them into the WindFlag CTF platform.
 
+**Tip:** For practical examples and "recipes" of common challenge types, check out the [Challenge Import Cookbook](cookbook_import.md).
+
 ## Category YAML File Format
 
 The YAML file can optionally contain a top-level key `categories`, which is a list of category objects. If a category is not defined here but is referenced by a challenge, it will be created with default `NONE` unlock type.
