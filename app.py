@@ -8,10 +8,15 @@ and scoreboard display. It also includes utility functions for data export/impor
 and admin user creation.
 """
 import os # Moved to top
+import logging
 from dotenv import load_dotenv # Moved to top
 import json # Ensure json is imported
 # Load environment variables from .env file in the project root
 load_dotenv(os.path.join(os.path.abspath(os.path.dirname(__file__)), '.env')) # Moved to top
+
+# Configure logging to a file
+logging.basicConfig(filename='app.log', level=logging.INFO,
+                    format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
 
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, current_app, session, make_response
 from flask_login import login_user, current_user, logout_user, login_required
@@ -794,9 +799,8 @@ def create_app(config_class=Config):
                 'starter_code': challenge.starter_code # New: Pass starter code for CodeMirror
             }
             print(f"DEBUG (app.py): JSON Response Data (sent to frontend): {json.dumps(response_data, indent=2)}")
-            # Temporarily flash the category name for debugging
-            flash(f"DEBUG: Category Name from API: {category_name_for_response}", "info")
-            print(f"DEBUG (app.py): Final JSON Response Data for frontend: {json.dumps(response_data, indent=2)}") # Keeping this in case journalctl behavior changes
+            current_app.logger.info(f"Final JSON Response Data for frontend: {json.dumps(response_data, indent=2)}")
+            
             return jsonify(response_data)
         except Exception as e:
             current_app.logger.error(f"Error in get_challenge_details for challenge_id {challenge_id}: {e}", exc_info=True) # Log full traceback
