@@ -743,12 +743,12 @@ def create_app(config_class=Config):
             
             print(f"DEBUG (app.py): Processing Challenge ID: {challenge.id}, Name: {challenge.name}")
             
-            category_name_for_response = None
+            category_name_for_response = "Uncategorized" # Default value
             if challenge.category:
                 category_name_for_response = challenge.category.name
                 print(f"DEBUG (app.py): Found Challenge Category: {category_name_for_response}")
             else:
-                print(f"DEBUG (app.py): Challenge Category is None for Challenge ID: {challenge.id}. Check database relations.")
+                print(f"DEBUG (app.py): Challenge ID {challenge.id} has no associated category. Using default 'Uncategorized'.")
 
             # Fetch all submissions by all users and build a cache: {user_id: {challenge_id, ...}}
             all_submissions = Submission.query.with_entities(Submission.user_id, Submission.challenge_id).all()
