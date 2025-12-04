@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetch(`/api/challenge_details/${currentChallengeId}`)
                     .then(response => response.json())
                     .then(data => {
+                        console.log('API response data for challenge details:', data); // Debug log
                         if (data.success === false) {
                             showFlashMessage(data.message, 'danger');
                             challengeModal.classList.add('opacity-0', 'pointer-events-none');
@@ -186,10 +187,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const categoryName = data.category_name || '';
                                 const challengeName = data.name || '';
 
+                                console.log('Raw Category Name (from API):', categoryName, 'Raw Challenge Name:', challengeName); // Debug log
+
                                 const categoryNameFormatted = categoryName.replace(/ /g, '_');
                                 const challengeNameFormatted = challengeName.replace(/ /g, '_');
+                                console.log('Formatted Category Name:', categoryNameFormatted, 'Formatted Challenge Name:', challengeNameFormatted); // Debug log
 
                                 switchboardButton.href = `${window.switchboardBaseUrl}/${categoryNameFormatted}/${challengeNameFormatted}`;
+                                console.log('Switchboard button href set to:', switchboardButton.href); // Debug log
                                 switchboardButton.classList.remove('hidden'); // Ensure it's visible if enabled
                             } else {
                                 // If switchboard is not enabled, hide the button if it exists
