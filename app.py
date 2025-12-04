@@ -791,6 +791,7 @@ def create_app(config_class=Config):
                 'name': challenge.name,
                 'description': challenge.description,
                 'category_name': category_name_for_response, # Use the derived variable
+                '_debug_category_name': category_name_for_response, # Temporary debug key
                 'points': challenge.calculated_points, # Use the calculated_points property
                 'is_completed': is_completed,
                 'multi_flag_type': challenge.multi_flag_type,
