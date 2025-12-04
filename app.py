@@ -60,13 +60,6 @@ def create_app(config_class=Config):
         A Flask application instance.
     """
     app = Flask(__name__)
-    # Configure app.logger to write to a file
-    file_handler = logging.FileHandler('/tmp/app.log')
-    file_handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
-    file_handler.setFormatter(formatter)
-    app.logger.addHandler(file_handler)
-    app.logger.setLevel(logging.INFO) # Ensure Flask's logger is set to INFO level
     # Load environment variables from .env file in the project root
     load_dotenv(os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), '.env'))
     app.config.from_object(config_class)
@@ -749,16 +742,9 @@ def create_app(config_class=Config):
         try:
             challenge = Challenge.query.options(joinedload(Challenge.hints), joinedload(Challenge.category)).get_or_404(challenge_id)
             
-            current_app.logger.info(f"DEBUG (app.py): Processing Challenge ID: {challenge.id}, Name: {challenge.name}")
-            
             category_name_for_response = "Uncategorized" # Default value
             if challenge.category:
                 category_name_for_response = challenge.category.name
-                current_app.logger.info(f"DEBUG (app.py): Found Challenge Category: {category_name_for_response}")
-            else:
-                current_app.logger.info(f"DEBUG (app.py): Challenge ID {challenge.id} has no associated category. Using default 'Uncategorized'.")
-            
-            current_app.logger.info(f"DEBUG (app.py): category_name_for_response is set to: {category_name_for_response}")
 
             # Fetch all submissions by all users and build a cache: {user_id: {challenge_id, ...}}
             all_submissions = Submission.query.with_entities(Submission.user_id, Submission.challenge_id).all()
@@ -791,7 +777,7 @@ def create_app(config_class=Config):
             response_data = {
                 'id': challenge.id,
                 'name': challenge.name,
-                'description': challenge.description,
+                'description': f"DEBUG CATEGORY: {category_name_for_response} -- Original Description: {challenge.description}",
                 'category_name': category_name_for_response, # Use the derived variable
                 'points': challenge.calculated_points, # Use the calculated_points property
                 'is_completed': is_completed,
