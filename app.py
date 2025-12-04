@@ -794,6 +794,7 @@ def create_app(config_class=Config):
                 'starter_code': challenge.starter_code # New: Pass starter code for CodeMirror
             }
             print(f"DEBUG (app.py): JSON Response Data (sent to frontend): {json.dumps(response_data, indent=2)}")
+            print(f"DEBUG (app.py): Final JSON Response Data for frontend: {json.dumps(response_data, indent=2)}")
             return jsonify(response_data)
         except Exception as e:
             current_app.logger.error(f"Error in get_challenge_details for challenge_id {challenge_id}: {e}", exc_info=True) # Log full traceback
