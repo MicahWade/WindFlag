@@ -39,7 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetch(`/api/challenge_details/${currentChallengeId}`)
                     .then(response => response.json())
                     .then(data => {
-                        console.log('API response data for challenge details:', data); // Debug log
                         if (data.success === false) {
                             showFlashMessage(data.message, 'danger');
                             challengeModal.classList.add('opacity-0', 'pointer-events-none');
@@ -182,19 +181,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                     submitButton.parentNode.insertBefore(switchboardButton, submitButton.nextSibling);
                                 }
 
-                                // Directly use data.category_name from the API response, which is assumed to be
-                                // in a human-readable, correctly cased format (e.g., "Linux Basics").
-                                const categoryName = data.category_name || '';
+                                // Get category name directly from the data-category-name attribute on the clicked card.
+                                const categoryName = this.dataset.categoryName || ''; // 'this' refers to the card
                                 const challengeName = data.name || '';
-
-                                console.log('Raw Category Name (from API):', categoryName, 'Raw Challenge Name:', challengeName); // Debug log
 
                                 const categoryNameFormatted = categoryName.replace(/ /g, '_');
                                 const challengeNameFormatted = challengeName.replace(/ /g, '_');
-                                console.log('Formatted Category Name:', categoryNameFormatted, 'Formatted Challenge Name:', challengeNameFormatted); // Debug log
 
                                 switchboardButton.href = `${window.switchboardBaseUrl}/${categoryNameFormatted}/${challengeNameFormatted}`;
-                                console.log('Switchboard button href set to:', switchboardButton.href); // Debug log
                                 switchboardButton.classList.remove('hidden'); // Ensure it's visible if enabled
                             } else {
                                 // If switchboard is not enabled, hide the button if it exists
@@ -354,7 +348,8 @@ document.addEventListener('DOMContentLoaded', function() {
                              data-description="${challenge.description}"
                              data-points="${challenge.points}"
                              data-completed="${challenge.solved}"
-                             data-solves="${challenge.solves}">
+                             data-solves="${challenge.solves}"
+                             data-category-name="${challenge.category}">
                             <h5 class="theme-challenge-title text-xl font-bold mb-2">
                                 ${challenge.name}
                             </h5>
