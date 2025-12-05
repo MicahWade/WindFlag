@@ -59,6 +59,10 @@ def verify_challenge_access():
     if not category:
         category = Category.query.filter_by(name=category_name.replace('_', ' ')).first()
 
+    # Fallback: Try case-insensitive match for Category
+    if not category:
+        category = Category.query.filter(Category.name.ilike(category_name.replace('_', ' '))).first()
+
     if not category:
          return jsonify({'allowed': False, 'message': 'Category not found'}), 404
 
@@ -69,6 +73,10 @@ def verify_challenge_access():
     # Fallback: Try replacing underscores with spaces for Challenge Name
     if not challenge:
         challenge = Challenge.query.filter_by(name=challenge_name.replace('_', ' '), category_id=category.id).first()
+
+    # Fallback: Try case-insensitive match for Challenge Name
+    if not challenge:
+        challenge = Challenge.query.filter(Challenge.name.ilike(challenge_name.replace('_', ' ')), Challenge.category_id == category.id).first()
     
     if not challenge:
         # Fallback: check if challenge_name is actually an ID
