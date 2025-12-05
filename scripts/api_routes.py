@@ -28,13 +28,17 @@ def verify_challenge_access():
     """
     Verifies if a user (via API Key) has access to a specific challenge.
     """
+    from flask import current_app
     data = request.get_json()
     if not data or not all(k in data for k in ['api_key', 'category', 'challenge_id']):
+        current_app.logger.warning("verify_challenge_access: Missing required fields")
         return jsonify({'allowed': False, 'message': 'Missing required fields'}), 400
 
     plain_api_key = data['api_key']
     category_name = data['category']
     challenge_name = data['challenge_id'] # SwitchBoard sends 'challenge_id' which is often the name or an ID. Let's assume name for now based on SB logic.
+    
+    current_app.logger.info(f"verify_challenge_access called for user (key prefix: {plain_api_key[:4] if plain_api_key else 'None'}). Cat: {category_name}, Chal: {challenge_name}")
 
     # Hash the key to look it up
     import hashlib
@@ -44,12 +48,16 @@ def verify_challenge_access():
     api_key_entry = ApiKey.query.filter_by(key_hash=key_hash, is_active=True).first()
     
     if not api_key_entry:
+        current_app.logger.warning("verify_challenge_access: Invalid API Key")
         return jsonify({'allowed': False, 'message': 'Invalid API Key'}), 401
 
     user = User.query.get(api_key_entry.user_id)
     if not user:
+        current_app.logger.warning("verify_challenge_access: User not found for API Key")
         return jsonify({'allowed': False, 'message': 'User not found'}), 401
-        
+    
+    current_app.logger.info(f"User identified: {user.username} (ID: {user.id})")
+
     # Find the challenge
     # SwitchBoard uses category name and challenge_id (which maps to challenge name usually in SB DB)
     # We need to find the challenge by name and category name
@@ -64,7 +72,10 @@ def verify_challenge_access():
         category = Category.query.filter(Category.name.ilike(category_name.replace('_', ' '))).first()
 
     if not category:
+         current_app.logger.warning(f"verify_challenge_access: Category '{category_name}' not found (even with fallbacks)")
          return jsonify({'allowed': False, 'message': 'Category not found'}), 404
+    
+    current_app.logger.info(f"Category found: {category.name} (ID: {category.id})")
 
     # Try to match challenge by name (SwitchBoard often uses name as ID in URL)
     # OR by ID if it's an integer. SwitchBoard 'challenge_id' is a string from URL.
@@ -84,16 +95,24 @@ def verify_challenge_access():
              challenge = Challenge.query.filter_by(id=int(challenge_name), category_id=category.id).first()
 
     if not challenge:
+        current_app.logger.warning(f"verify_challenge_access: Challenge '{challenge_name}' not found in category {category.name}")
         return jsonify({'allowed': False, 'message': 'Challenge not found'}), 404
+
+    current_app.logger.info(f"Challenge found: {challenge.name} (ID: {challenge.id}). Checking access...")
 
     # Check access
     # We need to build the cache expected by is_unlocked_for_user
     solved_challenges = {sub.challenge_id for sub in user.submissions}
     user_completed_challenges_cache = {user.id: solved_challenges}
     
-    if challenge.is_unlocked_for_user(user, user_completed_challenges_cache):
+    is_unlocked = challenge.is_unlocked_for_user(user, user_completed_challenges_cache)
+    current_app.logger.info(f"is_unlocked_for_user result: {is_unlocked}")
+
+    if is_unlocked:
         return jsonify({'allowed': True, 'user_id': user.id}), 200
     else:
+        # Log reason for failure
+        current_app.logger.info(f"Access Denied Logic Check: UnlockType={challenge.unlock_type}, Hidden={challenge.is_hidden}, CatHidden={category.is_hidden}, Prereqs={challenge.prerequisite_challenge_ids}")
         return jsonify({'allowed': False, 'message': "You can't access this challenge yet."}), 403
 
 @api_bp.route('/admin/import/yaml', methods=['POST'])
