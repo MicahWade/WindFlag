@@ -291,7 +291,17 @@
                                         {% endif %}
                                     {% endwith %}
                                     {% if active_api_key %}
-                                        <p class="theme-profile-text-muted">Active API Key: <code class="break-all">{{ active_api_key.api_key_plain }}</code></p>
+                                        <div class="flex items-center justify-center mb-2">
+                                            <span class="theme-profile-text-muted mr-2">Active API Key:</span>
+                                            <code id="api-key-code" class="break-all mr-2">{{ active_api_key.api_key_plain }}</code>
+                                            <button onclick="copyApiKey()" class="theme-modal-button-secondary py-1 px-2 rounded text-xs shadow-md hover:bg-gray-200 transition-colors" title="Copy to clipboard" type="button">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div id="copy-feedback" class="text-green-500 text-xs hidden mb-2 font-bold">Copied to clipboard!</div>
+
                                         <p class="theme-profile-text-muted">Generated on: {{ active_api_key.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
                                         {% if active_api_key.last_used_at %}
                                         <p class="theme-profile-text-muted">Last Used: {{ active_api_key.last_used_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
@@ -304,6 +314,19 @@
                                             </button>
                                         </form>
                                         <p class="text-sm text-red-500 mt-2">Warning: Regenerating will invalidate your current API Key.</p>
+                                        
+                                        <script>
+                                            function copyApiKey() {
+                                                var copyText = document.getElementById("api-key-code");
+                                                navigator.clipboard.writeText(copyText.innerText).then(function() {
+                                                    var feedback = document.getElementById("copy-feedback");
+                                                    feedback.classList.remove("hidden");
+                                                    setTimeout(function() { feedback.classList.add("hidden"); }, 2000);
+                                                }, function(err) {
+                                                    console.error('Async: Could not copy text: ', err);
+                                                });
+                                            }
+                                        </script>
                                     {% else %}
                                         <p class="theme-profile-text-muted">You do not have an active API Key.</p>
                                         <form method="POST" action="{{ url_for('generate_api_key_route') }}" class="mt-4">

@@ -380,7 +380,7 @@ def create_app(config_class=Config):
             return redirect(url_for('profile'))
         
         newly_generated_api_key_plain = current_user.generate_new_api_key()
-        flash(f'Your new API Key has been generated: {newly_generated_api_key_plain}. Please save it securely!', 'warning')
+        flash('API Key generated successfully.', 'success')
         
         response = make_response(redirect(url_for('profile')))
         response.set_cookie('api_key', newly_generated_api_key_plain)
