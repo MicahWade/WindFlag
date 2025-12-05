@@ -221,7 +221,7 @@ def create_app(config_class=Config):
                 # Set API key cookie if available
                 active_key = user.get_active_api_key()
                 if active_key and active_key.api_key_plain:
-                    response.set_cookie('api_key', active_key.api_key_plain)
+                    response.set_cookie('windflag_api_key', active_key.api_key_plain, samesite='Lax')
                 
                 return response
             else:
@@ -383,7 +383,7 @@ def create_app(config_class=Config):
         flash('API Key generated successfully.', 'success')
         
         response = make_response(redirect(url_for('profile')))
-        response.set_cookie('api_key', newly_generated_api_key_plain)
+        response.set_cookie('windflag_api_key', newly_generated_api_key_plain, samesite='Lax')
         return response
 
     @app.route('/challenges')
