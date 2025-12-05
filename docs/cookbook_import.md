@@ -6,6 +6,12 @@ This cookbook provides "recipes" for common challenge types and setups using the
 
 This is the most common type of challenge: a description, a single correct flag, and a category.
 
+- **`name`** (string, required): The unique name of the challenge.
+- **`description`** (string, required): A detailed explanation of the challenge, supporting markdown.
+- **`category`** (string, optional): The name of the category the challenge belongs to. If not defined, "Uncategorized" is used.
+- **`points`** (integer, required): The initial points awarded for solving the challenge.
+- **`flags`** (list of strings, optional): A list of all correct flag strings for the challenge. Not required for `DYNAMIC` or `HTTP` flag types.
+
 ```yaml
 challenges:
   - name: "Sanity Check"
@@ -19,6 +25,13 @@ challenges:
 ## Recipe 2: The "Hidden" Challenge
 
 A challenge that rewards players for digging deeper. It uses case-insensitive matching and provides a hint that costs points.
+
+- **`case_sensitive`** (boolean, optional): Determines whether the flag submission must match the case of the defined `flags`. Defaults to `true`.
+- **`hint_cost`** (integer, optional): The default points deducted from a user's score when they reveal any hint for this challenge. Defaults to `0`.
+- **`hints`** (list of objects, optional): A list of hint objects for the challenge.
+  - **`title`** (string, required): The title of the hint, visible before content is revealed.
+  - **`content`** (string, required): The actual hint text, supports markdown.
+  - **`cost`** (integer, optional): Specific point cost for *this individual hint*, overriding `hint_cost`.
 
 ```yaml
 challenges:
@@ -38,6 +51,14 @@ challenges:
 ## Recipe 3: The Coding Challenge
 
 A challenge that requires the user to write code (e.g., Python) to solve a problem. The platform runs their code against a test case.
+
+- **`challenge_type`** (string, optional): The type of challenge. Defaults to `FLAG`.
+    - `FLAG`: Standard CTF challenge requiring a text flag.
+    - `CODING`: Challenge requiring code submission, executed against a test case.
+- **`language`** (string, optional): Required if `challenge_type` is `CODING`. The programming language expected for the user-submitted code (e.g., `python3`, `nodejs`, `bash`).
+- **`test_case_input`** (string, optional): Optional input to provide to the user's code via stdin for `CODING` challenges.
+- **`expected_output`** (string, optional): Required if `challenge_type` is `CODING`. The expected standard output (stdout) from the user's code.
+- **`starter_code`** (string, optional): Optional starter code to display to the user for `CODING` challenges.
 
 ```yaml
 challenges:
@@ -65,6 +86,15 @@ challenges:
 
 A challenge where users need to find a subset of multiple hidden flags. Great for OSINT or exploration tasks.
 
+- **`multi_flag_type`** (string, optional): Defines how multiple flags are handled. Defaults to `SINGLE`.
+    - `SINGLE`: One correct flag solves the challenge.
+    - `ANY`: Any one of the listed flags solves the challenge.
+    - `ALL`: All listed flags must be submitted to solve the challenge.
+    - `N_OF_M`: A specific number (N) of the listed flags (M) must be submitted.
+    - `DYNAMIC`: Flag is generated/validated by custom logic (not defined in list).
+    - `HTTP`: Flag is retrieved from an external URL.
+- **`multi_flag_threshold`** (integer, optional): Required if `multi_flag_type` is `N_OF_M`. Specifies the number of flags ('N') required to solve the challenge.
+
 ```yaml
 challenges:
   - name: "Social Butterfly"
@@ -87,6 +117,15 @@ challenges:
 
 A high-value challenge that decays in value as more people solve it, and requires previous challenges to be solved first.
 
+- **`minimum_points`** (integer, optional): The lowest number of points a challenge can be worth due to decay. Defaults to `1`.
+- **`point_decay_type`** (string, optional): The strategy for how the challenge's point value decreases as more users solve it. Defaults to `STATIC`.
+    - `STATIC`: Points do not change.
+    - `LINEAR`: Points decrease by `point_decay_rate` per solve.
+    - `LOGARITHMIC`: Points decrease quickly at first, then slower, based on solve count.
+- **`point_decay_rate`** (integer, optional): The rate of decay for `LINEAR` or `LOGARITHMIC` decay types.
+- **`proactive_decay`** (boolean, optional): If `true`, points for this challenge will decay for *all* users (including those who have already solved it) when a new user solves it. Defaults to `false`.
+- **`prerequisites`** (list of strings, optional): A list of challenge names that must be solved before this challenge becomes available.
+
 ```yaml
 challenges:
   - name: "The Final Boss"
@@ -107,6 +146,17 @@ challenges:
 ## Recipe 6: Timed & Locked Categories
 
 A setup for a category that only opens at a specific time or after the user has progressed enough in other areas.
+
+- **`unlock_type`** (string, optional): The type of unlocking mechanism for the category. Defaults to `NONE`.
+    - `NONE`: Category is always available.
+    - `PREREQUISITE_PERCENTAGE`: Unlocks after a % of all/category challenges are solved.
+    - `PREREQUISITE_COUNT`: Unlocks after a specific number of challenges are solved.
+    - `PREREQUISITE_CHALLENGES`: Unlocks after specific named challenges are solved.
+    - `TIMED`: Unlocks at a specific UTC date/time.
+    - `COMBINED`: Allows combining multiple conditions (e.g., Time AND Percentage).
+- **`unlock_date_time`** (string, optional): Required if `unlock_type` is `TIMED` or `COMBINED`. The UTC datetime string (e.g., "YYYY-MM-DDTHH:MM:SSZ").
+- **`is_hidden`** (boolean, optional): If `true`, the category will be entirely hidden from non-admin users until its unlock conditions are met. Defaults to `false`.
+- **`prerequisite_percentage_value`** (integer, optional): Required if `unlock_type` is `PREREQUISITE_PERCENTAGE` or `COMBINED`. An integer between 1 and 100 representing the percentage of challenges that must be solved.
 
 ```yaml
 categories:
