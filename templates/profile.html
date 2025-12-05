@@ -317,14 +317,51 @@
                                         
                                         <script>
                                             function copyApiKey() {
-                                                var copyText = document.getElementById("api-key-code");
-                                                navigator.clipboard.writeText(copyText.innerText).then(function() {
-                                                    var feedback = document.getElementById("copy-feedback");
-                                                    feedback.classList.remove("hidden");
-                                                    setTimeout(function() { feedback.classList.add("hidden"); }, 2000);
-                                                }, function(err) {
-                                                    console.error('Async: Could not copy text: ', err);
-                                                });
+                                                var copyText = document.getElementById("api-key-code").innerText;
+                                                
+                                                if (navigator.clipboard && navigator.clipboard.writeText) {
+                                                    navigator.clipboard.writeText(copyText).then(function() {
+                                                        showCopyFeedback();
+                                                    }, function(err) {
+                                                        console.error('Async: Could not copy text: ', err);
+                                                        fallbackCopyTextToClipboard(copyText);
+                                                    });
+                                                } else {
+                                                    fallbackCopyTextToClipboard(copyText);
+                                                }
+                                            }
+                                            
+                                            function fallbackCopyTextToClipboard(text) {
+                                                var textArea = document.createElement("textarea");
+                                                textArea.value = text;
+                                                
+                                                // Avoid scrolling to bottom
+                                                textArea.style.top = "0";
+                                                textArea.style.left = "0";
+                                                textArea.style.position = "fixed";
+                                                
+                                                document.body.appendChild(textArea);
+                                                textArea.focus();
+                                                textArea.select();
+                                                
+                                                try {
+                                                    var successful = document.execCommand('copy');
+                                                    if (successful) {
+                                                        showCopyFeedback();
+                                                    } else {
+                                                        console.error('Fallback: Copying text command was unsuccessful');
+                                                    }
+                                                } catch (err) {
+                                                    console.error('Fallback: Oops, unable to copy', err);
+                                                }
+                                                
+                                                document.body.removeChild(textArea);
+                                            }
+                                            
+                                            function showCopyFeedback() {
+                                                var feedback = document.getElementById("copy-feedback");
+                                                feedback.classList.remove("hidden");
+                                                setTimeout(function() { feedback.classList.add("hidden"); }, 2000);
                                             }
                                         </script>
                                     {% else %}
