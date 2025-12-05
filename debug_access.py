@@ -1,9 +1,11 @@
+
 import os
 import sys
 from app import create_app
 from scripts.models import User, Challenge, Category, ApiKey, Submission
 from flask import g
 import hashlib
+import urllib.parse # Import urllib.parse for URL parsing
 
 # Create the Flask app context
 app = create_app()
@@ -12,8 +14,44 @@ def check_access():
     with app.app_context():
         print("\n--- WindFlag Debug Access Tool ---")
         
+        username = ""
+        api_key_input = ""
+        category_input = ""
+        challenge_input = ""
+
+        # Option to paste full URL
+        full_url_input = input("Enter Full Challenge URL (e.g., http://host:port/Category/Challenge?api_key=xyz) or press Enter for manual input: ").strip()
+
+        if full_url_input:
+            parsed_url = urllib.parse.urlparse(full_url_input)
+            path_parts = parsed_url.path.strip("/").split("/")
+            query_params = urllib.parse.parse_qs(parsed_url.query)
+
+            if len(path_parts) >= 2:
+                category_input = path_parts[0]
+                challenge_input = path_parts[1]
+            
+            if 'api_key' in query_params:
+                api_key_input = query_params['api_key'][0]
+            
+            # For username, we assume the user will enter it based on the API key or later for verification
+            print("\n--- Parsed from URL ---")
+            print(f" Category: {category_input}")
+            print(f" Challenge: {challenge_input}")
+            print(f" API Key (from URL): {api_key_input[:8]}..." if api_key_input else " Not found")
+            print("-----------------------")
+
+            username = input("Enter your Username (required for user context): ").strip()
+
+        else: # Manual Input Fallback
+            username = input("Enter your Username: ").strip()
+            print("\n[Optional] Paste the API Key you are using to verify it matches this user.")
+            api_key_input = input("API Key (press Enter to skip): ").strip()
+            print("\nEnter the Category and Challenge name exactly as seen in the UI or URL (underscores are handled).")
+            category_input = input("Category Name (e.g., 'Linux Basics' or 'Linux_Basics'): ").strip()
+            challenge_input = input("Challenge Name (e.g., 'Cat the Flag' or 'Cat_the_Flag'): ").strip()
+        
         # 1. Get User
-        username = input("Enter your Username: ").strip()
         user = User.query.filter_by(username=username).first()
         
         if not user:
@@ -25,8 +63,6 @@ def check_access():
         print(f" - Is Hidden: {user.hidden}")
 
         # 2. Check API Key (Optional verification)
-        print("\n[Optional] Paste the API Key you are using to verify it matches this user.")
-        api_key_input = input("API Key (press Enter to skip): ").strip()
         if api_key_input:
             key_hash = hashlib.sha256(api_key_input.encode('utf-8')).hexdigest()
             api_key_entry = ApiKey.query.filter_by(key_hash=key_hash, is_active=True).first()
@@ -39,29 +75,31 @@ def check_access():
             else:
                 print(" -> API Key Check: INVALID or inactive.")
         
-        # 3. Get Challenge Details
-        print("\nEnter the Category and Challenge name exactly as seen in the URL or Challenge list.")
-        category_name = input("Category Name (e.g., 'Linux Basics'): ").strip()
-        challenge_name = input("Challenge Name (e.g., 'Cat the Flag'): ").strip()
-
-        # 4. Find Category
-        category = Category.query.filter_by(name=category_name).first()
+        # 3. Find Category (Handle underscores and case)
+        category = Category.query.filter_by(name=category_input).first()
         if not category:
-            print(f"\nError: Category '{category_name}' NOT found.")
+            # Try replacing underscores
+            category = Category.query.filter_by(name=category_input.replace('_', ' ')).first()
+        if not category:
+            # Try case insensitive
+            category = Category.query.filter(Category.name.ilike(category_input.replace('_', ' '))).first()
+
+        if not category:
+            print(f"\nError: Category '{category_input}' NOT found.")
             print("Available Categories:")
             for c in Category.query.all():
                 print(f" - {c.name}")
             return
 
-        # 5. Find Challenge
-        challenge = Challenge.query.filter_by(name=challenge_name, category_id=category.id).first()
+        # 4. Find Challenge (Handle underscores and case)
+        challenge = Challenge.query.filter_by(name=challenge_input, category_id=category.id).first()
         if not challenge:
-            print(f"\nError: Challenge '{challenge_name}' NOT found in category '{category_name}'.")
+            challenge = Challenge.query.filter_by(name=challenge_input.replace('_', ' '), category_id=category.id).first()
+        if not challenge:
+            challenge = Category.query.filter(Challenge.name.ilike(challenge_input.replace('_', ' ')), Challenge.category_id == category.id).first()
             
-            # Fuzzy search or alternative suggestions
-            c_other = Challenge.query.filter(Challenge.name.ilike(challenge_name)).first()
-            if c_other:
-                print(f"Did you mean '{c_other.name}' in category '{c_other.category.name}'?")
+        if not challenge:
+            print(f"\nError: Challenge '{challenge_input}' NOT found in category '{category.name}'.")
             
             print(f"Available Challenges in '{category.name}':")
             for c in category.challenges:
@@ -74,10 +112,14 @@ def check_access():
         print(f" - Category Hidden: {category.is_hidden}")
         print(f" - Unlock Type: {challenge.unlock_type}")
 
-        # 6. Check Logic
+        # 5. Check Logic
         solved_challenges = {sub.challenge_id for sub in user.submissions}
         user_completed_challenges_cache = {user.id: solved_challenges}
         
+        print(f"\nUser '{user.username}' has solved {len(solved_challenges)} challenges.")
+        if solved_challenges:
+            print(" Solved Challenge IDs:", solved_challenges)
+
         is_unlocked = challenge.is_unlocked_for_user(user, user_completed_challenges_cache)
         print(f"\n>>> IS UNLOCKED: {is_unlocked} <<<")
         
@@ -101,7 +143,9 @@ def check_access():
                     print(f" [x] Missing Prerequisite Challenges (IDs: {missing})")
                     for mid in missing:
                         mc = Challenge.query.get(mid)
-                        print(f"     - Needs: {mc.name}")
+                        print(f"     - MISSING: {mc.name} (ID: {mc.id})")
+                else:
+                    print(" [v] Specific challenge prerequisites met.")
             
             if challenge.unlock_type == 'PREREQUISITE_PERCENTAGE':
                 total = Challenge.query.count()
@@ -127,3 +171,4 @@ def check_access():
 
 if __name__ == "__main__":
     check_access()
+
