@@ -188,7 +188,6 @@ def create_app(config_class=Config):
             if app.config.get('GENERATE_API_KEY_ON_REGISTER', False):
                 db.session.refresh(user) # Ensure user object is fresh for key generation
                 newly_generated_api_key_plain = user.generate_new_api_key() # Generate and store the hashed key
-                flash(f'Your API Key has been generated: {newly_generated_api_key_plain}. Please save it securely!', 'warning')
             
             flash(f'Your account with username "{new_username}" has been created! You are now able to log in', 'success')
             return redirect(url_for('login'))
