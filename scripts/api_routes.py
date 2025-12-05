@@ -23,6 +23,62 @@ def admin_api_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+@api_bp.route('/verify_challenge_access', methods=['POST'])
+def verify_challenge_access():
+    """
+    Verifies if a user (via API Key) has access to a specific challenge.
+    """
+    data = request.get_json()
+    if not data or not all(k in data for k in ['api_key', 'category', 'challenge_id']):
+        return jsonify({'allowed': False, 'message': 'Missing required fields'}), 400
+
+    plain_api_key = data['api_key']
+    category_name = data['category']
+    challenge_name = data['challenge_id'] # SwitchBoard sends 'challenge_id' which is often the name or an ID. Let's assume name for now based on SB logic.
+
+    # Hash the key to look it up
+    import hashlib
+    key_hash = hashlib.sha256(plain_api_key.encode('utf-8')).hexdigest()
+    
+    from scripts.models import ApiKey
+    api_key_entry = ApiKey.query.filter_by(key_hash=key_hash, is_active=True).first()
+    
+    if not api_key_entry:
+        return jsonify({'allowed': False, 'message': 'Invalid API Key'}), 401
+
+    user = User.query.get(api_key_entry.user_id)
+    if not user:
+        return jsonify({'allowed': False, 'message': 'User not found'}), 401
+        
+    # Find the challenge
+    # SwitchBoard uses category name and challenge_id (which maps to challenge name usually in SB DB)
+    # We need to find the challenge by name and category name
+    category = Category.query.filter_by(name=category_name).first()
+    if not category:
+         return jsonify({'allowed': False, 'message': 'Category not found'}), 404
+
+    # Try to match challenge by name (SwitchBoard often uses name as ID in URL)
+    # OR by ID if it's an integer. SwitchBoard 'challenge_id' is a string from URL.
+    challenge = Challenge.query.filter_by(name=challenge_name, category_id=category.id).first()
+    
+    if not challenge:
+        # Fallback: check if challenge_name is actually an ID
+        if challenge_name.isdigit():
+             challenge = Challenge.query.filter_by(id=int(challenge_name), category_id=category.id).first()
+
+    if not challenge:
+        return jsonify({'allowed': False, 'message': 'Challenge not found'}), 404
+
+    # Check access
+    # We need to build the cache expected by is_unlocked_for_user
+    solved_challenges = {sub.challenge_id for sub in user.submissions}
+    user_completed_challenges_cache = {user.id: solved_challenges}
+    
+    if challenge.is_unlocked_for_user(user, user_completed_challenges_cache):
+        return jsonify({'allowed': True, 'user_id': user.id}), 200
+    else:
+        return jsonify({'allowed': False, 'message': "You can't access this challenge yet."}), 403
+
 @api_bp.route('/admin/import/yaml', methods=['POST'])
 @admin_api_required
 def import_yaml():
