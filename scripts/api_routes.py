@@ -54,12 +54,21 @@ def verify_challenge_access():
     # SwitchBoard uses category name and challenge_id (which maps to challenge name usually in SB DB)
     # We need to find the challenge by name and category name
     category = Category.query.filter_by(name=category_name).first()
+    
+    # Fallback: Try replacing underscores with spaces for Category
+    if not category:
+        category = Category.query.filter_by(name=category_name.replace('_', ' ')).first()
+
     if not category:
          return jsonify({'allowed': False, 'message': 'Category not found'}), 404
 
     # Try to match challenge by name (SwitchBoard often uses name as ID in URL)
     # OR by ID if it's an integer. SwitchBoard 'challenge_id' is a string from URL.
     challenge = Challenge.query.filter_by(name=challenge_name, category_id=category.id).first()
+    
+    # Fallback: Try replacing underscores with spaces for Challenge Name
+    if not challenge:
+        challenge = Challenge.query.filter_by(name=challenge_name.replace('_', ' '), category_id=category.id).first()
     
     if not challenge:
         # Fallback: check if challenge_name is actually an ID
