@@ -179,3 +179,44 @@ challenges:
     flags:
       - "flag{werewolf}"
 ```
+
+## Recipe 7: Project Structure for Challenge Packs
+
+Organize multiple challenges into a single "Pack" controlled by one `import.yaml`. This is the recommended structure.
+
+**Directory Structure:**
+```text
+LinuxBasics/
+├── import.yaml          <-- One file defining ALL challenges
+├── level_1/             <-- Folder for Challenge 1 (Dockerfile)
+│   ├── Dockerfile
+│   └── solve.yaml
+├── level_2/             <-- Folder for Challenge 2 (Dockerfile)
+│   ├── Dockerfile
+│   └── solve.yaml
+└── level_3/             <-- Folder for Challenge 3
+    ├── Dockerfile
+    └── solve.yaml
+```
+
+**Content of `import.yaml`:**
+```yaml
+challenges:
+  - name: "Linux Basics Level 1"
+    image: "level_1"     # Points to the 'level_1' folder
+    description: "..."
+    points: 10
+    flags: ["flag{one}"]
+
+  - name: "Linux Basics Level 2"
+    image: "level_2"     # Points to the 'level_2' folder
+    description: "..."
+    points: 20
+    flags: ["flag{two}"]
+```
+
+**Bundling Command:**
+```bash
+# Bundle the specific pack
+python3 -m prism.cli bundle ./LinuxBasics --output ./linux_basics.zip
+```
