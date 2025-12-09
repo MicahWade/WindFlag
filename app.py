@@ -113,6 +113,19 @@ def create_app(config_class=Config):
 
     from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission, Award, AwardCategory, FlagAttempt, Hint, UserHint, ApiKey # Import FlagAttempt, Hint, UserHint, ApiKey
     from scripts.code_execution import execute_code_in_sandbox # New: Import for coding challenges
+    from flask import send_from_directory # Import send_from_directory
+    import mimetypes # Import mimetypes
+
+    # Register common font MIME types explicitly to prevent browser issues
+    mimetypes.add_type("font/woff", ".woff")
+    mimetypes.add_type("font/woff2", ".woff2")
+    mimetypes.add_type("font/ttf", ".ttf")
+    # Add other font types if necessary, e.g., for .otf, .eot
+    
+    # Custom route for fonts to ensure correct MIME types are sent
+    @app.route('/static/fonts/<path:filename>')
+    def custom_serve_fonts(filename):
+        return send_from_directory(app.static_folder + '/fonts', filename, mimetype=mimetypes.guess_type(filename)[0])
 
     app.register_blueprint(admin_bp) # Register admin blueprint
     app.register_blueprint(api_key_bp) # Register api_key blueprint
