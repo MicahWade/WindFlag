@@ -283,8 +283,12 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error running code:', error);
-            codeResult.textContent = `Error: ${error.message}`;
-            showFlashMessage('An error occurred during code execution.', 'danger');
+            const errorMessage = error.message || 'An error occurred during code execution.';
+            const details = {
+                stdout: error.stdout || '', // Pass stdout if available in the error object
+                stderr: error.stderr || ''  // Pass stderr if available in the error object
+            };
+            showFlashMessage(errorMessage, 'danger', details);
         })
         .finally(() => {
             modalRunCodeButton.disabled = false;
@@ -505,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    function showFlashMessage(message, category) {
+    function showFlashMessage(message, category, details = {}) {
         const flashContainer = document.getElementById('flash-messages');
         if (!flashContainer) {
             console.warn('Flash message container not found. Message:', message);
@@ -515,11 +519,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const alertDiv = document.createElement('div');
         alertDiv.className = `p-3 mb-3 rounded-md text-sm ${category === 'success' ? 'theme-flash-success' : 'theme-flash-danger'}`;
-        alertDiv.textContent = message;
+        alertDiv.innerHTML = `<strong>${message}</strong>`; // Bold the main message
+
+        if (details.stdout || details.stderr) {
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'mt-2 text-xs';
+
+            if (details.stdout) {
+                detailsDiv.innerHTML += `<p><strong>Stdout:</strong></p><pre class="bg-gray-800 p-2 rounded-sm overflow-auto max-h-40">${escapeHtml(details.stdout)}</pre>`;
+            }
+            if (details.stderr) {
+                detailsDiv.innerHTML += `<p><strong>Stderr:</strong></p><pre class="bg-gray-800 p-2 rounded-sm overflow-auto max-h-40 text-red-300">${escapeHtml(details.stderr)}</pre>`;
+            }
+            alertDiv.appendChild(detailsDiv);
+        }
+
         flashContainer.appendChild(alertDiv);
 
         setTimeout(() => {
             alertDiv.remove();
         }, 5000);
+    }
+
+    // Helper function to escape HTML for displaying user-generated content safely
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 });

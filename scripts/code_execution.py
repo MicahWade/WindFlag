@@ -350,15 +350,20 @@ def execute_code_in_sandbox(language, code, expected_output, setup_code=None, te
             else:
                 return CodeExecutionResult(False, stdout, stderr, f"Output mismatch. Expected: '{expected_output.strip()}', Got: '{stdout}'")
 
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
             # The process was terminated because it exceeded the timeout
-            return CodeExecutionResult(False, "", "", "Execution timed out.", is_timeout=True)
+            stdout_output = e.stdout.strip() if e.stdout else ""
+            stderr_output = e.stderr.strip() if e.stderr else ""
+            return CodeExecutionResult(False, stdout_output, stderr_output, "Execution timed out.", is_timeout=True)
         except FileNotFoundError:
             # bwrap itself or the runtime executable was not found
             return CodeExecutionResult(False, "", "", f"bwrap or runtime not found. Check paths: {BWRAP_PATH}, {runtime_host_path}")
         except Exception as e:
-            # Catch other unexpected errors
-            return CodeExecutionResult(False, "", "", f"An unexpected error occurred during execution: {e}")
+            # Catch other unexpected errors during subprocess.run setup or execution
+            # Try to capture stdout/stderr if the process object was created before the exception
+            stdout_output = process.stdout.strip() if 'process' in locals() and process.stdout else ""
+            stderr_output = process.stderr.strip() if 'process' in locals() and process.stderr else ""
+            return CodeExecutionResult(False, stdout_output, stderr_output, f"An unexpected error occurred during execution: {e}")
 
     finally:
         # Clean up temporary directory on the host
