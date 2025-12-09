@@ -125,7 +125,23 @@ def create_app(config_class=Config):
     # Custom route for fonts to ensure correct MIME types are sent
     @app.route('/static/fonts/<path:filename>')
     def custom_serve_fonts(filename):
-        return send_from_directory(app.static_folder + '/fonts', filename, mimetype=mimetypes.guess_type(filename)[0])
+        # Determine MIME type explicitly based on extension
+        if filename.endswith('.woff'):
+            mimetype = 'font/woff'
+        elif filename.endswith('.woff2'):
+            mimetype = 'font/woff2'
+        elif filename.endswith('.ttf'):
+            mimetype = 'font/ttf'
+        elif filename.endswith('.otf'):
+            mimetype = 'font/otf'
+        elif filename.endswith('.eot'):
+            mimetype = 'application/vnd.ms-fontobject'
+        else:
+            # Fallback to guess_type for other potential files in fonts folder
+            mimetype = mimetypes.guess_type(filename)[0]
+        
+        current_app.logger.debug(f"Serving font: {filename} with MIME type: {mimetype}")
+        return send_from_directory(app.static_folder + '/fonts', filename, mimetype=mimetype)
 
     app.register_blueprint(admin_bp) # Register admin blueprint
     app.register_blueprint(api_key_bp) # Register api_key blueprint
