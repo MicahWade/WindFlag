@@ -13,7 +13,8 @@ mkdir -p static/codemirror \
          static/vendor/chartjs-adapter-date-fns \
          static/vendor/chartjs-plugin-annotation \
          static/vendor/jquery-datatables \
-         static/js
+         static/js \
+         static/fonts
 
 # Function to download with curl or wget
 download() {
@@ -30,6 +31,16 @@ download() {
     fi
 }
 
+# Raleway Google Fonts
+# These URLs are based on common Google Fonts CDN structure. You might need to verify them
+# by inspecting network requests on the Google Fonts page for Raleway if they don't work.
+download "https://fonts.gstatic.com/s/raleway/v28/1Ptxg8zYS_SKggPNYhNf.woff2" "static/fonts/Raleway-Regular.woff2"
+download "https://fonts.gstatic.com/s/raleway/v28/1Ptxg8zYS_SKggPNYhNf.woff" "static/fonts/Raleway-Regular.woff"
+download "https://fonts.gstatic.com/s/raleway/v28/1Ptxg8zYS_SKggPNYhNf.ttf" "static/fonts/Raleway-Regular.ttf"
+download "https://fonts.gstatic.com/s/raleway/v28/1Ptxg8zYS_SKggPNYn41h-Wi3K-G_A.woff2" "static/fonts/Raleway-Bold.woff2"
+download "https://fonts.gstatic.com/s/raleway/v28/1Ptxg8zYS_SKggPNYn41h-Wi3K-G_A.woff" "static/fonts/Raleway-Bold.woff"
+download "https://fonts.gstatic.com/s/raleway/v28/1Ptxg8zYS_SKggPNYn41h-Wi3K-G_A.ttf" "static/fonts/Raleway-Bold.ttf"
+
 # CodeMirror
 download "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.css" "static/codemirror/codemirror.min.css"
 download "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/theme/dracula.min.css" "static/codemirror/dracula.min.css"
@@ -41,8 +52,8 @@ download "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/php/php
 download "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/python/python.min.js" "static/codemirror/python.min.js"
 
 # CodeMirror Fullscreen Addon
-download "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/addon/display/fullscreen.min.css" "static/codemirror/fullscreen.min.css"
-download "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/addon/display/fullscreen.min.js" "static/codemirror/fullscreen.min.js"
+download "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/addon/display/fullscreen.min.css" "static/codemirror/cm-fullscreen.min.css"
+download "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/addon/display/fullscreen.min.js" "static/codemirror/cm-fullscreen.min.js"
 
 # Font Awesome
 download "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" "static/vendor/font-awesome/css/all.min.css"
