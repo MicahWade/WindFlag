@@ -512,9 +512,9 @@ def submit_code_challenge(challenge_id):
             db.session.add(new_submission)
             current_user.score += challenge.points
             db.session.commit()
-            return jsonify({'message': 'Challenge solved!', 'is_correct': True}), 200
+            return jsonify({'message': 'Challenge solved!', 'is_correct': True, 'success': True, 'output': execution_result.stdout}), 200
         else:
-            return jsonify({'message': 'Challenge already solved!', 'is_correct': True}), 200
+            return jsonify({'message': 'Challenge already solved!', 'is_correct': True, 'success': True, 'output': execution_result.stdout}), 200
     else:
         # Provide feedback on why it failed
         feedback = {

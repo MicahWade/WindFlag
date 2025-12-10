@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const currentCard = document.querySelector(`.challenge-card[data-id="${currentChallengeId}"]`);
                     if (currentCard) {
                         currentCard.dataset.completed = 'true';
-                        currentCard.classList.add('theme-completed-challenge');
+                        currentCard.classList.add('theme-completed-challenge', 'completed-challenge-line');
                         codeMirrorEditor.setOption('readOnly', true);
                         modalRunCodeButton.disabled = true;
                         modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
@@ -496,7 +496,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (currentCard) {
                     if (data.message.includes('Challenge Solved!')) {
                         currentCard.dataset.completed = 'true';
-                        currentCard.classList.add('theme-completed-challenge');
+                        currentCard.classList.add('theme-completed-challenge', 'completed-challenge-line');
                         flagInput.disabled = true;
                         submitButton.disabled = true;
                         submitButton.classList.add('opacity-50', 'cursor-not-allowed');
