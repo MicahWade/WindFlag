@@ -340,15 +340,24 @@ def execute_code_in_sandbox(language, code, expected_output, setup_code=None, te
 
 
             if process.returncode != 0:
-                error_message = f"Execution failed with exit code {process.returncode}."
+                error_message = f"Execution failed with exit code {process.returncode}.\n"
+                if stdout:
+                    error_message += f"Program Output (stdout):\n{stdout}\n"
                 if stderr:
-                    error_message += f"\nStderr: {stderr}"
-                return CodeExecutionResult(False, stdout, stderr, error_message)
+                    error_message += f"Error Output (stderr):\n{stderr}\n"
+                if not stdout and not stderr:
+                    error_message += "No output or errors captured.\n"
+                return CodeExecutionResult(False, stdout, stderr, error_message.strip())
 
             if stdout == expected_output.strip():
                 return CodeExecutionResult(True, stdout, stderr, "")
             else:
-                return CodeExecutionResult(False, stdout, stderr, f"Output mismatch. Expected: '{expected_output.strip()}', Got: '{stdout}'")
+                error_message = f"Output mismatch.\n" \
+                                f"Expected Output:\n'{expected_output.strip()}'\n\n" \
+                                f"Actual Program Output (stdout):\n'{stdout}'\n"
+                if stderr:
+                    error_message += f"\nError Output (stderr):\n{stderr}\n"
+                return CodeExecutionResult(False, stdout, stderr, error_message.strip())
 
         except subprocess.TimeoutExpired as e:
             # The process was terminated because it exceeded the timeout

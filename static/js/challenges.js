@@ -255,14 +255,21 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(async response => {
             if (!response.ok) {
+                // If response is not OK, try to parse JSON error message
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `HTTP Error: ${response.status} ${response.statusText}`);
+                // Create a more informative error message to display in codeResult
+                let errorMessageText = errorData.message || `HTTP Error: ${response.status} ${response.statusText}. Check console for more details.`;
+                if (errorData.stdout) errorMessageText += `\n\nProgram Output (stdout):\n${errorData.stdout}`;
+                if (errorData.stderr) errorMessageText += `\n\nError Output (stderr):\n${errorData.stderr}`;
+                codeResult.textContent = errorMessageText; // Display this in codeResult
+                showFlashMessage('Code execution failed due to server error.', 'danger');
+                return; // Stop further processing in this then block
             }
             return response.json();
         })
         .then(data => {
-            codeResult.textContent = data.output;
             if (data.success) {
+                codeResult.textContent = data.output; // Display only stdout for successful runs
                 showFlashMessage('Code executed successfully!', 'success');
                 if (data.is_correct) {
                     showFlashMessage('Challenge Solved!', 'success');
@@ -278,17 +285,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             } else {
-                showFlashMessage(data.message || 'Error executing code.', 'danger');
+                codeResult.textContent = data.message || 'An unknown error occurred.'; // Display detailed error message (includes stdout/stderr)
+                showFlashMessage('Code execution failed.', 'danger'); // Simpler flash message
             }
         })
         .catch(error => {
             console.error('Error running code:', error);
-            const errorMessage = error.message || 'An error occurred during code execution.';
-            const details = {
-                stdout: error.stdout || '', // Pass stdout if available in the error object
-                stderr: error.stderr || ''  // Pass stderr if available in the error object
-            };
-            showFlashMessage(errorMessage, 'danger', details);
+            const errorMessage = error.message || 'A network or unexpected error occurred during code submission.';
+            codeResult.textContent = errorMessage; // Display the raw error message if fetch itself failed
+            showFlashMessage('Network or server error during code submission.', 'danger'); // A more general error message
         })
         .finally(() => {
             modalRunCodeButton.disabled = false;
@@ -509,7 +514,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    function showFlashMessage(message, category, details = {}) {
+    function showFlashMessage(message, category) {
         const flashContainer = document.getElementById('flash-messages');
         if (!flashContainer) {
             console.warn('Flash message container not found. Message:', message);
@@ -520,19 +525,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const alertDiv = document.createElement('div');
         alertDiv.className = `p-3 mb-3 rounded-md text-sm ${category === 'success' ? 'theme-flash-success' : 'theme-flash-danger'}`;
         alertDiv.innerHTML = `<strong>${message}</strong>`; // Bold the main message
-
-        if (details.stdout || details.stderr) {
-            const detailsDiv = document.createElement('div');
-            detailsDiv.className = 'mt-2 text-xs';
-
-            if (details.stdout) {
-                detailsDiv.innerHTML += `<p><strong>Stdout:</strong></p><pre class="bg-gray-800 p-2 rounded-sm overflow-auto max-h-40">${escapeHtml(details.stdout)}</pre>`;
-            }
-            if (details.stderr) {
-                detailsDiv.innerHTML += `<p><strong>Stderr:</strong></p><pre class="bg-gray-800 p-2 rounded-sm overflow-auto max-h-40 text-red-300">${escapeHtml(details.stderr)}</pre>`;
-            }
-            alertDiv.appendChild(detailsDiv);
-        }
 
         flashContainer.appendChild(alertDiv);
 
