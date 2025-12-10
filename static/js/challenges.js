@@ -29,6 +29,41 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentChallengeType = null;
     let currentChallengeLanguage = null;
     let codeMirrorEditor = null; // Initialize CodeMirror editor here
+    const loadedCodeMirrorModes = {}; // Keep track of loaded modes
+
+    function getCodeMirrorMode(language) {
+        const lowerCaseLang = language.toLowerCase();
+        if (lowerCaseLang.includes('python')) return { file: '/static/codemirror/python.min.js', mode: 'python' };
+        if (lowerCaseLang.includes('javascript') || lowerCaseLang.includes('node')) return { file: '/static/codemirror/javascript.min.js', mode: 'javascript' };
+        if (lowerCaseLang.includes('php')) return { file: '/static/codemirror/php.min.js', mode: 'php' };
+        if (lowerCaseLang.includes('shell') || lowerCaseLang.includes('bash')) return { file: '/static/codemirror/shell.min.js', mode: 'shell' };
+        if (lowerCaseLang.includes('dart')) return { file: '/static/codemirror/dart.min.js', mode: 'dart' };
+        return { file: null, mode: null }; // Default to no specific mode or file
+    }
+
+    function loadCodeMirrorMode(modeInfo, callback) {
+        if (!modeInfo || !modeInfo.file) {
+            callback(); // Nothing to load
+            return;
+        }
+
+        if (loadedCodeMirrorModes[modeInfo.file]) {
+            callback(); // Already loaded
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = modeInfo.file;
+        script.onload = () => {
+            loadedCodeMirrorModes[modeInfo.file] = true;
+            callback();
+        };
+        script.onerror = () => {
+            console.error('Failed to load CodeMirror mode:', modeInfo.file);
+            callback(); // Continue even if loading fails
+        };
+        document.head.appendChild(script);
+    }
 
     function initChallengeCards() {
         const challengeCards = document.querySelectorAll('.challenge-card');
@@ -76,58 +111,75 @@ document.addEventListener('DOMContentLoaded', function() {
                             currentChallengeLanguage = data.language || 'python';
                             currentChallengeType = 'CODING';
 
-                            if (!codeMirrorEditor) {
-                                codeMirrorEditor = CodeMirror.fromTextArea(codeEditor, {
-                                    lineNumbers: true,
-                                    mode: currentChallengeLanguage,
-                                    theme: "dracula",
-                                    indentUnit: 4,
-                                    tabSize: 4,
-                                    indentWithTabs: false,
-                                    viewportMargin: Infinity,
-                                    fullScreen: false // Ensure CodeMirror is NOT fullscreen by default
-                                });
-                                codeMirrorEditor.getWrapperElement().classList.add('codemirror-themed-input');
-                                
-                                // Dynamically create and append fullscreen button
-                                const fullscreenButton = document.createElement('button');
-                                fullscreenButton.innerHTML = `
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
-                                    </svg>
-                                `;
-                                fullscreenButton.title = "Enter Fullscreen (F11)";
-                                fullscreenButton.className = "CodeMirror-fullscreen-button-custom absolute top-2 right-2 p-1 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white z-10";
-                                
-                                fullscreenButton.addEventListener('click', (event) => {
-                                    event.preventDefault();
-                                    codeMirrorEditor.setOption("fullScreen", !codeMirrorEditor.getOption("fullScreen"));
-                                });
-                                codeMirrorEditor.getWrapperElement().appendChild(fullscreenButton);
-                                
-                                // Add an event listener to update the button icon when fullscreen state changes
-                                codeMirrorEditor.on('optionChange', (cm, option) => {
-                                    if (option === 'fullScreen') {
-                                        if (cm.getOption("fullScreen")) {
-                                            fullscreenButton.innerHTML = `Exit`;
-                                            fullscreenButton.title = "Exit Fullscreen (Esc)";
-                                            fullscreenButton.classList.add('text-lg', 'px-3'); // Make it bigger and more visible
-                                        } else {
-                                            fullscreenButton.innerHTML = `
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
-                                                </svg>
-                                            `;
-                                            fullscreenButton.title = "Enter Fullscreen (F11)";
-                                            fullscreenButton.classList.remove('text-lg', 'px-3');
-                                        }
-                                    }
-                                });
+                            const modeInfo = getCodeMirrorMode(currentChallengeLanguage);
 
-                            } else {
-                                codeMirrorEditor.setOption('mode', currentChallengeLanguage);
-                                codeMirrorEditor.getWrapperElement().classList.add('codemirror-themed-input'); // Ensure class is applied on re-use
-                            }
+                            loadCodeMirrorMode(modeInfo, () => {
+                                if (!codeMirrorEditor) {
+                                    codeMirrorEditor = CodeMirror.fromTextArea(codeEditor, {
+                                        lineNumbers: true,
+                                        mode: modeInfo.mode,
+                                        theme: "dracula",
+                                        indentUnit: 4,
+                                        tabSize: 4,
+                                        indentWithTabs: false,
+                                        viewportMargin: Infinity,
+                                        fullScreen: false // Ensure CodeMirror is NOT fullscreen by default
+                                    });
+                                    codeMirrorEditor.getWrapperElement().classList.add('codemirror-themed-input');
+                                    
+                                    // Dynamically create and append fullscreen button
+                                    const fullscreenButton = document.createElement('button');
+                                    fullscreenButton.innerHTML = `
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                                        </svg>
+                                    `;
+                                    fullscreenButton.title = "Enter Fullscreen (F11)";
+                                    fullscreenButton.className = "CodeMirror-fullscreen-button-custom absolute top-2 right-2 p-1 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white z-10";
+                                    
+                                    fullscreenButton.addEventListener('click', (event) => {
+                                        event.preventDefault();
+                                        codeMirrorEditor.setOption("fullScreen", !codeMirrorEditor.getOption("fullScreen"));
+                                    });
+                                    codeMirrorEditor.getWrapperElement().appendChild(fullscreenButton);
+                                    
+                                    // Add an event listener to update the button icon when fullscreen state changes
+                                    codeMirrorEditor.on('optionChange', (cm, option) => {
+                                        if (option === 'fullScreen') {
+                                            if (cm.getOption("fullScreen")) {
+                                                fullscreenButton.innerHTML = `Exit`;
+                                                fullscreenButton.title = "Exit Fullscreen (Esc)";
+                                                fullscreenButton.classList.add('text-lg', 'px-3'); // Make it bigger and more visible
+                                            } else {
+                                                fullscreenButton.innerHTML = `
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                                                    </svg>
+                                                `;
+                                                fullscreenButton.title = "Enter Fullscreen (F11)";
+                                                fullscreenButton.classList.remove('text-lg', 'px-3');
+                                            }
+                                        }
+                                    });
+
+                                } else {
+                                    codeMirrorEditor.setOption('mode', modeInfo.mode);
+                                    codeMirrorEditor.getWrapperElement().classList.add('codemirror-themed-input'); // Ensure class is applied on re-use
+                                }
+                                codeMirrorEditor.setValue(data.starter_code || '');
+                                if (isCompleted) {
+                                    codeMirrorEditor.setOption('readOnly', true);
+                                    modalRunCodeButton.disabled = true;
+                                    modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
+                                    modalChallengeStatus.textContent = 'You have already completed this coding challenge!';
+                                    modalChallengeStatus.classList.remove('hidden');
+                                } else {
+                                    codeMirrorEditor.setOption('readOnly', false);
+                                    modalRunCodeButton.disabled = false;
+                                    modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                                }
+                                codeMirrorEditor.refresh();
+                            });
                             codeMirrorEditor.setValue(data.starter_code || '');
                             if (isCompleted) {
                                 codeMirrorEditor.setOption('readOnly', true);
