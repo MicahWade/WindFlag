@@ -280,6 +280,13 @@ def import_challenges_from_yaml(app, yaml_source, is_file=True):
                 print(f"Warning: Challenge '{challenge_name}' already exists. Skipping import.")
                 continue
 
+            challenge_type = challenge_data.get('challenge_type', 'FLAG')
+            language = challenge_data.get('language')
+            
+            if challenge_type == 'CODING' and not language:
+                print(f"Skipping challenge '{challenge_name}': 'language' is required for CODING challenges. Data: {challenge_data}")
+                continue
+
             challenge = Challenge(
                 name=challenge_name,
                 description=challenge_data.get('description', ''),
@@ -291,8 +298,8 @@ def import_challenges_from_yaml(app, yaml_source, is_file=True):
                 hint_cost=challenge_data.get('hint_cost', 0),
                 unlock_type='ALWAYS_UNLOCKED',
                 prerequisite_challenge_ids=[],
-                challenge_type=challenge_data.get('challenge_type', 'FLAG'),
-                language=challenge_data.get('language'),
+                challenge_type=challenge_type,
+                language=language,
                 starter_code=challenge_data.get('starter_code'),
                 expected_output=challenge_data.get('expected_output'),
                 test_case_input=challenge_data.get('test_case_input'),
