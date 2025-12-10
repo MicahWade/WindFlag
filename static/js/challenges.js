@@ -260,19 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                                                                                     }
 
                                                                                                                 });
-                            codeMirrorEditor.setValue(data.starter_code || '');
-                            if (isCompleted) {
-                                codeMirrorEditor.setOption('readOnly', true);
-                                modalRunCodeButton.disabled = true;
-                                modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
-                                modalChallengeStatus.textContent = 'You have already completed this coding challenge!';
-                                modalChallengeStatus.classList.remove('hidden');
-                            } else {
-                                codeMirrorEditor.setOption('readOnly', false);
-                                modalRunCodeButton.disabled = false;
-                                modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                            }
-                            codeMirrorEditor.refresh();
+
                         } else {
                             flagSubmissionSection.classList.remove('hidden');
                             codeSubmissionSection.classList.add('hidden');
