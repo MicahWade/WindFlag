@@ -518,7 +518,7 @@ def submit_code_challenge(challenge_id):
     else:
         # Provide feedback on why it failed
         feedback = {
-            'message': 'Code execution failed or output mismatch.',
+            'message': execution_result.error_message,
             'is_correct': False,
             'output': execution_result.stdout if execution_result.stdout else execution_result.stderr,
             'error_message': execution_result.error_message,
