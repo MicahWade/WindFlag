@@ -221,37 +221,99 @@ document.addEventListener('DOMContentLoaded', function() {
 
                                                                                                                         
 
-                                                                                                                        // All operations below this line are guaranteed to have a valid codeMirrorEditor
-
-                                                                                                                        codeMirrorEditor.getWrapperElement().classList.add('codemirror-themed-input');
+                                                                                                                                                            // All operations below this line are guaranteed to have a valid codeMirrorEditor
 
                                                                                                                         
 
-                                                                                                                        codeMirrorEditor.setValue(data.starter_code || '');
+                                                                                                                                                            codeMirrorEditor.getWrapperElement().classList.add('codemirror-themed-input');
 
-                                                                                                                        if (isCompleted) {
+                                                                                                                        
 
-                                                                                                                            codeMirrorEditor.setOption('readOnly', true);
+                                                                                                                                                            
 
-                                                                                                                            modalRunCodeButton.disabled = true;
+                                                                                                                        
 
-                                                                                                                            modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
+                                                                                                                                                            const savedCode = localStorage.getItem(`challenge_code_${currentChallengeId}`);
 
-                                                                                                                            modalChallengeStatus.textContent = 'You have already completed this coding challenge!';
+                                                                                                                        
 
-                                                                                                                            modalChallengeStatus.classList.remove('hidden');
+                                                                                                                                                            if (savedCode) {
 
-                                                                                                                        } else {
+                                                                                                                        
 
-                                                                                                                            codeMirrorEditor.setOption('readOnly', false);
+                                                                                                                                                                codeMirrorEditor.setValue(savedCode);
 
-                                                                                                                            modalRunCodeButton.disabled = false;
+                                                                                                                        
 
-                                                                                                                            modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                                                                                                                                                            } else {
 
-                                                                                                                        }
+                                                                                                                        
 
-                                                                                                                        codeMirrorEditor.refresh();
+                                                                                                                                                                codeMirrorEditor.setValue(data.starter_code || '');
+
+                                                                                                                        
+
+                                                                                                                                                            }
+
+                                                                                                                        
+
+                                                                                                                        
+
+                                                                                                                        
+
+                                                                                                                                                            if (isCompleted) {
+
+                                                                                                                        
+
+                                                                                                                                                                codeMirrorEditor.setOption('readOnly', true);
+
+                                                                                                                        
+
+                                                                                                                                                                modalRunCodeButton.disabled = true;
+
+                                                                                                                        
+
+                                                                                                                                                                modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+                                                                                                                        
+
+                                                                                                                                                                modalChallengeStatus.textContent = 'You have already completed this coding challenge!';
+
+                                                                                                                        
+
+                                                                                                                                                                modalChallengeStatus.classList.remove('hidden');
+
+                                                                                                                        
+
+                                                                                                                                                                // Clear saved code from localStorage if challenge is completed
+
+                                                                                                                        
+
+                                                                                                                                                                localStorage.removeItem(`challenge_code_${currentChallengeId}`);
+
+                                                                                                                        
+
+                                                                                                                                                            } else {
+
+                                                                                                                        
+
+                                                                                                                                                                codeMirrorEditor.setOption('readOnly', false);
+
+                                                                                                                        
+
+                                                                                                                                                                modalRunCodeButton.disabled = false;
+
+                                                                                                                        
+
+                                                                                                                                                                modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                                                                                                                        
+
+                                                                                                                                                            }
+
+                                                                                                                        
+
+                                                                                                                                                            codeMirrorEditor.refresh();
 
                                                                                                                     } else {
 
@@ -573,6 +635,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     closeModalButtons.forEach(button => {
         button.addEventListener('click', function() {
+            // Save code if it's a coding challenge and editor exists
+            if (currentChallengeType === 'CODING' && codeMirrorEditor) {
+                localStorage.setItem(`challenge_code_${currentChallengeId}`, codeMirrorEditor.getValue());
+            }
+
             challengeModal.classList.add('opacity-0', 'pointer-events-none');
             modalContent.classList.add('-translate-y-full');
             showingSolvers = false; // Reset state when closing modal
@@ -586,6 +653,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     challengeModal.addEventListener('click', function(event) {
         if (event.target === challengeModal) {
+            // Save code if it's a coding challenge and editor exists
+            if (currentChallengeType === 'CODING' && codeMirrorEditor) {
+                localStorage.setItem(`challenge_code_${currentChallengeId}`, codeMirrorEditor.getValue());
+            }
+
             challengeModal.classList.add('opacity-0', 'pointer-events-none');
             modalContent.classList.add('-translate-y-full');
             showingSolvers = false; // Reset state when closing modal
