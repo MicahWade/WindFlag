@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, IntegerField, SelectField, SelectMultipleField, HiddenField
+from flask_wtf.file import FileAllowed # Import FileAllowed
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, IntegerField, SelectField, SelectMultipleField, HiddenField, MultipleFileField # Import MultipleFileField
 from wtforms.fields import FieldList, FormField
 from wtforms.fields.datetime import DateTimeField, DateField # Import DateField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange, Optional
@@ -287,6 +288,7 @@ class ChallengeForm(FlaskForm):
     has_dynamic_flag = BooleanField('Has Dynamic Flag', default=False) # New: Field to enable/disable dynamic flag
     solution_verified = HiddenField('Solution Verified', default='false') # New: Track verification status
     hints = FieldList(FormField(HintForm), min_entries=0, label='Hints') # New: Dynamic hints
+    files = MultipleFileField('Upload Files', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'txt', 'pdf', 'zip', 'rar', 'tar', 'gz', 'py', 'c', 'cpp', 'java', 'js', 'html', 'css', 'md', 'json', 'yaml', 'yml'], 'Images, Text, PDF, Archives, and Code files only!')])
     submit = SubmitField('Submit Challenge')
 
     def __init__(self, *args, **kwargs):

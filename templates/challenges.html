@@ -33,17 +33,14 @@
                         <h4 class="theme-modal-title text-lg font-semibold mb-2">Hints</h4>
                         <div id="hintsList">
                             {# Hints will be dynamically added here by JavaScript #}
-                            {# The structure below is a placeholder for what JS will generate #}
-                            {#
-                            <div class="hint-item mb-2 p-3 theme-modal-hint-item">
-                                <p class="theme-modal-description">Hint content goes here.</p>
-                            </div>
-                            <div class="hint-item mb-2 p-3 theme-modal-hint-item flex justify-between items-center">
-                                <span class="theme-modal-description">Cost: 50 pts</span>
-                                <button class="reveal-hint-btn theme-modal-button-primary font-bold py-1 px-3 rounded text-xs" data-hint-id="1">Reveal Hint</button>
-                            </div>
-                            #}
                         </div>
+                    </div>
+
+                    <div id="modalFilesSection" class="mt-4 pt-4 hidden" style="border-top: 1px solid var(--border-color);">
+                        <h4 class="theme-modal-title text-lg font-semibold mb-2">Attached Files</h4>
+                        <ul id="filesList" class="list-disc list-inside theme-modal-description">
+                            {# Files will be dynamically added here by JavaScript #}
+                        </ul>
                     </div>
 
                     {# Conditional forms based on challenge type #}

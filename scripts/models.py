@@ -315,6 +315,7 @@ class Challenge(db.Model):
     solution_verified = db.Column(db.Boolean, nullable=False, default=False)
     
     flags = db.relationship('ChallengeFlag', backref='challenge', lazy=True, cascade="all, delete-orphan")
+    files = db.relationship('ChallengeFile', backref='challenge', lazy=True, cascade="all, delete-orphan")
 
     @property
     def total_challenges(self):
@@ -619,6 +620,24 @@ class ChallengeFlag(db.Model):
 
     def __repr__(self):
         return f"ChallengeFlag(Challenge ID: {self.challenge_id}, Flag: '{self.flag_content}')"
+
+class ChallengeFile(db.Model):
+    """
+    Represents a file attached to a challenge.
+
+    Attributes:
+        id (int): Primary key.
+        challenge_id (int): Foreign key to the Challenge model.
+        filename (str): The original filename.
+        storage_filename (str): The filename as stored on disk (secure).
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    challenge_id = db.Column(db.Integer, db.ForeignKey('challenge.id'), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    storage_filename = db.Column(db.String(255), nullable=False)
+
+    def __repr__(self):
+        return f"ChallengeFile(Challenge ID: {self.challenge_id}, File: '{self.filename}')"
 
 class Submission(db.Model):
     """

@@ -5,7 +5,7 @@ It includes routes for managing categories, challenges, users, award categories,
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user, logout_user
 from scripts.extensions import db, get_setting
-from scripts.models import Category, Challenge, Submission, User, Setting, ChallengeFlag, FlagSubmission, AwardCategory, Award, FlagAttempt
+from scripts.models import Category, Challenge, Submission, User, Setting, ChallengeFlag, FlagSubmission, AwardCategory, Award, FlagAttempt, ChallengeFile
 from scripts.forms import CategoryForm, ChallengeForm, AdminSettingsForm, AwardCategoryForm, InlineGiveAwardForm, _get_timezone_choices
 from functools import wraps
 from sqlalchemy import func
@@ -16,6 +16,9 @@ from scripts.utils import make_datetime_timezone_aware
 import secrets # New: for generating API keys
 import hashlib # New: for hashing API keys
 from scripts.theme_utils import scan_themes, get_active_theme, set_active_theme # New: Import theme utilities
+import os
+import uuid
+from werkzeug.utils import secure_filename
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -423,6 +426,26 @@ def new_challenge():
             challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
             db.session.add(challenge_flag)
         
+        # Handle file uploads
+        if form.files.data:
+            upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'challenge_files')
+            if not os.path.exists(upload_folder):
+                os.makedirs(upload_folder)
+
+            for file in form.files.data:
+                if file.filename:
+                    original_filename = secure_filename(file.filename)
+                    extension = os.path.splitext(original_filename)[1]
+                    storage_filename = f"{uuid.uuid4().hex}{extension}"
+                    file.save(os.path.join(upload_folder, storage_filename))
+                    
+                    challenge_file = ChallengeFile(
+                        challenge_id=challenge.id,
+                        filename=original_filename,
+                        storage_filename=storage_filename
+                    )
+                    db.session.add(challenge_file)
+
         # Add hints
         for hint_form_data in form.hints.entries:
             hint = Hint(challenge_id=challenge.id,
@@ -555,6 +578,26 @@ def update_challenge(challenge_id):
             challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
             db.session.add(challenge_flag)
 
+        # Handle file uploads
+        if form.files.data:
+            upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'challenge_files')
+            if not os.path.exists(upload_folder):
+                os.makedirs(upload_folder)
+
+            for file in form.files.data:
+                if file.filename:
+                    original_filename = secure_filename(file.filename)
+                    extension = os.path.splitext(original_filename)[1]
+                    storage_filename = f"{uuid.uuid4().hex}{extension}"
+                    file.save(os.path.join(upload_folder, storage_filename))
+                    
+                    challenge_file = ChallengeFile(
+                        challenge_id=challenge.id,
+                        filename=original_filename,
+                        storage_filename=storage_filename
+                    )
+                    db.session.add(challenge_file)
+
         # Delete existing hints and add new ones
         Hint.query.filter_by(challenge_id=challenge.id).delete()
         for hint_form_data in form.hints.entries:
@@ -645,6 +688,29 @@ def delete_challenge(challenge_id):
     db.session.commit()
     flash('Challenge has been deleted!', 'success')
     return redirect(url_for('admin.manage_challenges'))
+
+@admin_bp.route('/challenge/file/<int:file_id>/delete', methods=['POST'])
+@admin_required
+def delete_challenge_file(file_id):
+    """
+    Handles the deletion of a challenge file.
+    """
+    file = ChallengeFile.query.get_or_404(file_id)
+    challenge_id = file.challenge_id
+    
+    # Remove file from disk
+    try:
+        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'challenge_files', file.storage_filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+    except Exception as e:
+        current_app.logger.error(f"Error deleting file {file.storage_filename}: {e}")
+        flash(f'Error deleting file from disk: {e}', 'warning')
+
+    db.session.delete(file)
+    db.session.commit()
+    flash('File deleted successfully!', 'success')
+    return redirect(url_for('admin.update_challenge', challenge_id=challenge_id))
 
 @admin_bp.route('/submissions')
 @admin_required
@@ -1060,8 +1126,6 @@ def analytics():
                            all_challenges=all_challenges,
                            user_challenge_status=user_challenge_status)
 
-from werkzeug.utils import secure_filename
-import os
 from scripts.import_export import import_challenges_from_yaml, import_categories_from_yaml
 
 @admin_bp.route('/docs/dynamic_flags')

@@ -111,217 +111,169 @@ document.addEventListener('DOMContentLoaded', function() {
                             currentChallengeLanguage = data.language || 'python';
                             currentChallengeType = 'CODING';
 
-                            const modeInfo = getCodeMirrorMode(currentChallengeLanguage);
+                                                        loadCodeMirrorMode(modeInfo, () => {
 
-                                                                                                                loadCodeMirrorMode(modeInfo, () => {
+                                                            if (codeEditor && typeof CodeMirror !== 'undefined') { // Ensure codeEditor and CodeMirror are available
 
-                                                                                                                    if (codeEditor && typeof CodeMirror !== 'undefined') { // Ensure codeEditor and CodeMirror are available
+                                                                if (!codeMirrorEditor) {
 
-                                                                                                                        if (!codeMirrorEditor) {
+                                                                    codeMirrorEditor = CodeMirror.fromTextArea(codeEditor, {
 
-                                                                                                                            codeMirrorEditor = CodeMirror.fromTextArea(codeEditor, {
+                                                                        lineNumbers: true,
 
-                                                                                                                                lineNumbers: true,
+                                                                        mode: modeInfo.mode,
 
-                                                                                                                                mode: modeInfo.mode,
+                                                                        theme: "dracula",
 
-                                                                                                                                theme: "dracula",
+                                                                        indentUnit: 4,
 
-                                                                                                                                indentUnit: 4,
+                                                                        tabSize: 4,
 
-                                                                                                                                tabSize: 4,
+                                                                        indentWithTabs: false,
 
-                                                                                                                                indentWithTabs: false,
+                                                                        viewportMargin: Infinity,
 
-                                                                                                                                viewportMargin: Infinity,
+                                                                        fullScreen: false // Ensure CodeMirror is NOT fullscreen by default
 
-                                                                                                                                fullScreen: false // Ensure CodeMirror is NOT fullscreen by default
+                                                                    });
 
-                                                                                                                            });
+                                                                    codeMirrorEditor.getWrapperElement().classList.add('codemirror-themed-input');
 
-                                                                                                                            codeMirrorEditor.getWrapperElement().classList.add('codemirror-themed-input');
+                                                                    
 
-                                                                                                                            
+                                                                    // Dynamically create and append fullscreen button
 
-                                                                                                                            // Dynamically create and append fullscreen button
+                                                                    const fullscreenButton = document.createElement('button');
 
-                                                                                                                            const fullscreenButton = document.createElement('button');
+                                                                    fullscreenButton.innerHTML = `
 
-                                                                                                                            fullscreenButton.innerHTML = `
+                                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 
-                                                                                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
 
-                                                                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                                                                    </svg>
 
-                                                                                                                            </svg>
+                                                                    `;
 
-                                                                                                                            `;
+                                                                    fullscreenButton.title = "Enter Fullscreen (F11)";
 
-                                                                                                                            fullscreenButton.title = "Enter Fullscreen (F11)";
+                                                                    fullscreenButton.className = "CodeMirror-fullscreen-button-custom absolute top-2 right-2 p-1 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white z-10";
 
-                                                                                                                            fullscreenButton.className = "CodeMirror-fullscreen-button-custom absolute top-2 right-2 p-1 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white z-10";
+                                                                    
 
-                                                                                                                            
+                                                                    fullscreenButton.addEventListener('click', (event) => {
 
-                                                                                                                            fullscreenButton.addEventListener('click', (event) => {
+                                                                        event.preventDefault();
 
-                                                                                                                                event.preventDefault();
+                                                                        codeMirrorEditor.setOption("fullScreen", !codeMirrorEditor.getOption("fullScreen"));
 
-                                                                                                                                codeMirrorEditor.setOption("fullScreen", !codeMirrorEditor.getOption("fullScreen"));
+                                                                    });
 
-                                                                                                                            });
+                                                                    codeMirrorEditor.getWrapperElement().appendChild(fullscreenButton);
 
-                                                                                                                            codeMirrorEditor.getWrapperElement().appendChild(fullscreenButton);
+                                                                    
 
-                                                                                                                            
+                                                                    // Add an event listener to update the button icon when fullscreen state changes
 
-                                                                                                                            // Add an event listener to update the button icon when fullscreen state changes
+                                                                    codeMirrorEditor.on('optionChange', (cm, option) => {
 
-                                                                                                                            codeMirrorEditor.on('optionChange', (cm, option) => {
+                                                                        if (option === 'fullScreen') {
 
-                                                                                                                                if (option === 'fullScreen') {
+                                                                            if (cm.getOption("fullScreen")) {
 
-                                                                                                                                    if (cm.getOption("fullScreen")) {
+                                                                                fullscreenButton.innerHTML = `Exit`;
 
-                                                                                                                                        fullscreenButton.innerHTML = `Exit`;
+                                                                                fullscreenButton.title = "Exit Fullscreen (Esc)";
 
-                                                                                                                                        fullscreenButton.title = "Exit Fullscreen (Esc)";
+                                                                                fullscreenButton.classList.add('text-lg', 'px-3'); // Make it bigger and more visible
 
-                                                                                                                                        fullscreenButton.classList.add('text-lg', 'px-3'); // Make it bigger and more visible
+                                                                            } else {
 
-                                                                                                                                    } else {
+                                                                                fullscreenButton.innerHTML = `
 
-                                                                                                                                        fullscreenButton.innerHTML = `
+                                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 
-                                                                                                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
 
-                                                                                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                                                                                    </svg>
 
-                                                                                                                                            </svg>
+                                                                                `;
 
-                                                                                                                                        `;
+                                                                                fullscreenButton.title = "Enter Fullscreen (F11)";
 
-                                                                                                                                        fullscreenButton.title = "Enter Fullscreen (F11)";
+                                                                                fullscreenButton.classList.remove('text-lg', 'px-3');
 
-                                                                                                                                        fullscreenButton.classList.remove('text-lg', 'px-3');
+                                                                            }
 
-                                                                                                                                    }
+                                                                        }
 
-                                                                                                                                }
+                                                                    });
 
-                                                                                                                            });
+                                                                } else {
 
-                                                                                                                        } else {
+                                                                    // If editor already exists, just update its mode
 
-                                                                                                                            // If editor already exists, just update its mode
+                                                                    codeMirrorEditor.setOption('mode', modeInfo.mode);
 
-                                                                                                                            codeMirrorEditor.setOption('mode', modeInfo.mode);
+                                                                }
 
-                                                                                                                        }
+                                                                
 
-                                                                                                                        
+                                                                // All operations below this line are guaranteed to have a valid codeMirrorEditor
 
-                                                                                                                                                            // All operations below this line are guaranteed to have a valid codeMirrorEditor
+                                                                codeMirrorEditor.getWrapperElement().classList.add('codemirror-themed-input');
 
-                                                                                                                        
+                                                                
 
-                                                                                                                                                            codeMirrorEditor.getWrapperElement().classList.add('codemirror-themed-input');
+                                                                const savedCode = localStorage.getItem(`challenge_code_${currentChallengeId}`);
 
-                                                                                                                        
+                                                                if (savedCode) {
 
-                                                                                                                                                            
+                                                                    codeMirrorEditor.setValue(savedCode);
 
-                                                                                                                        
+                                                                } else {
 
-                                                                                                                                                            const savedCode = localStorage.getItem(`challenge_code_${currentChallengeId}`);
+                                                                    codeMirrorEditor.setValue(data.starter_code || '');
 
-                                                                                                                        
+                                                                }
 
-                                                                                                                                                            if (savedCode) {
+                            
 
-                                                                                                                        
+                                                                if (isCompleted) {
 
-                                                                                                                                                                codeMirrorEditor.setValue(savedCode);
+                                                                    codeMirrorEditor.setOption('readOnly', true);
 
-                                                                                                                        
+                                                                    modalRunCodeButton.disabled = true;
 
-                                                                                                                                                            } else {
+                                                                    modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
 
-                                                                                                                        
+                                                                    modalChallengeStatus.textContent = 'You have already completed this coding challenge!';
 
-                                                                                                                                                                codeMirrorEditor.setValue(data.starter_code || '');
+                                                                    modalChallengeStatus.classList.remove('hidden');
 
-                                                                                                                        
+                                                                    // Clear saved code from localStorage if challenge is completed
 
-                                                                                                                                                            }
+                                                                    localStorage.removeItem(`challenge_code_${currentChallengeId}`);
 
-                                                                                                                        
+                                                                } else {
 
-                                                                                                                        
+                                                                    codeMirrorEditor.setOption('readOnly', false);
 
-                                                                                                                        
+                                                                    modalRunCodeButton.disabled = false;
 
-                                                                                                                                                            if (isCompleted) {
+                                                                    modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
 
-                                                                                                                        
+                                                                }
 
-                                                                                                                                                                codeMirrorEditor.setOption('readOnly', true);
+                                                                codeMirrorEditor.refresh();
 
-                                                                                                                        
+                                                            } else {
 
-                                                                                                                                                                modalRunCodeButton.disabled = true;
+                                                                console.error('CodeMirror editor or textarea not available for initialization.');
 
-                                                                                                                        
+                                                            }
 
-                                                                                                                                                                modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
-
-                                                                                                                        
-
-                                                                                                                                                                modalChallengeStatus.textContent = 'You have already completed this coding challenge!';
-
-                                                                                                                        
-
-                                                                                                                                                                modalChallengeStatus.classList.remove('hidden');
-
-                                                                                                                        
-
-                                                                                                                                                                // Clear saved code from localStorage if challenge is completed
-
-                                                                                                                        
-
-                                                                                                                                                                localStorage.removeItem(`challenge_code_${currentChallengeId}`);
-
-                                                                                                                        
-
-                                                                                                                                                            } else {
-
-                                                                                                                        
-
-                                                                                                                                                                codeMirrorEditor.setOption('readOnly', false);
-
-                                                                                                                        
-
-                                                                                                                                                                modalRunCodeButton.disabled = false;
-
-                                                                                                                        
-
-                                                                                                                                                                modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
-
-                                                                                                                        
-
-                                                                                                                                                            }
-
-                                                                                                                        
-
-                                                                                                                                                            codeMirrorEditor.refresh();
-
-                                                                                                                    } else {
-
-                                                                                                                        console.error('CodeMirror editor or textarea not available for initialization.');
-
-                                                                                                                    }
-
-                                                                                                                });
+                                                        });
 
                         } else {
                             flagSubmissionSection.classList.remove('hidden');
@@ -402,6 +354,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         } else {
                             document.getElementById('modalHintsSection').classList.add('hidden');
                             hintsList.innerHTML = '';
+                        }
+
+                        // Files Section
+                        const filesList = document.getElementById('filesList');
+                        const modalFilesSection = document.getElementById('modalFilesSection');
+                        if (data.files && data.files.length > 0) {
+                            filesList.innerHTML = '';
+                            modalFilesSection.classList.remove('hidden');
+                            data.files.forEach(file => {
+                                const li = document.createElement('li');
+                                li.innerHTML = `<a href="${file.download_url}" class="text-blue-400 hover:text-blue-300 underline" download>${file.filename}</a>`;
+                                filesList.appendChild(li);
+                            });
+                        } else {
+                            modalFilesSection.classList.add('hidden');
+                            filesList.innerHTML = '';
                         }
     
                         if (currentChallengeType === 'FLAG') {

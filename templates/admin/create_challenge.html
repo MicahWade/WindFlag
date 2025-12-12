@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <div class="max-w-md mx-auto theme-card p-8 rounded-lg shadow-lg">
-        <form method="POST" action="" class="space-y-4">
+        <form method="POST" action="" class="space-y-4" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
             {{ form.solution_verified(id="solution_verified") }}
 
@@ -362,6 +362,36 @@
                     </div>
                     <button type="button" id="add-hint-button" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-4">Add Hint</button>
                 </fieldset>
+
+                <fieldset class="border-t border-gray-700 pt-4 mt-4">
+                    <legend class="text-xl font-bold text-gray-100 mb-4">Challenge Files</legend>
+                    <div class="mb-4">
+                        {{ form.files.label(class="block text-gray-300 text-sm font-bold mb-2") }}
+                        {{ form.files(class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline", multiple=True) }}
+                        {% if form.files.errors %}
+                            <p class="text-red-400 text-xs italic">
+                                {% for error in form.files.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    {% if challenge and challenge.files %}
+                        <div class="mb-4">
+                            <label class="block text-gray-300 text-sm font-bold mb-2">Existing Files</label>
+                            <ul class="list-disc list-inside text-gray-300">
+                                {% for file in challenge.files %}
+                                    <li class="flex items-center justify-between mb-2">
+                                        <span>{{ file.filename }}</span>
+                                        <button type="submit" formaction="{{ url_for('admin.delete_challenge_file', file_id=file.id) }}" class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline">Delete</button>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                </fieldset>
+
                 <div class="mb-4">
                     {{ form.category.label(class="block text-gray-300 text-sm font-bold mb-2") }}
                     {% if form.category.errors %}

@@ -111,7 +111,7 @@ def create_app(config_class=Config):
     # Note: Flask-RESTX Api is initialized within scripts/api_routes.py
     # and its blueprint (api_bp) is registered here.
 
-    from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission, Award, AwardCategory, FlagAttempt, Hint, UserHint, ApiKey # Import FlagAttempt, Hint, UserHint, ApiKey
+    from scripts.models import User, Category, Challenge, Submission, ChallengeFlag, FlagSubmission, Award, AwardCategory, FlagAttempt, Hint, UserHint, ApiKey, ChallengeFile # Import FlagAttempt, Hint, UserHint, ApiKey
     from scripts.code_execution import execute_code_in_sandbox # New: Import for coding challenges
     from flask import send_from_directory # Import send_from_directory
     import mimetypes # Import mimetypes
@@ -452,6 +452,28 @@ def create_app(config_class=Config):
         # Redirect to the challenges page with the challenge_id as a query parameter
         # The frontend JS (challenges.js) will pick this up and open the modal
         return redirect(url_for('challenges', challenge_id=challenge.id))
+
+    @app.route('/download_file/<int:file_id>')
+    @login_required
+    def download_challenge_file(file_id):
+        """
+        Allows users to download a file attached to a challenge.
+        Checks if the challenge is unlocked for the user.
+        """
+        file = ChallengeFile.query.get_or_404(file_id)
+        challenge = Challenge.query.get_or_404(file.challenge_id)
+        
+        # Build cache for unlock check
+        user_completed_challenges_cache = {
+            current_user.id: {sub.challenge_id for sub in current_user.submissions}
+        }
+        
+        if not challenge.is_unlocked_for_user(current_user, user_completed_challenges_cache):
+             flash('You do not have permission to access this file.', 'danger')
+             return redirect(url_for('challenges'))
+
+        directory = os.path.join(current_app.config['UPLOAD_FOLDER'], 'challenge_files')
+        return send_from_directory(directory, file.storage_filename, as_attachment=True, download_name=file.filename)
 
 
     # The calculate_points function is now integrated into the Challenge model as a property.
@@ -796,6 +818,14 @@ def create_app(config_class=Config):
                     'cost': hint.cost,
                     'is_revealed': hint.id in revealed_hint_ids
                 })
+
+            files_data = []
+            for file in challenge.files:
+                files_data.append({
+                    'id': file.id,
+                    'filename': file.filename,
+                    'download_url': url_for('download_challenge_file', file_id=file.id)
+                })
             
             # Get completion status and flag counts
             is_completed = Submission.query.filter_by(user_id=current_user.id, challenge_id=challenge.id).first() is not None
@@ -813,6 +843,7 @@ def create_app(config_class=Config):
                 'submitted_flags_count': submitted_flags_count,
                 'total_flags': total_flags,
                 'hints': hints_data,
+                'files': files_data, # New: Include files
                 'current_user_score': current_user.score, # Pass current user's score for client-side checks
                 'language': challenge.language, # New: Pass challenge language for CodeMirror
                 'starter_code': challenge.starter_code # New: Pass starter code for CodeMirror
