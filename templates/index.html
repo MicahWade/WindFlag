@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
     <div class="container mx-auto px-4 py-8">
-        <!-- Welcome Section -->
-        <section class="bg-gray-800 p-8 rounded-lg shadow-lg text-center mb-12">
+        <div class="max-w-4xl mx-auto">
+            <!-- Welcome Section -->
+            <section class="bg-gray-800 p-8 rounded-lg shadow-lg text-center mb-12">
             <h1 class="text-4xl font-extrabold text-gray-100 mb-4">Welcome to {{ config['APP_NAME'] }}!</h1>
             <p class="text-gray-300 text-lg mb-6">Dive into the thrilling world of Capture The Flag challenges and sharpen your cybersecurity skills.</p>
             <a href="/register" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full transition duration-300 ease-in-out transform hover:scale-105">Get Started Now!</a>
@@ -81,5 +82,6 @@
             <p>&copy; 2025 {{ config['APP_NAME'] }}. All rights reserved. | <a href="#" class="text-blue-400 hover:underline">Privacy Policy</a> | <a href="#" class="text-blue-400 hover:underline">Terms of Service</a></p>
         </section>
         {% endif %}
+        </div> <!-- Closing tag for max-w-4xl mx-auto div -->
     </div>
 {% endblock content %}
