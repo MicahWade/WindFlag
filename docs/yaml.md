@@ -85,9 +85,10 @@ The YAML file should contain a top-level key `challenges`, which is a list of ch
     *   `CODING`: A challenge where user-submitted code is executed and evaluated against expected output.
 *   **`language`** (string, optional): Required if `challenge_type` is `CODING`. The programming language expected for the user-submitted code (e.g., `python3`, `nodejs`, `bash`, `dart`, `haskell`).
 *   **`starter_code`** (string, optional): Optional starter code to display to the user for `CODING` challenges.
-*   **`expected_output`** (string, optional): Required if `challenge_type` is `CODING`. The expected standard output (stdout) from the user's code for it to be considered solved.
 *   **`setup_code`** (string, optional): Optional setup code/commands to run in the sandbox before the user's code for `CODING` challenges.
-*   **`test_case_input`** (string, optional): Optional input to provide to the user's code via stdin for `CODING` challenges.
+*   **`test_cases`** (list of objects, optional): Required if `challenge_type` is `CODING`. A list of test case objects for the challenge.
+    *   **`input_data`** (string, optional): Optional input to provide to the user's code via stdin for this specific test case.
+    *   **`expected_output`** (string, required): The expected standard output (stdout) from the user's code for this specific test case.
 *   **`hint_cost`** (integer, optional): The default points deducted from a user's score when they reveal any hint associated with this challenge. This global cost applies if individual hints do not specify their own `cost`. Defaults to `0` (hints are free).
 *   **`prerequisites`** (list of strings, optional): A list of challenge names (exact `name` strings) that must be solved by the user before this challenge becomes available. If specified, the `unlock_type` for this challenge will be internally set to `CHALLENGE_SOLVED`. This helps in creating dependency chains between challenges.
 *   **`hints`** (list of objects, optional): A list of hint objects for the challenge, providing progressive assistance to users.
@@ -143,9 +144,10 @@ challenges:
 
       if __name__ == "__main__":
           solve()
-    expected_output: "30"
     setup_code: ""
-    test_case_input: "10\n20"
+    test_cases:
+      - input_data: "10\n20"
+        expected_output: "30"
     multi_flag_type: SINGLE # Coding challenges are usually single "flag" (solution)
     flags: [] # No flags needed for coding challenges
 

@@ -41,7 +41,7 @@ python app.py -admin <username> <password>
 *   **CTF Core**: Jeopardy-style challenges, dynamic scoring, categories, and real-time scoreboard.
 *   **Flag Types**: Single, Multiple (Any/All), N-of-M, and Regex/Dynamic support.
 *   **File Downloads**: Admins can attach files to challenges for users to download.
-*   **Code Execution**: Integrated editor and secure sandbox (Bubblewrap) for Python, Bash, Node.js, etc.
+*   **Code Execution**: Integrated editor and secure sandbox (Bubblewrap) for Python, Bash, Node.js, etc., supporting multiple test cases.
 *   **Analytics**: Detailed charts for user progress, submission stats, and challenge difficulty.
 *   **Import/Export**: Manage challenges via YAML or API. [See YAML Docs](docs/yaml.md).
 *   **Themes**: Modern UI with multiple built-in themes (Cyberdeck, Retro, Dark, etc.).

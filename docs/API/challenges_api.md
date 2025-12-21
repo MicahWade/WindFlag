@@ -40,6 +40,13 @@ Creates a new challenge within the CTF platform.
     *   **`unlock_date_time`** (string, ISO 8601, optional): UTC datetime for timed unlock.
     *   **`dynamic_flag_api_url`** (string, optional): URL for the external dynamic flag service if `multi_flag_type` is `DYNAMIC` or `HTTP`.
     *   **`dynamic_flag_api_key`** (string, optional): API key for the external dynamic flag service if `multi_flag_type` is `DYNAMIC` or `HTTP`.
+    *   **`challenge_type`** (string, optional): The type of challenge. Defaults to `FLAG`. `FLAG` or `CODING`.
+    *   **`language`** (string, optional): Required if `challenge_type` is `CODING`. E.g., `python3`, `nodejs`, `bash`.
+    *   **`starter_code`** (string, optional): Optional starter code for `CODING` challenges.
+    *   **`setup_code`** (string, optional): Optional setup code/commands for `CODING` challenges.
+    *   **`test_cases`** (array of objects, optional): Required if `challenge_type` is `CODING`. A list of test case objects.
+        *   `input_data` (string, optional): Input for the user's code via stdin.
+        *   `expected_output` (string, required): Expected standard output (stdout) from the user's code.
     *   **`hints`** (array of objects, optional): A list of hint objects. Each object should have:
         *   `title` (string, required): Hint title.
         *   `content` (string, required): Hint text.
@@ -64,6 +71,29 @@ Creates a new challenge within the CTF platform.
         "minimum_points": 50,
         "hints": [
             {"title": "Web Hint 1", "content": "Check the source code.", "cost": 25}
+        ],
+        "is_hidden": false
+    }
+    ```
+*   **Example Request (Coding Challenge)**:
+    ```http
+    POST /api/challenges HTTP/1.1
+    Host: your-ctf-platform.com
+    X-API-KEY: YOUR_ADMIN_API_KEY
+    Content-Type: application/json
+
+    {
+        "name": "API Created Sum Challenge",
+        "description": "Write a function to sum two numbers.",
+        "points": 100,
+        "category_id": 2,
+        "challenge_type": "CODING",
+        "language": "python3",
+        "starter_code": "def add(a, b):\n    return a + b",
+        "setup_code": "",
+        "test_cases": [
+            {"input_data": "10\n20", "expected_output": "30"},
+            {"input_data": "5\n-3", "expected_output": "2"}
         ],
         "is_hidden": false
     }
@@ -261,7 +291,11 @@ Retrieves full details for a single challenge.
         "current_points": 230,     // Current points for the challenge after decay
         "first_blood_user": "some_ctf_player",
         "created_at": "2025-11-24T10:00:00Z",
-        "updated_at": "2025-11-24T11:00:00Z"
+        "updated_at": "2025-11-24T11:00:00Z",
+        "test_cases": [
+            {"id": 1, "input_data": "10\\n20", "expected_output": "30", "order": 0},
+            {"id": 2, "input_data": "5\\n-3", "expected_output": "2", "order": 1}
+        ]
     }
     ```
     *   **`id`** (integer): Unique identifier for the challenge.
@@ -289,6 +323,11 @@ Retrieves full details for a single challenge.
         *   `content` (string, null): Content of the hint. `null` if not yet revealed by the authenticated user.
         *   `cost` (integer): Cost to reveal this hint.
         *   `is_revealed` (boolean): `true` if the authenticated user has revealed this hint.
+    *   **`test_cases`** (array of objects): List of test case objects for coding challenges.
+        *   `id` (integer): ID of the test case.
+        *   `input_data` (string, null): Input data for the test case.
+        *   `expected_output` (string): Expected output for the test case.
+        *   `order` (integer): Execution order of the test case.
     *   **`prerequisites_met`** (boolean): `true` if the authenticated user has met all prerequisites for this challenge.
     *   **`is_solved`** (boolean): `true` if the authenticated user has solved this challenge.
     *   **`is_unlocked`** (boolean): `true` if the authenticated user can currently access this challenge.
@@ -331,6 +370,7 @@ Updates an existing challenge with new information.
     *   `challenge_id` (integer, required): The unique ID of the challenge to update.
 *   **Request Body**: `application/json`. The body should contain a JSON object with the fields to update. All fields listed under `POST /api/challenges` can be used here, but only those provided will be modified.
     *   **Updating Flags**: If the `flags` field is included in the request body, all existing flags for the specified challenge will be deleted and replaced with the new flags provided in the array. If `flags` is omitted, existing flags remain unchanged.
+    *   **Updating Test Cases**: If the `test_cases` field is included in the request body, all existing test cases for the specified challenge will be deleted and replaced with the new test cases provided in the array. If `test_cases` is omitted, existing test cases remain unchanged.
 *   **Example Request (Partial Update)**:
     ```http
     PUT /api/challenges/101 HTTP/1.1
@@ -471,27 +511,73 @@ Allows an authenticated user to submit a flag or code for a challenge.
 *   **Example Response (Success - 200 OK - Correct Flag/Code)**:
     ```json
     {
-        "message": "Flag submitted successfully! Challenge solved!",
+        "message": "Challenge solved! All test cases passed.",
         "is_correct": true,
-        "new_score": 1500,
-        "points_earned": 230,
-        "stdout": "Hello, world!",
-        "stderr": ""
+        "success": true,
+        "test_case_results": [
+            {
+                "test_case_id": 1,
+                "input_data": "10\\n20",
+                "expected_output": "30",
+                "actual_output": "30",
+                "passed": true,
+                "error_message": null,
+                "is_timeout": false,
+                "stderr": ""
+            },
+            {
+                "test_case_id": 2,
+                "input_data": "5\\n-3",
+                "expected_output": "2",
+                "actual_output": "2",
+                "passed": true,
+                "error_message": null,
+                "is_timeout": false,
+                "stderr": ""
+            }
+        ]
     }
     ```
     *   `message`: A message indicating the result of the submission.
-    *   `is_correct` (boolean): `true` if the flag/code was correct, `false` otherwise.
-    *   `new_score` (integer): The user's updated total score after the submission.
-    *   `points_earned` (integer): The points gained from this particular submission (relevant for correct flags/code).
-    *   `stdout` (string, optional): The standard output of the executed code (for coding challenges).
-    *   `stderr` (string, optional): The standard error of the executed code (for coding challenges).
+    *   `is_correct` (boolean): `true` if the flag/code was correct, `false` otherwise (overall for coding challenges).
+    *   `success` (boolean): `true` if all test cases passed, `false` otherwise.
+    *   `test_case_results` (array of objects): Detailed results for each test case.
+        *   `test_case_id` (integer): ID of the test case.
+        *   `input_data` (string, null): Input provided to the code.
+        *   `expected_output` (string): Expected output for the test case.
+        *   `actual_output` (string): Actual output from the user's code.
+        *   `passed` (boolean): `true` if this specific test case passed, `false` otherwise.
+        *   `error_message` (string, null): Any error message if the test case failed.
+        *   `is_timeout` (boolean): `true` if the code timed out for this test case.
+        *   `stderr` (string): Standard error output for this test case.
 *   **Example Response (Success - 200 OK - Incorrect Flag/Code)**:
     ```json
     {
-        "message": "Incorrect flag. Try again!",
+        "message": "Some test cases failed.",
         "is_correct": false,
-        "stdout": "Your code produced incorrect output.",
-        "stderr": ""
+        "success": false,
+        "test_case_results": [
+            {
+                "test_case_id": 1,
+                "input_data": "10\\n20",
+                "expected_output": "30",
+                "actual_output": "30",
+                "passed": true,
+                "error_message": null,
+                "is_timeout": false,
+                "stderr": ""
+            },
+            {
+                "test_case_id": 2,
+                "input_data": "5\\n-3",
+                "expected_output": "2",
+                "actual_output": "4",
+                "passed": false,
+                "error_message": "Output mismatch",
+                "is_timeout": false,
+                "stderr": ""
+            }
+        ]
     }
     ```
 *   **Example Response (Error - 400 Bad Request - Missing fields)**:

@@ -56,9 +56,9 @@ A challenge that requires the user to write code (e.g., Python) to solve a probl
     - `FLAG`: Standard CTF challenge requiring a text flag.
     - `CODING`: Challenge requiring code submission, executed against a test case.
 - **`language`** (string, optional): Required if `challenge_type` is `CODING`. The programming language expected for the user-submitted code (e.g., `python3`, `nodejs`, `bash`).
-- **`test_case_input`** (string, optional): Optional input to provide to the user's code via stdin for `CODING` challenges.
-- **`expected_output`** (string, optional): Required if `challenge_type` is `CODING`. The expected standard output (stdout) from the user's code.
-- **`starter_code`** (string, optional): Optional starter code to display to the user for `CODING` challenges.
+- **`test_cases`** (list of objects, optional): Required if `challenge_type` is `CODING`. A list of test case objects for the challenge.
+  - **`input_data`** (string, optional): Optional input to provide to the user's code via stdin for this specific test case.
+  - **`expected_output`** (string, required): The expected standard output (stdout) from the user's code for this specific test case.
 
 ```yaml
 challenges:
@@ -68,8 +68,11 @@ challenges:
     points: 200
     challenge_type: "CODING"
     language: "python3"
-    test_case_input: "5\n7"    # Input fed to the user's script
-    expected_output: "12"      # Expected stdout from the user's script
+    test_cases:
+      - input_data: "5\n7"    # Input fed to the user's script for Test Case 1
+        expected_output: "12"      # Expected stdout from the user's script for Test Case 1
+      - input_data: "10\n-3"   # Input fed to the user's script for Test Case 2
+        expected_output: "7"       # Expected stdout from the user's script for Test Case 2
     starter_code: |
       import sys
       
