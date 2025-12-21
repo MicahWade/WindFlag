@@ -4,7 +4,7 @@ This module defines the API routes and functions for the WindFlag CTF platform.
 from flask import Blueprint, request, jsonify, g
 from flask_login import current_user, login_required
 from scripts.extensions import db
-from scripts.models import Challenge, Category, ChallengeFlag, Submission, User, AwardCategory, Setting, CHALLENGE_TYPES, UserHint, FlagSubmission
+from scripts.models import Challenge, Category, ChallengeFlag, Submission, User, AwardCategory, Setting, CHALLENGE_TYPES, UserHint, FlagSubmission, TestCase
 from scripts.utils import api_key_required
 from scripts.code_execution import execute_code_in_sandbox, CodeExecutionResult
 from functools import wraps
@@ -208,34 +208,28 @@ def create_challenge():
         challenge_type=data.get('challenge_type', 'FLAG'),
         language=data.get('language'),
         starter_code=data.get('starter_code'),
-        expected_output=data.get('expected_output'),
-        setup_code=data.get('setup_code'),
-        test_case_input=data.get('test_case_input')
+        setup_code=data.get('setup_code')
     )
     db.session.add(challenge)
-    db.session.commit()
+    db.session.commit() # Commit challenge first to get its ID
+
+    if 'test_cases' in data and isinstance(data['test_cases'], list):
+        for i, tc_data in enumerate(data['test_cases']):
+            test_case = TestCase(
+                challenge_id=challenge.id,
+                input_data=tc_data.get('input_data'),
+                expected_output=tc_data.get('expected_output'),
+                order=i
+            )
+            db.session.add(test_case)
+        db.session.commit() # Commit all test cases
 
     if 'flags' in data and isinstance(data['flags'], list):
         for flag_content in data['flags']:
             challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
             db.session.add(challenge_flag)
-        db.session.commit()
+        db.session.commit() # Commit all flags
 
-        return jsonify({
-
-            'message': 'Challenge created successfully',
-
-            'challenge': {
-
-                'id': challenge.id,
-
-                'name': challenge.name
-
-            }
-
-        }), 201
-
-    db.session.commit()
     return jsonify({
         'message': 'Challenge created successfully',
         'challenge': {
@@ -392,7 +386,8 @@ def get_challenge(challenge_id):
         'challenge_type': challenge.challenge_type,
         'language': challenge.language,
         'starter_code': challenge.starter_code,
-        'flags': [{'id': f.id, 'content': f.flag_content} for f in challenge.flags]
+        'flags': [{'id': f.id, 'content': f.flag_content} for f in challenge.flags],
+        'test_cases': [{'id': tc.id, 'input_data': tc.input_data, 'expected_output': tc.expected_output, 'order': tc.order} for tc in sorted(challenge.test_cases, key=lambda tc: tc.order)]
     })
 
 
@@ -407,7 +402,7 @@ def update_challenge_api(challenge_id):
     if not data:
         return jsonify({'message': 'Request body must be JSON'}), 400
 
-    for field in ['name', 'description', 'points', 'category_id', 'case_sensitive', 'multi_flag_type', 'multi_flag_threshold', 'point_decay_type', 'point_decay_rate', 'proactive_decay', 'minimum_points', 'unlock_type', 'prerequisite_percentage_value', 'prerequisite_count_value', 'prerequisite_count_category_ids', 'prerequisite_challenge_ids', 'unlock_date_time', 'unlock_point_reduction_type', 'unlock_point_reduction_value', 'unlock_point_reduction_target_date', 'is_hidden', 'has_dynamic_flag', 'challenge_type', 'language', 'starter_code', 'expected_output', 'setup_code', 'test_case_input']:
+    for field in ['name', 'description', 'points', 'category_id', 'case_sensitive', 'multi_flag_type', 'multi_flag_threshold', 'point_decay_type', 'point_decay_rate', 'proactive_decay', 'minimum_points', 'unlock_type', 'prerequisite_percentage_value', 'prerequisite_count_value', 'prerequisite_count_category_ids', 'prerequisite_challenge_ids', 'unlock_date_time', 'unlock_point_reduction_type', 'unlock_point_reduction_value', 'unlock_point_reduction_target_date', 'is_hidden', 'has_dynamic_flag', 'challenge_type', 'language', 'starter_code', 'setup_code']:
         if field in data:
             setattr(challenge, field, data[field])
 
@@ -417,6 +412,21 @@ def update_challenge_api(challenge_id):
             challenge_flag = ChallengeFlag(challenge_id=challenge.id, flag_content=flag_content)
             db.session.add(challenge_flag)
 
+    # Handle test cases
+    if 'test_cases' in data and isinstance(data['test_cases'], list):
+        # Delete existing test cases
+        TestCase.query.filter_by(challenge_id=challenge.id).delete()
+        
+        # Add new test cases
+        for i, tc_data in enumerate(data['test_cases']):
+            test_case = TestCase(
+                challenge_id=challenge.id,
+                input_data=tc_data.get('input_data'),
+                expected_output=tc_data.get('expected_output'),
+                order=i
+            )
+            db.session.add(test_case)
+
     db.session.commit()
     return jsonify({'message': 'Challenge updated successfully'})
 
@@ -424,49 +434,74 @@ def update_challenge_api(challenge_id):
 @login_required
 def verify_coding_challenge():
     """
-    Verifies a coding challenge solution for administrators.
+    Verifies a coding challenge's reference solution against its defined test cases for administrators.
     """
     if not current_user.is_admin:
         return jsonify({'message': 'Administrator access required'}), 403
 
     data = request.get_json()
-    if not data:
-        return jsonify({'message': 'Request body must be JSON'}), 400
+    if not data or 'challenge_id' not in data:
+        return jsonify({'message': 'Request body must be JSON and include "challenge_id"'}), 400
 
-    required_fields = ['language', 'setup_code', 'test_case_input', 'reference_solution', 'expected_output']
-    if not all(field in data for field in required_fields):
-        return jsonify({'message': 'Missing required fields for verification'}), 400
+    challenge_id = data['challenge_id']
+    challenge = Challenge.query.get_or_404(challenge_id)
 
-    language = data['language']
-    setup_code = data['setup_code']
-    test_case_input = data['test_case_input']
-    reference_solution = data['reference_solution']
-    expected_output = data['expected_output']
+    if challenge.challenge_type != 'CODING':
+        return jsonify({'message': 'This is not a coding challenge.'}), 400
+    
+    if not challenge.reference_solution:
+        return jsonify({'message': 'No reference solution defined for this challenge.'}), 400
 
-    # Execute the reference solution in the sandbox
-    execution_result = execute_code_in_sandbox(
-        language=language,
-        code=reference_solution,
-        setup_code=setup_code,
-        test_case_input=test_case_input,
-        expected_output=expected_output # Pass expected output for direct comparison
-    )
-    if execution_result.success:
+    test_cases = challenge.test_cases
+    if not test_cases:
+        return jsonify({'message': 'No test cases defined for this coding challenge.'}), 400
+
+    all_test_cases_passed = True
+    test_case_results = []
+
+    sorted_test_cases = sorted(test_cases, key=lambda tc: tc.order)
+
+    for test_case in sorted_test_cases:
+        execution_result = execute_code_in_sandbox(
+            language=challenge.language,
+            code=challenge.reference_solution,
+            expected_output=test_case.expected_output,
+            setup_code=challenge.setup_code,
+            test_case_input=test_case.input_data,
+        )
+
+        test_case_passed = execution_result.success
+        if not test_case_passed:
+            all_test_cases_passed = False
+
+        test_case_results.append({
+            'test_case_id': test_case.id,
+            'input_data': test_case.input_data,
+            'expected_output': test_case.expected_output,
+            'actual_output': execution_result.stdout,
+            'passed': test_case_passed,
+            'error_message': execution_result.error_message,
+            'is_timeout': execution_result.is_timeout,
+            'stderr': execution_result.stderr
+        })
+    
+    # Update solution_verified status of the challenge
+    challenge.solution_verified = all_test_cases_passed
+    db.session.commit()
+
+    if all_test_cases_passed:
         return jsonify({
-            'message': 'Reference solution verified successfully.',
+            'message': 'Reference solution verified successfully against all test cases.',
             'is_correct': True,
-            'stdout': execution_result.stdout,
-            'stderr': execution_result.stderr,
-            'is_timeout': execution_result.is_timeout
+            'success': True,
+            'test_case_results': test_case_results
         }), 200
     else:
         return jsonify({
-            'message': 'Reference solution verification failed.',
+            'message': 'Reference solution failed some test cases.',
             'is_correct': False,
-            'stdout': execution_result.stdout,
-            'stderr': execution_result.stderr,
-            'error_message': execution_result.error_message,
-            'is_timeout': execution_result.is_timeout
+            'success': False,
+            'test_case_results': test_case_results
         }), 200
 
 
@@ -474,7 +509,7 @@ def verify_coding_challenge():
 @login_required # User must be logged in
 def submit_code_challenge(challenge_id):
     """
-    Submits code for a coding challenge.
+    Submits code for a coding challenge and runs it against multiple test cases.
     """
     challenge = Challenge.query.get_or_404(challenge_id)
     if challenge.challenge_type != 'CODING':
@@ -486,16 +521,41 @@ def submit_code_challenge(challenge_id):
 
     user_code = data['code']
 
-    # Execute code in sandbox
-    execution_result = execute_code_in_sandbox(
-        language=challenge.language,
-        code=user_code,
-        expected_output=challenge.expected_output,
-        setup_code=challenge.setup_code,
-        test_case_input=challenge.test_case_input,
-    )
+    test_cases = challenge.test_cases # Access the relationship
+    if not test_cases:
+        return jsonify({'message': 'No test cases defined for this coding challenge.'}), 400
 
-    if execution_result.success:
+    all_test_cases_passed = True
+    test_case_results = []
+
+    # Sort test cases by their 'order' field
+    sorted_test_cases = sorted(test_cases, key=lambda tc: tc.order)
+
+    for test_case in sorted_test_cases:
+        execution_result = execute_code_in_sandbox(
+            language=challenge.language,
+            code=user_code,
+            expected_output=test_case.expected_output,
+            setup_code=challenge.setup_code,
+            test_case_input=test_case.input_data,
+        )
+
+        test_case_passed = execution_result.success
+        if not test_case_passed:
+            all_test_cases_passed = False
+
+        test_case_results.append({
+            'test_case_id': test_case.id,
+            'input_data': test_case.input_data,
+            'expected_output': test_case.expected_output,
+            'actual_output': execution_result.stdout,
+            'passed': test_case_passed,
+            'error_message': execution_result.error_message,
+            'is_timeout': execution_result.is_timeout,
+            'stderr': execution_result.stderr
+        })
+
+    if all_test_cases_passed:
         # Check if the user has already solved this challenge
         existing_submission = Submission.query.filter_by(
             user_id=current_user.id,
@@ -512,19 +572,27 @@ def submit_code_challenge(challenge_id):
             db.session.add(new_submission)
             current_user.score += challenge.points
             db.session.commit()
-            return jsonify({'message': 'Challenge solved!', 'is_correct': True, 'success': True, 'output': execution_result.stdout}), 200
+            return jsonify({
+                'message': 'Challenge solved! All test cases passed.',
+                'is_correct': True,
+                'success': True,
+                'test_case_results': test_case_results
+            }), 200
         else:
-            return jsonify({'message': 'Challenge already solved!', 'is_correct': True, 'success': True, 'output': execution_result.stdout}), 200
+            return jsonify({
+                'message': 'Challenge already solved! All test cases passed.',
+                'is_correct': True,
+                'success': True,
+                'test_case_results': test_case_results
+            }), 200
     else:
         # Provide feedback on why it failed
-        feedback = {
-            'message': execution_result.error_message,
+        return jsonify({
+            'message': 'Some test cases failed.',
             'is_correct': False,
-            'output': execution_result.stdout if execution_result.stdout else execution_result.stderr,
-            'error_message': execution_result.error_message,
-            'is_timeout': execution_result.is_timeout
-        }
-        return jsonify(feedback), 200
+            'success': False,
+            'test_case_results': test_case_results
+        }), 200
 
 
 @api_bp.route('/challenges/<int:challenge_id>', methods=['DELETE'])
