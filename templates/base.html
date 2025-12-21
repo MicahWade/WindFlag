@@ -57,7 +57,7 @@
     <main class="container mx-auto mt-8 p-4">
         <div id="flash-messages" class="mb-4"></div> {# Container for dynamically added flash messages #}
         <div class="flex flex-wrap -mx-4">
-            <div class="w-full lg:w-3/4 px-4">
+            <div class="w-full px-4 mx-auto">
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
