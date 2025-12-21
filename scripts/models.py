@@ -307,9 +307,7 @@ class Challenge(db.Model):
     # New fields for coding challenges
     challenge_type = db.Column(db.String(10), nullable=False, default='FLAG') # 'FLAG' or 'CODING'
     language = db.Column(db.String(50), nullable=True) # e.g., 'python3', 'nodejs', 'php', 'bash', 'dart', 'haskell'
-    expected_output = db.Column(db.Text, nullable=True)
     setup_code = db.Column(db.Text, nullable=True)
-    test_case_input = db.Column(db.Text, nullable=True)
     starter_code = db.Column(db.Text, nullable=True) # New: Default code for coding challenges
     reference_solution = db.Column(db.Text, nullable=True)
     solution_verified = db.Column(db.Boolean, nullable=False, default=False)
@@ -638,6 +636,22 @@ class ChallengeFile(db.Model):
 
     def __repr__(self):
         return f"ChallengeFile(Challenge ID: {self.challenge_id}, File: '{self.filename}')"
+
+
+class TestCase(db.Model):
+    """
+    Represents a test case for a coding challenge.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    challenge_id = db.Column(db.Integer, db.ForeignKey('challenge.id'), nullable=False)
+    input_data = db.Column(db.Text, nullable=True)
+    expected_output = db.Column(db.Text, nullable=False)
+    order = db.Column(db.Integer, nullable=False, default=0) # To define execution order
+
+    challenge = db.relationship('Challenge', backref=db.backref('test_cases', lazy=True, cascade="all, delete-orphan"))
+
+    def __repr__(self):
+        return f"TestCase(Challenge ID: {self.challenge_id}, Order: {self.order})"
 
 class Submission(db.Model):
     """
