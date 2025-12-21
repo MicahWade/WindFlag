@@ -150,3 +150,7 @@
 
 .word-break-all { word-break: break-all; }
 .theme-table-end-padding { width: 1rem; }
+
+.challenge-card {
+    aspect-ratio: 3 / 2;
+}
