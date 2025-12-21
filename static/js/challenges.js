@@ -418,25 +418,63 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            if (data.success) {
-                codeResult.textContent = data.output; // Display only stdout for successful runs
-                showFlashMessage('Code executed successfully!', 'success');
-                if (data.is_correct) {
-                    showFlashMessage('Challenge Solved!', 'success');
-                    const currentCard = document.querySelector(`.challenge-card[data-id="${currentChallengeId}"]`);
-                    if (currentCard) {
-                        currentCard.dataset.completed = 'true';
-                        currentCard.classList.add('theme-completed-challenge', 'completed-challenge-line');
-                        codeMirrorEditor.setOption('readOnly', true);
-                        modalRunCodeButton.disabled = true;
-                        modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
-                        modalChallengeStatus.textContent = 'You have already completed this coding challenge!';
-                        modalChallengeStatus.classList.remove('hidden');
+            const resultsHtml = document.createElement('div');
+            resultsHtml.innerHTML = `<h4>Test Results:</h4>`;
+            
+            if (data.test_case_results && data.test_case_results.length > 0) {
+                data.test_case_results.forEach((result, index) => {
+                    const testCaseDiv = document.createElement('div');
+                    testCaseDiv.className = `p-2 my-2 rounded ${result.passed ? 'bg-green-700' : 'bg-red-700'} text-white`;
+                    
+                    let outputDetail = '';
+                    if (!result.passed) {
+                        outputDetail = `
+                            <p><strong>Input:</strong> <pre>${escapeHtml(result.input_data || '')}</pre></p>
+                            <p><strong>Expected:</strong> <pre>${escapeHtml(result.expected_output || '')}</pre></p>
+                            <p><strong>Actual:</strong> <pre>${escapeHtml(result.actual_output || '')}</pre></p>
+                            ${result.stderr ? `<p><strong>Error:</strong> <pre>${escapeHtml(result.stderr)}</pre></p>` : ''}
+                            ${result.error_message ? `<p><strong>Message:</strong> ${escapeHtml(result.error_message)}</p>` : ''}
+                            ${result.is_timeout ? `<p><strong>Timeout:</strong> Yes</p>` : ''}
+                        `;
+                    } else {
+                        outputDetail = `
+                            <p><strong>Input:</strong> <pre>${escapeHtml(result.input_data || '')}</pre></p>
+                            <p><strong>Output:</strong> <pre>${escapeHtml(result.actual_output || '')}</pre></p>
+                        `;
                     }
+
+                    testCaseDiv.innerHTML = `
+                        <h5>Test Case ${index + 1}: ${result.passed ? 'PASSED ✅' : 'FAILED ❌'}</h5>
+                        ${outputDetail}
+                    `;
+                    resultsHtml.appendChild(testCaseDiv);
+                });
+            } else {
+                resultsHtml.innerHTML += `<p>${escapeHtml(data.message || 'No detailed test results available.')}</p>`;
+            }
+
+            codeResult.innerHTML = ''; // Clear previous content
+            codeResult.appendChild(resultsHtml); // Add new detailed results
+            
+            showFlashMessage(data.message, data.success ? 'success' : 'danger');
+
+            if (data.success && data.is_correct) {
+                // Mark challenge as solved on the frontend
+                const currentCard = document.querySelector(`.challenge-card[data-id="${currentChallengeId}"]`);
+                if (currentCard) {
+                    currentCard.dataset.completed = 'true';
+                    currentCard.classList.add('theme-completed-challenge', 'completed-challenge-line');
+                    codeMirrorEditor.setOption('readOnly', true);
+                    modalRunCodeButton.disabled = true;
+                    modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    modalChallengeStatus.textContent = data.message;
+                    modalChallengeStatus.classList.remove('hidden');
                 }
             } else {
-                codeResult.textContent = data.message || 'An unknown error occurred.'; // Display detailed error message (includes stdout/stderr)
-                showFlashMessage('Code execution failed.', 'danger'); // Simpler flash message
+                // If not overall success, ensure button is re-enabled for another attempt
+                codeMirrorEditor.setOption('readOnly', false);
+                modalRunCodeButton.disabled = false;
+                modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         })
         .catch(error => {
