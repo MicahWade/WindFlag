@@ -40,8 +40,11 @@ def verify_import():
         assert challenge.challenge_type == "CODING"
         assert challenge.language == "python3"
         assert "def solve():" in challenge.starter_code
-        assert challenge.expected_output == "30"
-        assert challenge.test_case_input == "10\n20"
+        assert challenge.test_cases, "No test cases were imported for the coding challenge."
+        assert len(challenge.test_cases) > 0, "Test cases list is empty."
+        first_test_case = challenge.test_cases[0]
+        assert first_test_case.expected_output == "30"
+        assert first_test_case.input_data == "10\n20"
         assert challenge.setup_code == ""
         assert challenge.multi_flag_type == "SINGLE"
         assert len(challenge.flags) == 0

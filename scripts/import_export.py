@@ -301,12 +301,29 @@ def import_challenges_from_yaml(app, yaml_source, is_file=True):
                 challenge_type=challenge_type,
                 language=language,
                 starter_code=challenge_data.get('starter_code'),
-                expected_output=challenge_data.get('expected_output'),
-                test_case_input=challenge_data.get('test_case_input'),
-                setup_code=challenge_data.get('setup_code')
+                setup_code=challenge_data.get('setup_code'),
+                reference_solution=challenge_data.get('reference_solution')
             )
             db.session.add(challenge)
             db.session.flush()
+
+            # Handle test cases for CODING challenges
+            if challenge_type == 'CODING':
+                from scripts.models import TestCase
+                test_cases = challenge_data.get('test_cases', [])
+                if not test_cases:
+                    print(f"Warning: Coding challenge '{challenge_name}' has no test cases defined.")
+                for i, tc_data in enumerate(test_cases):
+                    if 'expected_output' not in tc_data:
+                        print(f"Warning: Skipping test case for '{challenge_name}' because 'expected_output' is missing.")
+                        continue
+                    test_case = TestCase(
+                        challenge_id=challenge.id,
+                        input_data=tc_data.get('input_data'),
+                        expected_output=tc_data['expected_output'],
+                        order=i
+                    )
+                    db.session.add(test_case)
 
             flags = challenge_data.get('flags', [])
             if not flags:
