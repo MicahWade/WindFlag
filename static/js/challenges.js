@@ -111,7 +111,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             currentChallengeLanguage = data.language || 'python';
                             currentChallengeType = 'CODING';
 
-                                                        loadCodeMirrorMode(modeInfo, () => {
+                            const modeInfo = getCodeMirrorMode(currentChallengeLanguage);
+                            loadCodeMirrorMode(modeInfo, () => {
 
                                                             if (codeEditor && typeof CodeMirror !== 'undefined') { // Ensure codeEditor and CodeMirror are available
 
