@@ -81,7 +81,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             return;
                         }
     
-                        <div id="modal-flash-messages" class="mt-4"></div>
                         modalChallengeName.textContent = data.name;
                         if (typeof marked !== 'undefined' && marked.parse) {
                             try {
