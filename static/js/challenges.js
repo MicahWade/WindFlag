@@ -287,12 +287,22 @@ document.addEventListener('DOMContentLoaded', function() {
                                 codeMirrorEditor = null;
                             }
 
+                            // Load or clear saved flag
+                            const savedFlag = localStorage.getItem(`challenge_flag_${currentChallengeId}`);
+                            if (savedFlag) {
+                                flagInput.value = savedFlag;
+                            } else {
+                                flagInput.value = ''; // Clear if no saved flag
+                            }
+
                             if (isCompleted) {
                                 modalChallengeStatus.textContent = 'You have already completed this challenge!';
                                 modalChallengeStatus.classList.remove('hidden');
                                 flagInput.disabled = true;
                                 submitButton.disabled = true;
                                 submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                                // Clear saved flag from localStorage if challenge is completed
+                                localStorage.removeItem(`challenge_flag_${currentChallengeId}`);
                             }
                             else {
                                 flagInput.disabled = false;
@@ -647,6 +657,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem(`challenge_code_${currentChallengeId}`, codeMirrorEditor.getValue());
             }
 
+            // Save flag input if it's a flag challenge
+            if (currentChallengeType === 'FLAG' && flagInput.value.trim() !== '') {
+                localStorage.setItem(`challenge_flag_${currentChallengeId}`, flagInput.value);
+            } else if (currentChallengeType === 'FLAG' && flagInput.value.trim() === '') {
+                // If flag input is empty, clear any saved flag for this challenge
+                localStorage.removeItem(`challenge_flag_${currentChallengeId}`);
+            }
+
             challengeModal.classList.add('opacity-0', 'pointer-events-none');
             modalContent.classList.add('-translate-y-full');
             showingSolvers = false; // Reset state when closing modal
@@ -663,6 +681,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Save code if it's a coding challenge and editor exists
             if (currentChallengeType === 'CODING' && codeMirrorEditor) {
                 localStorage.setItem(`challenge_code_${currentChallengeId}`, codeMirrorEditor.getValue());
+            }
+
+            // Save flag input if it's a flag challenge
+            if (currentChallengeType === 'FLAG' && flagInput.value.trim() !== '') {
+                localStorage.setItem(`challenge_flag_${currentChallengeId}`, flagInput.value);
+            } else if (currentChallengeType === 'FLAG' && flagInput.value.trim() === '') {
+                // If flag input is empty, clear any saved flag for this challenge
+                localStorage.removeItem(`challenge_flag_${currentChallengeId}`);
             }
 
             challengeModal.classList.add('opacity-0', 'pointer-events-none');
