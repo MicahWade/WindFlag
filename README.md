@@ -63,8 +63,3 @@ We welcome contributions! If you encounter a bug or have a feature idea, please 
 1.  **Fork & Clone**: Get your own copy of the repository.
 2.  **Create a Branch**: Use a descriptive name (e.g., `feature/add-dark-mode` or `fix/login-bug`).
 3.  **Submit a Pull Request**: Detail your changes and improvements.
-
-**Before submitting, ensure all tests pass by running:**
-```bash
-python app.py -run-tests
-```
