@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             return;
                         }
     
+                        <div id="modal-flash-messages" class="mt-4"></div>
                         modalChallengeName.textContent = data.name;
                         if (typeof marked !== 'undefined' && marked.parse) {
                             try {
@@ -382,7 +383,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .catch(error => {
                         console.error('Error fetching challenge details:', error);
-                        showFlashMessage('Error loading challenge details.', 'danger');
+                        showFlashMessage('Error loading challenge details. Please try again.', 'danger'); // More user-friendly message
                     });
             });
         });
@@ -482,7 +483,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error running code:', error);
             const errorMessage = error.message || 'A network or unexpected error occurred during code submission.';
             codeResult.textContent = errorMessage; // Display the raw error message if fetch itself failed
-            showFlashMessage('Network or server error during code submission.', 'danger'); // A more general error message
+            showFlashMessage('Network or server error during code submission. Please try again.', 'danger'); // More user-friendly message
         })
         .finally(() => {
             modalRunCodeButton.disabled = false;
@@ -713,11 +714,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    function showFlashMessage(message, category) {
-        const flashContainer = document.getElementById('flash-messages');
-        if (!flashContainer) {
+    function showFlashMessage(message, category, targetContainer = null) {
+        let container = targetContainer;
+
+        // If no specific target, try to find the modal flash messages container
+        // if the modal is currently open.
+        if (!container && challengeModal && !challengeModal.classList.contains('opacity-0')) {
+            container = document.getElementById('modal-flash-messages');
+        }
+        
+        // Fallback to global flash messages if modal isn't open or doesn't have its own container
+        if (!container) {
+            container = document.getElementById('flash-messages');
+        }
+
+        if (!container) {
             console.warn('Flash message container not found. Message:', message);
-            alert(message);
+            // alert(message); // Removed alert as it blocks UI
             return;
         }
 
@@ -725,7 +738,12 @@ document.addEventListener('DOMContentLoaded', function() {
         alertDiv.className = `p-3 mb-3 rounded-md text-sm ${category === 'success' ? 'theme-flash-success' : 'theme-flash-danger'}`;
         alertDiv.innerHTML = `<strong>${message}</strong>`; // Bold the main message
 
-        flashContainer.appendChild(alertDiv);
+        // Clear previous messages in the modal container if it's being used
+        if (container.id === 'modal-flash-messages') {
+            container.innerHTML = ''; 
+        }
+
+        container.appendChild(alertDiv);
 
         setTimeout(() => {
             alertDiv.remove();
