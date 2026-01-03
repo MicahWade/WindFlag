@@ -264,6 +264,14 @@ def get_public_challenges():
         for challenge in category.challenges:
             # Use the model's logic to determine if the challenge should be visible
             if challenge.is_unlocked_for_user(current_user, user_completed_challenges_cache):
+                is_expired = False
+                if challenge.expiration_date:
+                    from datetime import datetime, UTC
+                    from scripts.utils import make_datetime_timezone_aware
+                    aware_expiration_date = make_datetime_timezone_aware(challenge.expiration_date)
+                    if datetime.now(UTC) > aware_expiration_date:
+                        is_expired = True
+
                 challenges_data.append({
                     'id': challenge.id,
                     'name': challenge.name,
@@ -274,7 +282,8 @@ def get_public_challenges():
                     'category': category.name,
                     'challenge_type': challenge.challenge_type,
                     'language': challenge.language,
-                    'starter_code': challenge.starter_code
+                    'starter_code': challenge.starter_code,
+                    'expired': is_expired
                 })
         if challenges_data:
             category_data.append({
@@ -326,6 +335,14 @@ def get_challenge_details_for_modal(challenge_id):
         ).count()
         total_flags = len(challenge.flags)
 
+    is_expired = False
+    if challenge.expiration_date:
+        from datetime import datetime, UTC
+        from scripts.utils import make_datetime_timezone_aware
+        aware_expiration_date = make_datetime_timezone_aware(challenge.expiration_date)
+        if datetime.now(UTC) > aware_expiration_date:
+            is_expired = True
+
     return jsonify({
         'success': True,
         'id': challenge.id,
@@ -339,7 +356,8 @@ def get_challenge_details_for_modal(challenge_id):
         'hints': hints_data,
         'challenge_type': challenge.challenge_type,
         'language': challenge.language,
-        'starter_code': challenge.starter_code
+        'starter_code': challenge.starter_code,
+        'expired': is_expired
     }), 200
 
 

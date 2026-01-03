@@ -543,6 +543,14 @@ class Challenge(db.Model):
                 aware_unlock_date_time = aware_unlock_date_time.replace(tzinfo=UTC)
             if now < aware_unlock_date_time:
                 red = True
+        
+        # Check Expiration for Red Stripe
+        if not red and self.expiration_date:
+            aware_expiration_date = self.expiration_date
+            if aware_expiration_date.tzinfo is None:
+                aware_expiration_date = aware_expiration_date.replace(tzinfo=UTC)
+            if now > aware_expiration_date:
+                red = True
 
         # ORANGE STRIPE Logic
         orange = False
