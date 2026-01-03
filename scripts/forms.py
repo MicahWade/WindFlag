@@ -275,6 +275,9 @@ class ChallengeForm(FlaskForm):
     unlock_date_time = DateField('Unlock Date', format='%Y-%m-%d',
                                      validators=[Optional()],
                                      render_kw={"placeholder": "YYYY-MM-DD"})
+    expiration_date = DateField('Expiration Date', format='%Y-%m-%d',
+                                     validators=[Optional()],
+                                     render_kw={"placeholder": "YYYY-MM-DD"})
     unlock_point_reduction_type = SelectField('Unlock Point Reduction Type',
                                                choices=[('NONE', 'None'), ('PERCENTAGE', 'Percentage'), ('FIXED', 'Fixed')],
                                                default='NONE')

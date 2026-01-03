@@ -200,6 +200,7 @@ def create_challenge():
         prerequisite_count_category_ids=data.get('prerequisite_count_category_ids'),
         prerequisite_challenge_ids=data.get('prerequisite_challenge_ids'),
         unlock_date_time=data.get('unlock_date_time'),
+        expiration_date=data.get('expiration_date'),
         unlock_point_reduction_type=data.get('unlock_point_reduction_type'),
         unlock_point_reduction_value=data.get('unlock_point_reduction_value'),
         unlock_point_reduction_target_date=data.get('unlock_point_reduction_target_date'),
@@ -378,6 +379,7 @@ def get_challenge(challenge_id):
         'prerequisite_count_category_ids': challenge.prerequisite_count_category_ids,
         'prerequisite_challenge_ids': challenge.prerequisite_challenge_ids,
         'unlock_date_time': challenge.unlock_date_time,
+        'expiration_date': challenge.expiration_date,
         'unlock_point_reduction_type': challenge.unlock_point_reduction_type,
         'unlock_point_reduction_value': challenge.unlock_point_reduction_value,
         'unlock_point_reduction_target_date': challenge.unlock_point_reduction_target_date,
@@ -402,7 +404,7 @@ def update_challenge_api(challenge_id):
     if not data:
         return jsonify({'message': 'Request body must be JSON'}), 400
 
-    for field in ['name', 'description', 'points', 'category_id', 'case_sensitive', 'multi_flag_type', 'multi_flag_threshold', 'point_decay_type', 'point_decay_rate', 'proactive_decay', 'minimum_points', 'unlock_type', 'prerequisite_percentage_value', 'prerequisite_count_value', 'prerequisite_count_category_ids', 'prerequisite_challenge_ids', 'unlock_date_time', 'unlock_point_reduction_type', 'unlock_point_reduction_value', 'unlock_point_reduction_target_date', 'is_hidden', 'has_dynamic_flag', 'challenge_type', 'language', 'starter_code', 'setup_code']:
+    for field in ['name', 'description', 'points', 'category_id', 'case_sensitive', 'multi_flag_type', 'multi_flag_threshold', 'point_decay_type', 'point_decay_rate', 'proactive_decay', 'minimum_points', 'unlock_type', 'prerequisite_percentage_value', 'prerequisite_count_value', 'prerequisite_count_category_ids', 'prerequisite_challenge_ids', 'unlock_date_time', 'expiration_date', 'unlock_point_reduction_type', 'unlock_point_reduction_value', 'unlock_point_reduction_target_date', 'is_hidden', 'has_dynamic_flag', 'challenge_type', 'language', 'starter_code', 'setup_code']:
         if field in data:
             setattr(challenge, field, data[field])
 

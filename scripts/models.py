@@ -292,6 +292,7 @@ class Challenge(db.Model):
     prerequisite_count_category_ids = db.Column(db.JSON, nullable=True) # New: Stores a list of category IDs for prerequisite count
     prerequisite_challenge_ids = db.Column(db.JSON, nullable=True) # Stores a list of challenge IDs
     unlock_date_time = db.Column(db.DateTime, nullable=True)
+    expiration_date = db.Column(db.DateTime, nullable=True) # New: Date and time when the challenge expires
     unlock_point_reduction_type = db.Column(db.String(50), nullable=True) # e.g., 'NONE', 'PERCENTAGE', 'FIXED'
     unlock_point_reduction_value = db.Column(db.Integer, nullable=True) # Value for percentage or fixed reduction
     unlock_point_reduction_target_date = db.Column(db.DateTime, nullable=True)
@@ -307,7 +308,9 @@ class Challenge(db.Model):
     # New fields for coding challenges
     challenge_type = db.Column(db.String(10), nullable=False, default='FLAG') # 'FLAG' or 'CODING'
     language = db.Column(db.String(50), nullable=True) # e.g., 'python3', 'nodejs', 'php', 'bash', 'dart', 'haskell'
+    expected_output = db.Column(db.Text, nullable=True)
     setup_code = db.Column(db.Text, nullable=True)
+    test_case_input = db.Column(db.Text, nullable=True)
     starter_code = db.Column(db.Text, nullable=True) # New: Default code for coding challenges
     reference_solution = db.Column(db.Text, nullable=True)
     solution_verified = db.Column(db.Boolean, nullable=False, default=False)
@@ -420,6 +423,13 @@ class Challenge(db.Model):
                 
                 if datetime.now(UTC) < aware_unlock_date_time:
                     unlocked_by_time = False
+
+        # Check expiration date
+        if self.expiration_date:
+            from scripts.utils import make_datetime_timezone_aware
+            aware_expiration_date = make_datetime_timezone_aware(self.expiration_date)
+            if datetime.now(UTC) > aware_expiration_date:
+                return False
 
         if self.unlock_type == 'COMBINED':
             return unlocked_by_prerequisites and unlocked_by_time

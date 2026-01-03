@@ -382,6 +382,11 @@ def new_challenge():
             localized_dt = local_tz.localize(datetime.combine(form.unlock_date_time.data, datetime.min.time()))
             unlock_date_time_utc = localized_dt.astimezone(UTC)
 
+        expiration_date_utc = None
+        if form.expiration_date.data:
+            localized_dt = local_tz.localize(datetime.combine(form.expiration_date.data, datetime.min.time()))
+            expiration_date_utc = localized_dt.astimezone(UTC)
+
         unlock_point_reduction_target_date_utc = None
         if form.unlock_point_reduction_target_date.data:
             localized_dt = local_tz.localize(datetime.combine(form.unlock_point_reduction_target_date.data, datetime.min.time()))
@@ -403,6 +408,7 @@ def new_challenge():
                               prerequisite_count_category_ids=form.prerequisite_count_category_ids_input.data,
                               prerequisite_challenge_ids=form.prerequisite_challenge_ids_input.data,
                               unlock_date_time=unlock_date_time_utc,
+                              expiration_date=expiration_date_utc,
                               unlock_point_reduction_type=form.unlock_point_reduction_type.data,
                               unlock_point_reduction_value=form.unlock_point_reduction_value.data,
                               unlock_point_reduction_target_date=unlock_point_reduction_target_date_utc,
@@ -527,6 +533,11 @@ def update_challenge(challenge_id):
             localized_dt = local_tz.localize(datetime.combine(form.unlock_date_time.data, datetime.min.time()))
             unlock_date_time_utc = localized_dt.astimezone(UTC)
 
+        expiration_date_utc = None
+        if form.expiration_date.data:
+            localized_dt = local_tz.localize(datetime.combine(form.expiration_date.data, datetime.min.time()))
+            expiration_date_utc = localized_dt.astimezone(UTC)
+
         unlock_point_reduction_target_date_utc = None
         if form.unlock_point_reduction_target_date.data:
             localized_dt = local_tz.localize(datetime.combine(form.unlock_point_reduction_target_date.data, datetime.min.time()))
@@ -550,6 +561,7 @@ def update_challenge(challenge_id):
         challenge.prerequisite_count_category_ids = form.prerequisite_count_category_ids_input.data
         challenge.prerequisite_challenge_ids = form.prerequisite_challenge_ids_input.data
         challenge.unlock_date_time = unlock_date_time_utc
+        challenge.expiration_date = expiration_date_utc
         challenge.unlock_point_reduction_type = form.unlock_point_reduction_type.data
         challenge.unlock_point_reduction_value = form.unlock_point_reduction_value.data
         challenge.unlock_point_reduction_target_date = unlock_point_reduction_target_date_utc
@@ -660,6 +672,11 @@ def update_challenge(challenge_id):
             form.unlock_date_time.data = challenge.unlock_date_time.astimezone(local_tz).date()
         else:
             form.unlock_date_time.data = None
+
+        if challenge.expiration_date:
+            form.expiration_date.data = challenge.expiration_date.astimezone(local_tz).date()
+        else:
+            form.expiration_date.data = None
 
         if challenge.unlock_point_reduction_target_date:
             form.unlock_point_reduction_target_date.data = challenge.unlock_point_reduction_target_date.astimezone(local_tz).date()

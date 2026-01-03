@@ -146,6 +146,13 @@ def seed_database():
     db.session.add(proactive_decay_challenge)
 
     # --- Explicit Challenges for Stripes ---
+    # Expired Challenge (Available but past expiration date)
+    expired_challenge = Challenge(name="Expired Challenge", description="This challenge has expired.",
+                                  points=50, category_id=categories[0].id,
+                                  expiration_date=datetime.now(UTC) - timedelta(days=1))
+    challenges.append(expired_challenge)
+    db.session.add(expired_challenge)
+
     # Red Stripe (Locked by Prerequisite Count - unachievable with demo data)
     red_stripe_prereq_challenge = Challenge(name="Red Stripe (Prereq Locked)", description="Requires 99 challenges from Category 1 to unlock.",
                                             points=50, category_id=categories[0].id,
