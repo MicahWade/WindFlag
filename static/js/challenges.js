@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         </svg>
                                         `;
                                         fullscreenButton.title = "Enter Fullscreen (F11)";
-                                        fullscreenButton.className = "CodeMirror-fullscreen-button-custom absolute top-2 right-2 p-1 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white z-10";
+                                        fullscreenButton.className = "CodeMirror-fullscreen-button-custom absolute top-2 right-2 p-1 rounded-full theme-modal-button-secondary z-10";
                                         
                                         fullscreenButton.addEventListener('click', (event) => {
                                             event.preventDefault();
@@ -189,16 +189,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                         modalRunCodeButton.disabled = true;
                                         modalRunCodeButton.classList.add('opacity-50', 'cursor-not-allowed');
                                         modalChallengeStatus.textContent = 'This challenge has EXPIRED.';
-                                        modalChallengeStatus.classList.remove('hidden', 'text-green-400');
-                                        modalChallengeStatus.classList.add('text-red-500');
+                                        modalChallengeStatus.classList.remove('hidden');
+                                        modalChallengeStatus.classList.add('theme-flash-danger');
                                     } else {
                                         codeMirrorEditor.setOption('readOnly', false);
                                         modalRunCodeButton.disabled = false;
                                         modalRunCodeButton.classList.remove('opacity-50', 'cursor-not-allowed');
                                         
                                         // Reset status color
-                                        modalChallengeStatus.classList.remove('text-red-500');
-                                        modalChallengeStatus.classList.add('text-green-400');
+                                        modalChallengeStatus.classList.remove('theme-flash-danger');
+                                        modalChallengeStatus.classList.add('theme-flash-success');
                                     }
                                     codeMirrorEditor.refresh();
                                 } else {
@@ -234,8 +234,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 localStorage.removeItem(`challenge_flag_${currentChallengeId}`);
                             } else if (data.expired) {
                                 modalChallengeStatus.textContent = 'This challenge has EXPIRED.';
-                                modalChallengeStatus.classList.remove('hidden', 'text-green-400');
-                                modalChallengeStatus.classList.add('text-red-500');
+                                modalChallengeStatus.classList.remove('hidden');
+                                modalChallengeStatus.classList.add('theme-flash-danger');
                                 flagInput.disabled = true;
                                 submitButton.disabled = true;
                                 submitButton.classList.add('opacity-50', 'cursor-not-allowed');
@@ -245,8 +245,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 submitButton.disabled = false;
                                 submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
                                 // Reset status color just in case
-                                modalChallengeStatus.classList.remove('text-red-500');
-                                modalChallengeStatus.classList.add('text-green-400');
+                                modalChallengeStatus.classList.remove('theme-flash-danger');
+                                modalChallengeStatus.classList.add('theme-flash-success');
                                 
                                 if (totalFlags > 1) {
                                     modalFlagProgress.textContent = `Flags submitted: ${submittedFlagsCount} / ${totalFlags}`;
@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             modalFilesSection.classList.remove('hidden');
                             data.files.forEach(file => {
                                 const li = document.createElement('li');
-                                li.innerHTML = `<a href="${file.download_url}" class="text-blue-400 hover:text-blue-300 underline" download>${file.filename}</a>`;
+                                li.innerHTML = `<a href="${file.download_url}" class="theme-link underline" download>${file.filename}</a>`;
                                 filesList.appendChild(li);
                             });
                         } else {
@@ -375,7 +375,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.test_case_results && data.test_case_results.length > 0) {
                 data.test_case_results.forEach((result, index) => {
                     const testCaseDiv = document.createElement('div');
-                    testCaseDiv.className = `p-2 my-2 rounded ${result.passed ? 'bg-green-700' : 'bg-red-700'} text-white`;
+                    testCaseDiv.className = `p-2 my-2 rounded ${result.passed ? 'theme-status-completed' : 'theme-expired-badge'} text-white`;
                     
                     let outputDetail = '';
                     if (!result.passed) {
@@ -503,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <h5 class="theme-challenge-title text-xl font-bold mb-2">
                                     ${challenge.name}
                                 </h5>
-                                ${challenge.expired ? '<span class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold uppercase ml-2">Expired</span>' : ''}
+                                ${challenge.expired ? '<span class="theme-expired-badge text-xs px-2 py-1 rounded font-bold uppercase ml-2">Expired</span>' : ''}
                             </div>
                             <p class="theme-challenge-points">${challenge.points} pts</p>
                         </div>
@@ -549,7 +549,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('There has been a problem with your fetch operation:', error);
             if (loading) loading.style.display = 'none';
-            challengeContainer.innerHTML = '<p class="text-red-500">Could not load challenges. Please try again later.</p>';
+            challengeContainer.innerHTML = '<p class="theme-text-danger">Could not load challenges. Please try again later.</p>';
         });
 
     const challengeContent = document.getElementById('challengeContent');

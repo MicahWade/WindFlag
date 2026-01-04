@@ -32,7 +32,7 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         if not current_user.is_admin:
             flash('You do not have permission to access this page.', 'danger')
-            return redirect(url_for('home'))
+            return redirect(url_for('core.home'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -897,7 +897,7 @@ def give_award_to_user(username):
             for error in errors:
                 flash(f"Error in {getattr(form, field).label.text}: {error}", 'danger')
     
-    return redirect(url_for('user_profile', username=username))
+    return redirect(url_for('core.user_profile', username=username))
 
 # Award Category CRUD
 @admin_bp.route('/award_categories')

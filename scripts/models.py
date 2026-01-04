@@ -42,7 +42,7 @@ class User(db.Model, UserMixin):
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
     is_super_admin = db.Column(db.Boolean, nullable=False, default=False)
     hidden = db.Column(db.Boolean, nullable=False, default=False)
-    last_seen = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
+    last_seen = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
     score = db.Column(db.Integer, nullable=False, default=0)
     is_banned = db.Column(db.Boolean, nullable=False, default=False)
     password_reset_required = db.Column(db.Boolean, nullable=False, default=False) # New: Flag to force password reset
@@ -93,7 +93,7 @@ class ApiKey(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     key_hash = db.Column(db.String(128), unique=True, nullable=False) # Hashed API key
     api_key_plain = db.Column(db.String(128), nullable=True) # Plaintext API key (for user display)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
     last_used_at = db.Column(db.DateTime, nullable=True)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
 
@@ -685,7 +685,7 @@ class Submission(db.Model):
     """
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
+    timestamp = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
     score_at_submission = db.Column(db.Integer, nullable=False)
 
     challenge_id = db.Column(db.Integer, db.ForeignKey('challenge.id'), nullable=False)
@@ -714,7 +714,7 @@ class FlagSubmission(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     challenge_id = db.Column(db.Integer, db.ForeignKey('challenge.id'), nullable=False)
     challenge_flag_id = db.Column(db.Integer, db.ForeignKey('challenge_flag.id'), nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
+    timestamp = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     # Modified: Use back_populates for clarity and to resolve SAWarning
     user_rel = db.relationship('User', back_populates='flag_submissions')
@@ -744,7 +744,7 @@ class FlagAttempt(db.Model):
     challenge_id = db.Column(db.Integer, db.ForeignKey('challenge.id'), nullable=False)
     submitted_flag = db.Column(db.String(256), nullable=False) # Store the actual submitted flag
     is_correct = db.Column(db.Boolean, nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
+    timestamp = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     user = db.relationship('User', backref='flag_attempts')
     challenge = db.relationship('Challenge', backref=db.backref('flag_attempts_for_challenge', cascade="all, delete-orphan"))
@@ -805,7 +805,7 @@ class Award(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('award_category.id'), nullable=False)
     points_awarded = db.Column(db.Integer, nullable=False)
     admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # Admin giving the award
-    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
+    timestamp = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     # Relationships
     recipient = db.relationship('User', foreign_keys=[user_id], backref='awards_received')
@@ -851,7 +851,7 @@ class UserHint(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     hint_id = db.Column(db.Integer, db.ForeignKey('hint.id'), nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now(UTC))
+    timestamp = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     user = db.relationship('User', backref='revealed_hints', lazy=True)
     hint = db.relationship('Hint', backref='revealed_by_users', lazy=True)

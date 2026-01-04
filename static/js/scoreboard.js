@@ -167,7 +167,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const userLink = document.createElement('a');
             userLink.href = `/profile/${player.username}`;
             userLink.textContent = player.username;
-            userLink.className = 'theme-link';
             usernameCell.appendChild(userLink);
 
             const scoreCell = row.insertCell();

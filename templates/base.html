@@ -33,23 +33,22 @@
 <body class="theme-{{ active_theme }}">
     <header class="theme-header p-4 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
-            <a class="text-xl font-bold" style="color: var(--text-header);" href="{% if current_user.is_authenticated %}{{ url_for('challenges') }}{% else %}/{% endif %}">{{ config['APP_NAME'] }}</a>
+            <a class="text-xl font-bold" style="color: var(--text-header);" href="{% if current_user.is_authenticated %}{{ url_for('core.challenges') }}{% else %}/{% endif %}">{{ config['APP_NAME'] }}</a>
             <nav class="space-x-4">
                 {% if current_user.is_authenticated %}
                     <span class="theme-nav-item">Score: <span id="userScoreDisplay">{{ current_user.score }}</span></span>
-                    <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('challenges') }}">Challenges</a>
-                    <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('scoreboard') }}">Scoreboard</a>
-                    <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('profile') }}">Profile</a>
-                    {% if current_user.is_admin %}
-                        <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('admin.index') }}">Admin</a>
-                    {% endif %}
-                    <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('logout') }}">Logout</a>
-                {% else %}
-                    <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('home') }}">Home</a>
-                    <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('login') }}">Login</a>
-                    {% if not disable_signup %}
-                        <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('register') }}">Register</a>
-                    {% endif %}
+                    <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('core.challenges') }}">Challenges</a>
+                                        <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('core.scoreboard') }}">Scoreboard</a>
+                                        <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('core.profile') }}">Profile</a>
+                                        {% if current_user.is_admin %}
+                                        <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('admin.index') }}">Admin</a>
+                                        {% endif %}
+                                        <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('core.logout') }}">Logout</a>
+                                    {% else %}
+                                        <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('core.home') }}">Home</a>
+                                        <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('core.login') }}">Login</a>
+                                        {% if not disable_signup %}
+                                        <a class="theme-nav-item hover:text-white transition-colors duration-200 ease-in-out" href="{{ url_for('core.register') }}">Register</a>                    {% endif %}
                 {% endif %}
             </nav>
         </div>
@@ -61,7 +60,7 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
-                            <div class="p-4 mb-4 rounded-md {% if category == 'success' %}bg-green-700 text-white{% elif category == 'danger' %}bg-red-700 text-white{% else %}bg-blue-700 text-white{% endif %} shadow-md">
+                            <div class="p-4 mb-4 rounded-md theme-flash-{% if category == 'success' %}success{% elif category == 'danger' %}danger{% else %}info{% endif %} shadow-md">
                                 {{ message }}
                             </div>
                         {% endfor %}

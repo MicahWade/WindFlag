@@ -77,7 +77,7 @@
                                                                 <tbody>
                                                                     {% for submission in submissions %}
                                                                     <tr>
-                                                                        <td class="py-2 text-center theme-table-body-cell"><a href="{{ url_for('challenges') }}" class="theme-link">{{ submission.challenge_rel.name }}</a></td>
+                                                                        <td class="py-2 text-center theme-table-body-cell"><a href="{{ url_for('core.challenges') }}" class="theme-link">{{ submission.challenge_rel.name }}</a></td>
                                                                         <td class="py-2 text-center theme-table-body-cell">{{ submission.challenge_rel.category.name }}</td>
                                                                         <td class="py-2 text-center theme-table-body-cell">{{ submission.challenge_rel.points }}</td>
                                                                         <td class="py-2 text-end theme-table-body-cell date-column">{{ submission.timestamp.strftime('%d/%m') }}</td>
@@ -117,7 +117,7 @@
                                                                 <tbody>
                                                                     {% for attempt in solved_attempts %}
                                                                     <tr>
-                                                                        <td class="py-2 text-center theme-table-body-cell"><a href="{{ url_for('challenges') }}" class="theme-link">{{ attempt.challenge.name }}</a></td>
+                                                                        <td class="py-2 text-center theme-table-body-cell"><a href="{{ url_for('core.challenges') }}" class="theme-link">{{ attempt.challenge.name }}</a></td>
                                                                         <td class="py-2 text-center theme-table-body-cell">{{ attempt.challenge.category.name }}</td>
                                                                         <td class="py-2 text-center theme-table-body-cell word-break-all">{{ attempt.submitted_flag }}</td>
                                                                         <td class="py-2 text-end theme-table-body-cell date-column">{{ attempt.timestamp.strftime('%d/%m') }}</td>
@@ -156,7 +156,7 @@
                                                                 <tbody>
                                                                     {% for attempt in failed_attempts %}
                                                                     <tr>
-                                                                        <td class="py-2 text-center theme-table-body-cell"><a href="{{ url_for('challenges') }}" class="theme-link">{{ attempt.challenge.name }}</a></td>
+                                                                        <td class="py-2 text-center theme-table-body-cell"><a href="{{ url_for('core.challenges') }}" class="theme-link">{{ attempt.challenge.name }}</a></td>
                                                                         <td class="py-2 text-center theme-table-body-cell">{{ attempt.challenge.category.name }}</td>
                                                                         <td class="py-2 text-center theme-table-body-cell word-break-all">{{ attempt.submitted_flag }}</td>
                                                                         <td class="py-2 text-end theme-table-body-cell date-column">{{ attempt.timestamp.strftime('%d/%m') }}</td>
@@ -308,12 +308,12 @@
                                         {% else %}
                                         <p class="theme-profile-text-muted">Never Used</p>
                                         {% endif %}
-                                        <form method="POST" action="{{ url_for('generate_api_key_route') }}" class="mt-4">
+                                        <form method="POST" action="{{ url_for('core.generate_api_key_route') }}" class="mt-4">
                                             <button type="submit" class="theme-modal-button-primary font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                                                 Regenerate API Key
                                             </button>
                                         </form>
-                                        <p class="text-sm text-red-500 mt-2">Warning: Regenerating will invalidate your current API Key.</p>
+                                        <p class="text-sm theme-text-danger mt-2">Warning: Regenerating will invalidate your current API Key.</p>
                                         
                                         <script>
                                             function copyApiKey() {
@@ -366,7 +366,7 @@
                                         </script>
                                     {% else %}
                                         <p class="theme-profile-text-muted">You do not have an active API Key.</p>
-                                        <form method="POST" action="{{ url_for('generate_api_key_route') }}" class="mt-4">
+                                        <form method="POST" action="{{ url_for('core.generate_api_key_route') }}" class="mt-4">
                                             <button type="submit" class="theme-modal-button-primary font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                                                 Generate API Key
                                             </button>

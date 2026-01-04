@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     `;
                     fullscreenButton.title = "Enter Fullscreen (F11)";
                     // Use a class for styling consistent with CodeMirror's own fullscreen button
-                    fullscreenButton.className = "CodeMirror-fullscreen-button-custom absolute top-2 right-2 p-1 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white z-10";
+                    fullscreenButton.className = "CodeMirror-fullscreen-button-custom absolute top-2 right-2 p-1 rounded-full theme-modal-button-secondary z-10";
                     
                     fullscreenButton.addEventListener('click', (event) => {
                         event.preventDefault();
@@ -275,17 +275,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (submitStatusMessageDiv) {
                     if (!isSolutionVerified) {
                         submitStatusMessageDiv.textContent = 'Please verify the reference solution before submitting.';
-                        submitStatusMessageDiv.classList.add('text-red-500');
+                        submitStatusMessageDiv.classList.add('theme-text-danger');
                     } else {
                         submitStatusMessageDiv.textContent = '';
-                        submitStatusMessageDiv.classList.remove('text-red-500');
+                        submitStatusMessageDiv.classList.remove('theme-text-danger');
                     }
                 }
             } else {
                 challengeSubmitButton.disabled = false; // Always enabled for non-coding challenges
                 if (submitStatusMessageDiv) {
                     submitStatusMessageDiv.textContent = '';
-                    submitStatusMessageDiv.classList.remove('text-red-500');
+                    submitStatusMessageDiv.classList.remove('theme-text-danger');
                 }
             }
         }
@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!language || !referenceSolution || !expectedOutput) {
                 if (statusDiv) {
                     statusDiv.textContent = 'Error: Language, Reference Solution, and Expected Output cannot be empty.';
-                    statusDiv.classList.add('text-red-500');
+                    statusDiv.classList.add('theme-text-danger');
                 }
                 isSolutionVerified = false;
                 updateSubmitButtonState();
@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     updateSubmitButtonState();
                     if (statusDiv) {
                         statusDiv.textContent = 'Success: Reference solution verified!';
-                        statusDiv.classList.add('text-green-500');
+                        statusDiv.classList.add('theme-flash-success');
                     }
                 } else {
                     isSolutionVerified = false;
@@ -428,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     if (statusDiv) {
                         statusDiv.textContent = errorMessage + (data.stderr ? ' (Check console for details)' : '');
-                        statusDiv.classList.add('text-red-500');
+                        statusDiv.classList.add('theme-text-danger');
                     }
                 }
             })
@@ -436,7 +436,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Error:', error);
                 if (statusDiv) {
                     statusDiv.textContent = 'An error occurred: ' + error.message;
-                    statusDiv.classList.add('text-red-500');
+                    statusDiv.classList.add('theme-text-danger');
                 }
                 isSolutionVerified = false;
                 updateSubmitButtonState();
@@ -463,18 +463,18 @@ document.addEventListener('DOMContentLoaded', function () {
         newHintEntry.innerHTML = `
             <input type="hidden" name="hints-${hintCount}-id" value="${hintId}">
             <div class="mb-4">
-                <label for="hints-${hintCount}-title" class="block text-gray-300 text-sm font-bold mb-2">Hint Title</label>
-                <input type="text" id="hints-${hintCount}-title" name="hints-${hintCount}-title" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline" value="${title}" required>
+                <label for="hints-${hintCount}-title" class="block theme-profile-text-muted text-sm font-bold mb-2">Hint Title</label>
+                <input type="text" id="hints-${hintCount}-title" name="hints-${hintCount}-title" class="theme-modal-input shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" value="${title}" required>
             </div>
             <div class="mb-4">
-                <label for="hints-${hintCount}-content" class="block text-gray-300 text-sm font-bold mb-2">Hint Content</label>
-                <textarea id="hints-${hintCount}-content" name="hints-${hintCount}-content" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline" required>${content}</textarea>
+                <label for="hints-${hintCount}-content" class="block theme-profile-text-muted text-sm font-bold mb-2">Hint Content</label>
+                <textarea id="hints-${hintCount}-content" name="hints-${hintCount}-content" class="theme-modal-input shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" required>${content}</textarea>
             </div>
             <div class="mb-4">
-                <label for="hints-${hintCount}-cost" class="block text-gray-300 text-sm font-bold mb-2">Hint Cost</label>
-                <input type="number" id="hints-${hintCount}-cost" name="hints-${hintCount}-cost" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-700 text-gray-200 leading-tight focus:outline-none focus:shadow-outline" value="${cost}" required min="0">
+                <label for="hints-${hintCount}-cost" class="block theme-profile-text-muted text-sm font-bold mb-2">Hint Cost</label>
+                <input type="number" id="hints-${hintCount}-cost" name="hints-${hintCount}-cost" class="theme-modal-input shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" value="${cost}" required min="0">
             </div>
-            <button type="button" class="remove-hint-button bg-red-600 hover:bg-red-500 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline">Remove Hint</button>
+            <button type="button" class="remove-hint-button theme-expired-badge hover:opacity-80 font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline">Remove Hint</button>
         `;
         hintsContainer.appendChild(newHintEntry);
         hintCount++;

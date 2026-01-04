@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (filtered.length > 0) {
             filtered.forEach(option => {
                 const div = document.createElement('div');
-                div.classList.add('p-2', 'cursor-pointer', 'hover:bg-gray-600', 'text-gray-200');
+                div.classList.add('p-2', 'cursor-pointer', 'theme-dropdown-item');
                 div.textContent = option.text;
                 div.dataset.value = option.value;
                 div.addEventListener('click', function() {

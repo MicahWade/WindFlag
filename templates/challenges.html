@@ -7,7 +7,7 @@
     <div id="challenge-container" class="space-y-6">
         <!-- Loading Spinner -->
         <div id="loading" class="flex justify-center items-center h-64">
-            <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-900"></div>
+            <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-100" style="border-top-color: var(--primary); border-bottom-color: var(--primary);"></div>
         </div>
         <!-- Categories and challenges will be dynamically inserted here -->
     </div>
@@ -26,7 +26,7 @@
                 <div id="challengeContent">
                     <p class="theme-modal-description text-sm" id="modalChallengeDescription"></p>
                     <p class="theme-modal-points text-lg font-bold mt-4" id="modalChallengePoints"></p>
-                    <div id="modalChallengeStatus" class="mt-2 text-green-400 font-semibold hidden"></div>
+                    <div id="modalChallengeStatus" class="mt-2 theme-flash-success p-1 rounded font-semibold hidden"></div>
                     <div id="modalFlagProgress" class="mt-2 theme-challenge-status-text text-sm hidden"></div>
                     
                     <div id="modalHintsSection" class="mt-4 pt-4" style="border-top: 1px solid var(--border-color);">

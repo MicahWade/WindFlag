@@ -27,6 +27,9 @@ body.theme-default {
     --chart-color-8: #8AC926;
     --chart-color-9: #1982C4;
     --chart-color-10: #F45B69;
+    --text-color-primary: #e2e8f0;
+    --text-color-secondary: #cbd5e0;
+    --chart-grid-color: rgba(203, 213, 224, 0.1);
 }
 
 body.theme-default p {
@@ -208,6 +211,7 @@ body.theme-default .theme-empty-state-text {
 /* New Semantic Classes for dynamic JS styling */
 /* Challenge Progress Status */
 body.theme-default .theme-status-completed { background-color: #047857; } /* Tailwind green-700 */
+body.theme-default .theme-expired-badge { background-color: #DC2626; color: white; } /* Tailwind red-600 */
 body.theme-default .theme-status-high-progress { background-color: #65A30D; } /* Tailwind lime-700 */
 body.theme-default .theme-status-medium-progress { background-color: #EAB308; } /* Tailwind yellow-500 */
 body.theme-default .theme-status-low-progress { background-color: #EA580C; } /* Tailwind orange-600 */
@@ -217,9 +221,11 @@ body.theme-default .theme-status-no-progress { background-color: var(--bg-surfac
 /* Flash Messages */
 body.theme-default .theme-flash-success { background-color: #10B981; color: white; } /* Tailwind green-500 */
 body.theme-default .theme-flash-danger { background-color: #EF4444; color: white; } /* Tailwind red-500 */
+body.theme-default .theme-flash-info { background-color: #3B82F6; color: white; } /* Tailwind blue-500 */
 
 /* Code Result */
 body.theme-default .theme-code-result-success { background-color: #065F46; color: white; } /* Tailwind green-800 */
+body.theme-default .theme-text-danger { color: #EF4444; } /* Tailwind red-500 */
 body.theme-de-result-error { color: #EF4444; } /* Tailwind red-500 */
 
 /* Explicit SVG stroke for theme-challenge-status-text within buttons (modal close icon) */
@@ -364,6 +370,16 @@ body.theme-default .theme-modal-card {
     border: var(--card-border);
     border-radius: var(--radius);
     box-shadow: var(--card-shadow);
+}
+
+body.theme-default .theme-dropdown-item {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+}
+
+body.theme-default .theme-dropdown-item:hover {
+    background-color: var(--bg-hover-surface);
+    color: var(--text-header);
 }
 
 /* Modal Overlay */
